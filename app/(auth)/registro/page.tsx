@@ -1,13 +1,18 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
-// MOCKUP visual — sin validación ni fetch todavía, eso se agrega en Paso 2.
+// MOCKUP visual — sin validación ni fetch todavía, eso se agrega en Paso 2c.
 // Sirve de plantilla para login y para cualquier otra pantalla de form.
 export default function RegistroPage() {
+  const [rol, setRol] = useState<'JUGADOR' | 'DUENIO'>('JUGADOR')
+
   return (
     <div className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center px-4 py-10">
       <Card className="w-full max-w-sm">
@@ -34,20 +39,21 @@ export default function RegistroPage() {
 
             <div className="space-y-2">
               <Label>Soy</Label>
-              <RadioGroup defaultValue="JUGADOR" className="flex gap-4">
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="JUGADOR" id="rol-jugador" />
-                  <Label htmlFor="rol-jugador" className="font-normal">
-                    Jugador
-                  </Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="DUENIO" id="rol-duenio" />
-                  <Label htmlFor="rol-duenio" className="font-normal">
-                    Dueño de complejo
-                  </Label>
-                </div>
-              </RadioGroup>
+              <ToggleGroup
+                value={[rol]}
+                onValueChange={(valores) => {
+                  if (valores[0]) setRol(valores[0] as 'JUGADOR' | 'DUENIO')
+                }}
+                variant="outline"
+                className="w-full"
+              >
+                <ToggleGroupItem value="JUGADOR" className="flex-1">
+                  Jugador
+                </ToggleGroupItem>
+                <ToggleGroupItem value="DUENIO" className="flex-1">
+                  Dueño de complejo
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
 
             <Button type="submit" className="w-full">
