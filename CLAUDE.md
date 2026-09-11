@@ -265,8 +265,13 @@ algo, mirar esa página, no adivinar.
 - **Botones**: uno solo `default` (verde, acción principal) por pantalla.
   `outline`/`secondary` para acciones secundarias. `destructive` solo para
   cancelar/borrar con consecuencia real (cancelar reserva, borrar cancha).
-- Modo oscuro: los tokens `.dark` ya están en `globals.css` pero **no hay
-  toggle armado todavía** (falta `next-themes`) — no es parte de Sprint 1.
+- **Modo claro/oscuro**: andando con `next-themes`. `ThemeProvider` envuelve
+  todo en `app/layout.tsx` (`attribute="class"`, sigue el tema del sistema por
+  default). El botón está en `components/theme-toggle.tsx` — cambia con clases
+  `dark:` de Tailwind, no con JS condicional, para no pelear con SSR.
+- **Header**: `components/site-header.tsx` — logo + toggle de tema, sticky
+  arriba de todo. Ahí van los links de navegación a medida que existan páginas
+  reales (por ahora no hay ninguna: login/registro/búsqueda llegan en Fase 1+).
 
 ## Seguridad (no negociable)
 
