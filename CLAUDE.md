@@ -82,60 +82,67 @@ sin IA? Si la respuesta es no, simplificar hasta que sea sí.
 
 ## Reglas de arquitectura
 
-- **Lógica de negocio en `lib/services/`**, no en route handlers ni en componentes.
-- **Acceso a la DB solo desde `lib/services/`**, vía `db` (`lib/db.ts`). Nada de
-  Prisma suelto en componentes o páginas.
-- **Validación**: todo input externo (form, body, params) pasa por un schema Zod
-  de `lib/validations/` antes de tocar la DB. El mismo schema valida en client y
-  en server.
-- **Server Actions** para los formularios. Route handlers (`app/api/.../route.ts`)
-  solo si de verdad hace falta un endpoint REST.
+- **Mutaciones (crear/editar/borrar) van por endpoints REST** en
+  `app/api/<recurso>/route.ts`. Nada de Server Actions — usamos HTTP puro
+  (`fetch` desde el cliente) porque es conocimiento universal y transferible al
+  parcial. Ver plantillas abajo.
+- **Leer datos**: en un Server Component se puede consultar `db` directo (es
+  server, no expone nada). No hace falta un endpoint para mostrar una lista.
+- **Validación**: todo body de un endpoint pasa por un schema Zod de
+  `lib/validations/` con `safeParse` antes de tocar la DB. El mismo schema valida
+  en el formulario (client) y en el endpoint (server).
+- **Lógica repetida va a `lib/`**. Si algo se usa en un solo endpoint, la lógica
+  vive en el `route.ts`. Si se repite (chequeo de ownership, hash de password,
+  cálculo de disponibilidad), va a un archivo en `lib/`.
+- **Acceso a la DB solo desde el server** (endpoints, Server Components, `lib/`),
+  siempre vía `db` de `@/lib/db`. Nunca Prisma en un componente cliente.
 - **Server Components por default.** `"use client"` solo cuando hay
-  interactividad real (`useState`, `onClick`, calendario).
+  interactividad real (`useState`, `onClick`, formularios, calendario).
 - Archivos y componentes chicos, una responsabilidad cada uno.
 
 ## Estructura de carpetas
 
-Tres capas. Regla mental: **`app/` recibe el request → `lib/services/` hace el
-trabajo → `lib/validations/` valida.**
+Regla mental: **el cliente hace `fetch` a `app/api/.../route.ts` → el endpoint
+valida con Zod → hace la operación → devuelve JSON.**
 
 ```
 auth.ts                     raíz. Config de Auth.js: provider, callbacks,
                             y authorize() (verificar email+password en login).
 middleware.ts               raíz. Protección de rutas por rol. Corre antes de todo.
 
-app/                        RUTAS (URL) + UI + puerta de entrada HTTP
+app/                        RUTAS (URL) + UI
   layout.tsx                layout raíz (nav según rol)
   page.tsx                  landing /
   (auth)/
-    login/page.tsx          /login — formulario
-    login/actions.ts        Server Action: iniciar sesión
-    registro/page.tsx       /registro — formulario
-    registro/actions.ts     Server Action: crear usuario
+    login/page.tsx          /login — formulario (fetch al endpoint de Auth.js)
+    registro/page.tsx       /registro — formulario (fetch a /api/usuarios)
   (jugador)/
-    canchas/page.tsx        /canchas — búsqueda
+    canchas/page.tsx        /canchas — búsqueda (Server Component, lee db directo)
     canchas/[id]/page.tsx   detalle + calendario de disponibilidad
-    canchas/[id]/actions.ts reservar turno
     reservas/page.tsx       historial del jugador
   (dueno)/
-    complejos/...           ABM complejos (page.tsx + actions.ts por pantalla)
+    complejos/page.tsx      lista + formularios (fetch a /api/complejos)
     complejos/[id]/canchas/ ABM canchas
   admin/
     usuarios/page.tsx       listado / baja de usuarios
-  api/
-    auth/[...nextauth]/route.ts   handler que Auth.js EXIGE (único obligatorio)
-    <recurso>/route.ts            SOLO si hace falta un endpoint REST de verdad
+
+  api/                      TODOS los endpoints
+    auth/[...nextauth]/route.ts   handler que Auth.js EXIGE
+    usuarios/route.ts             POST crear usuario (registro)
+    complejos/route.ts            GET listar míos · POST crear
+    complejos/[id]/route.ts       GET uno · PATCH editar · DELETE borrar
+    complejos/[id]/canchas/route.ts   GET listar · POST crear
+    canchas/[id]/route.ts         PATCH · DELETE
+    canchas/[id]/disponibilidad/route.ts   GET slots libres de una fecha
+    reservas/route.ts             POST reservar · GET mis reservas
 
 lib/
   db.ts                     cliente Prisma (ya existe)
-  services/                 LA LÓGICA. Funciones normales, testeables, sin HTTP.
-    usuarios.ts               crearUsuario(), buscarPorEmail()
-    password.ts               hashPassword(), verifyPassword() (argon2)
-    complejos.ts
-    canchas.ts
-    reservas.ts
-    disponibilidad.ts         calcular turnos libres de una cancha
-  validations/              SCHEMAS ZOD. Compartidos entre form (client) y action (server).
+  auth-helpers.ts           getSesion() / requireRol('DUENIO') — usado en casi todo endpoint
+  ownership.ts              getComplejoDelDuenio(id, duenioId) — reusado en varios endpoints
+  password.ts               hashPassword() / verifyPassword() (argon2)
+  disponibilidad.ts         calcular turnos libres de una cancha en una fecha
+  validations/              SCHEMAS ZOD. Compartidos entre formulario y endpoint.
     usuario.ts                registroSchema, loginSchema
     complejo.ts
     cancha.ts
@@ -154,27 +161,69 @@ docs/                       plan y backlog del sprint
 
 **Qué va en cada archivo — ejemplo registro:**
 
-| Cosa                                                | Archivo                          |
-| --------------------------------------------------- | -------------------------------- |
-| Formulario (inputs, React Hook Form)                | `app/(auth)/registro/page.tsx`   |
-| Puerta de entrada: valida con Zod, llama al service | `app/(auth)/registro/actions.ts` |
-| Lógica + DB: crear la fila `Usuario`                | `lib/services/usuarios.ts`       |
-| Hashear el password                                 | `lib/services/password.ts`       |
-| Schema Zod                                          | `lib/validations/usuario.ts`     |
+| Cosa                                          | Archivo                        |
+| --------------------------------------------- | ------------------------------ |
+| Formulario (inputs, React Hook Form, `fetch`) | `app/(auth)/registro/page.tsx` |
+| Endpoint: valida con Zod, hashea, inserta     | `app/api/usuarios/route.ts`    |
+| Hashear el password (reusado)                 | `lib/password.ts`              |
+| Schema Zod (form + endpoint)                  | `lib/validations/usuario.ts`   |
 
-Login es igual, pero "verificar credenciales" no va en un action — va en
-`authorize()` dentro de `auth.ts`, que llama a `usuarios.ts` + `password.ts`.
+Login: el formulario llama a `signIn('credentials', ...)` de Auth.js; la
+verificación de email+password vive en `authorize()` dentro de `auth.ts`, que
+usa `lib/password.ts`.
+
+## Plantillas REST (copiar esta forma siempre)
+
+**Endpoint** — `app/api/<recurso>/route.ts`:
+
+```ts
+import { NextResponse } from 'next/server'
+import { miSchema } from '@/lib/validations/...'
+import { db } from '@/lib/db'
+
+export async function POST(request: Request) {
+  const body = await request.json()
+
+  const parsed = miSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
+  }
+
+  // hacer la operación con parsed.data (insertar, editar, etc.)
+
+  return NextResponse.json({ ok: true }, { status: 201 })
+}
+```
+
+**Cliente** — dentro del componente del formulario:
+
+```ts
+const res = await fetch('/api/<recurso>', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(datos),
+})
+const json = await res.json()
+if (!res.ok) {
+  setError(json.error)
+  return
+}
+// éxito: redirigir o refrescar
+```
+
+Todos los endpoints tienen esa forma. Todos los formularios tienen esa forma.
+Cambia el schema y qué se hace en el medio, nada más.
 
 **Reglas de la estructura:**
 
-- Los `actions.ts` **no tienen lógica**: validan con el schema, llaman a un
-  service, devuelven `{ ok: true }` o `{ error: ... }`. Si un action pasa de
-  ~15 líneas, algo va a un service.
-- Un archivo de service por entidad. Cada función: una operación clara.
-- En App Router **no hay una carpeta `/api` con todo** — los Server Actions
-  reemplazan casi todos los endpoints. `app/api/` solo para Auth.js y REST real.
-- Una página interactiva puede tener su `actions.ts` al lado. Un `page.tsx` que
-  solo muestra datos no necesita `actions.ts`.
+- Un endpoint: valida con Zod → chequea sesión/rol/ownership → hace la operación
+  → devuelve JSON con status HTTP correcto (200/201/400/401/403/404/409).
+- Si un `route.ts` se pone largo (>40 líneas) o repite lógica de otro, esa parte
+  va a un archivo en `lib/`.
+- Para **mostrar** datos no se hace endpoint: el `page.tsx` (Server Component)
+  consulta `db` directo.
+- Un archivo por recurso en `app/api/`. Los métodos (`GET`, `POST`, `PATCH`,
+  `DELETE`) son funciones exportadas en ese mismo archivo.
 
 ## Seguridad (no negociable)
 
@@ -222,7 +271,8 @@ Login es igual, pero "verificar credenciales" no va en un action — va en
 
 - Mapas / geocoding
 - Modelo y flujo de **Pago** (está en el DER, no en Sprint 1)
-- Backend separado (se extrae `lib/services/` a un server aparte solo si un
+- Backend separado (nuestros `app/api/` + `lib/` ya son el backend; se movería a
+  un server aparte solo si un
   sprint futuro lo justifica — jobs pesados, tiempo real, etc.)
 - Emails reales (por ahora se simulan en la DB)
 
