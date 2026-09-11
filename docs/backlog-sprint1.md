@@ -26,17 +26,17 @@ Crear proyecto con `create-next-app` (App Router, Tailwind, ESLint). Agregar Pre
 
 ---
 
-### UCA-3 — Postgres local con Docker
+### UCA-3 — Base de datos PostgreSQL (sin Docker)
 
 **Tipo:** Task · **Puntos:** 1 · **Depende de:** —
 
-`docker-compose.yml` con Postgres 16. `.env.example` con `DATABASE_URL`, `AUTH_SECRET`, `BLOB_READ_WRITE_TOKEN`. Agregar `.env` a `.gitignore`.
+`.env.example` con `DATABASE_URL`, `AUTH_SECRET`, `BLOB_READ_WRITE_TOKEN`. `.env` en `.gitignore`. Cada dev elige su Postgres: `npx create-db` (Prisma Postgres gratis), `npm run db:dev` (local sin Docker) o Neon/Supabase.
 
 **Criterios de aceptación:**
 
-- `docker compose up -d` levanta la DB
 - `.env` NO aparece en `git status`
-- README con el comando para levantar la DB
+- README explica cómo obtener un `DATABASE_URL`
+- `npm run db:migrate` aplica el schema contra la DB elegida
 
 ---
 
