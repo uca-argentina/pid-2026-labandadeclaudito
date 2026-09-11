@@ -235,6 +235,39 @@ Cambia el schema y qué se hace en el medio, nada más.
 - Un archivo por recurso en `app/api/`. Los métodos (`GET`, `POST`, `PATCH`,
   `DELETE`) son funciones exportadas en ese mismo archivo.
 
+## Diseño y estilo visual
+
+Definido una vez acá para que las pantallas de los 3 se vean como una sola app.
+**Referencia viva:** `npm run dev` → `/estilo` — muestra colores, tipografía,
+botones y un card de ejemplo renderizados de verdad. Si hay dudas de cómo se ve
+algo, mirar esa página, no adivinar.
+
+- **Color de marca**: verde cancha (`--primary` en `app/globals.css`, ya
+  cargado). Se usa con las clases de Tailwind (`bg-primary`,
+  `text-primary-foreground`), **nunca** un hex escrito a mano en un componente.
+- **Paleta completa** son los tokens que ya trae shadcn: `background`,
+  `foreground`, `card`, `secondary`, `muted`, `accent`, `destructive`,
+  `border`. Cada uno tiene su clase (`bg-muted`, `text-muted-foreground`, etc.)
+  — se usan esas, no grises sueltos tipo `text-gray-500`.
+- **Tipografía**: Geist (ya viene de `create-next-app`, wireado en
+  `app/layout.tsx`). Escala de títulos: `h1` = `text-3xl font-semibold`, `h2` =
+  `text-2xl font-semibold`, `h3` = `text-xl font-semibold`. Cuerpo = `text-base`.
+  Texto secundario (ayuda, metadata) = `text-sm text-muted-foreground`.
+- **Radios y espaciado**: los que ya definen shadcn/Tailwind (`--radius`,
+  escala de `space-y-*`/`gap-*` de Tailwind). No inventar valores en píxeles
+  sueltos.
+- **Componentes**: shadcn/ui primero (`npx shadcn add <componente>`) antes de
+  escribir un componente de UI a mano. Ya instalados: `button`, `card`, `badge`.
+- **Estructura de pantalla tipo**: contenido en un `<main>` con
+  `mx-auto max-w-3xl px-4 py-10` (ajustar el ancho según la pantalla — un
+  listado puede ser más ancho que un form). Listados de Cancha/Complejo van en
+  `Card`. Tablas (admin) con el componente `table` de shadcn cuando se agregue.
+- **Botones**: uno solo `default` (verde, acción principal) por pantalla.
+  `outline`/`secondary` para acciones secundarias. `destructive` solo para
+  cancelar/borrar con consecuencia real (cancelar reserva, borrar cancha).
+- Modo oscuro: los tokens `.dark` ya están en `globals.css` pero **no hay
+  toggle armado todavía** (falta `next-themes`) — no es parte de Sprint 1.
+
 ## Seguridad (no negociable)
 
 - Passwords con **argon2**. Nunca en texto plano, nunca en logs.
