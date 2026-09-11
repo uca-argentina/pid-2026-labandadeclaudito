@@ -13,11 +13,13 @@ export default auth((req) => {
   }
 
   if (esRutaDueno && rol !== 'DUENIO') {
-    return NextResponse.redirect(new URL('/', req.url))
+    // acá adentro rol solo puede ser JUGADOR (los otros dos casos ya
+    // se resolvieron arriba: sin sesión, o rol === 'DUENIO')
+    return NextResponse.redirect(new URL('/jugador', req.url))
   }
 
   if (esRutaJugador && rol !== 'JUGADOR') {
-    return NextResponse.redirect(new URL('/', req.url))
+    return NextResponse.redirect(new URL('/dueno', req.url))
   }
 })
 

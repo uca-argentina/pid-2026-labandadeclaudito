@@ -131,18 +131,20 @@ proxy.ts                    raíz. Protección de rutas por rol. Corre antes de 
 app/                        RUTAS (URL) + UI
   layout.tsx                layout raíz (nav según rol)
   page.tsx                  landing /
-  (auth)/
+  (auth)/                   grupo — NO agrega segmento a la URL
     login/page.tsx          /login — formulario (fetch al endpoint de Auth.js)
     register/page.tsx       /register — formulario (fetch a /api/users)
-  (jugador)/
-    canchas/page.tsx        /canchas — búsqueda (Server Component, lee db directo)
+  jugador/                  carpeta real (sin paréntesis) — SÍ agrega /jugador
+    page.tsx                /jugador — home del rol, ya existe
+    canchas/page.tsx        /jugador/canchas — búsqueda (Server Component, lee db directo)
     canchas/[id]/page.tsx   detalle + calendario de disponibilidad
     reservas/page.tsx       historial del jugador
-  (dueno)/
+  dueno/                    carpeta real — SÍ agrega /dueno
+    page.tsx                /dueno — home del rol, ya existe
     complejos/page.tsx      lista + formularios (fetch a /api/complexes)
     complejos/[id]/canchas/ ABM canchas
-  admin/
-    usuarios/page.tsx       listado / baja de usuarios
+  admin/                    sin rol ADMIN en el schema todavía — no hay nada acá
+    usuarios/page.tsx       listado / baja de usuarios (futuro, cuando exista el rol)
 
   api/                      TODOS los endpoints (nombres de recurso en inglés)
     auth/[...nextauth]/route.ts   handler que Auth.js EXIGE
