@@ -125,38 +125,38 @@ app/                        RUTAS (URL) + UI
   page.tsx                  landing /
   (auth)/
     login/page.tsx          /login — formulario (fetch al endpoint de Auth.js)
-    registro/page.tsx       /registro — formulario (fetch a /api/usuarios)
+    registro/page.tsx       /registro — formulario (fetch a /api/users)
   (jugador)/
     canchas/page.tsx        /canchas — búsqueda (Server Component, lee db directo)
     canchas/[id]/page.tsx   detalle + calendario de disponibilidad
     reservas/page.tsx       historial del jugador
   (dueno)/
-    complejos/page.tsx      lista + formularios (fetch a /api/complejos)
+    complejos/page.tsx      lista + formularios (fetch a /api/complexes)
     complejos/[id]/canchas/ ABM canchas
   admin/
     usuarios/page.tsx       listado / baja de usuarios
 
-  api/                      TODOS los endpoints
+  api/                      TODOS los endpoints (nombres de recurso en inglés)
     auth/[...nextauth]/route.ts   handler que Auth.js EXIGE
-    usuarios/route.ts             POST crear usuario (registro)
-    complejos/route.ts            GET listar míos · POST crear
-    complejos/[id]/route.ts       GET uno · PATCH editar · DELETE borrar
-    complejos/[id]/canchas/route.ts   GET listar · POST crear
-    canchas/[id]/route.ts         PATCH · DELETE
-    canchas/[id]/disponibilidad/route.ts   GET slots libres de una fecha
-    reservas/route.ts             POST reservar · GET mis reservas
+    users/route.ts                 POST crear usuario (registro)
+    complexes/route.ts             GET listar míos · POST crear
+    complexes/[id]/route.ts        GET uno · PATCH editar · DELETE borrar
+    complexes/[id]/courts/route.ts GET listar · POST crear
+    courts/[id]/route.ts           PATCH · DELETE
+    courts/[id]/availability/route.ts   GET slots libres de una fecha
+    bookings/route.ts              POST reservar · GET mis reservas
 
 lib/
   db.ts                     cliente Prisma (ya existe)
-  auth-helpers.ts           getSesion() / requireRol('DUENIO') — usado en casi todo endpoint
-  ownership.ts              getComplejoDelDuenio(id, duenioId) — reusado en varios endpoints
-  password.ts               hashPassword() / verifyPassword() (argon2)
-  disponibilidad.ts         calcular turnos libres de una cancha en una fecha
+  auth-helpers.ts           getSession() / requireRole('DUENIO') — usado en casi todo endpoint
+  ownership.ts              getComplexByOwner(id, ownerId) — reusado en varios endpoints
+  passwords.ts              hashPassword() / verifyPassword() (argon2)
+  availability.ts           calcular turnos libres de una cancha en una fecha
   validations/              SCHEMAS ZOD. Compartidos entre formulario y endpoint.
-    usuario.ts                registroSchema, loginSchema
-    complejo.ts
-    cancha.ts
-    reserva.ts
+    user.ts                   registerSchema, loginSchema
+    complex.ts
+    court.ts
+    booking.ts
 
 components/
   ui/                       shadcn (generado, se edita libre)
@@ -174,9 +174,9 @@ docs/                       plan y backlog del sprint
 | Cosa                                          | Archivo                        |
 | --------------------------------------------- | ------------------------------ |
 | Formulario (inputs, React Hook Form, `fetch`) | `app/(auth)/registro/page.tsx` |
-| Endpoint: valida con Zod, hashea, inserta     | `app/api/usuarios/route.ts`    |
-| Hashear el password (reusado)                 | `lib/password.ts`              |
-| Schema Zod (form + endpoint)                  | `lib/validations/usuario.ts`   |
+| Endpoint: valida con Zod, hashea, inserta     | `app/api/users/route.ts`       |
+| Hashear el password (reusado)                 | `lib/passwords.ts`             |
+| Schema Zod (form + endpoint)                  | `lib/validations/user.ts`      |
 
 Login: el formulario llama a `signIn('credentials', ...)` de Auth.js; la
 verificación de email+password vive en `authorize()` dentro de `auth.ts`, que
