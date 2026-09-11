@@ -242,13 +242,16 @@ Definido una vez acá para que las pantallas de los 3 se vean como una sola app.
 botones y un card de ejemplo renderizados de verdad. Si hay dudas de cómo se ve
 algo, mirar esa página, no adivinar.
 
-- **Color de marca**: verde cancha (`--primary` en `app/globals.css`, ya
-  cargado). Se usa con las clases de Tailwind (`bg-primary`,
-  `text-primary-foreground`), **nunca** un hex escrito a mano en un componente.
+- **Paleta**: base crema tirando a verde (no blanco/negro puro) + verde cancha
+  como color de marca (`--background`/`--primary` en `app/globals.css`, ya
+  cargados, con su versión para modo oscuro). Se usa con las clases de
+  Tailwind (`bg-background`, `bg-primary`, `text-primary-foreground`),
+  **nunca** un hex escrito a mano en un componente.
 - **Paleta completa** son los tokens que ya trae shadcn: `background`,
   `foreground`, `card`, `secondary`, `muted`, `accent`, `destructive`,
   `border`. Cada uno tiene su clase (`bg-muted`, `text-muted-foreground`, etc.)
-  — se usan esas, no grises sueltos tipo `text-gray-500`.
+  — se usan esas, no grises sueltos tipo `text-gray-500` (además acá
+  desentonarían: son neutros, la paleta tiene un tinte cálido/verde).
 - **Tipografía**: Geist (ya viene de `create-next-app`, wireado en
   `app/layout.tsx`). Escala de títulos: `h1` = `text-3xl font-semibold`, `h2` =
   `text-2xl font-semibold`, `h3` = `text-xl font-semibold`. Cuerpo = `text-base`.
@@ -265,8 +268,13 @@ algo, mirar esa página, no adivinar.
 - **Botones**: uno solo `default` (verde, acción principal) por pantalla.
   `outline`/`secondary` para acciones secundarias. `destructive` solo para
   cancelar/borrar con consecuencia real (cancelar reserva, borrar cancha).
-- Modo oscuro: los tokens `.dark` ya están en `globals.css` pero **no hay
-  toggle armado todavía** (falta `next-themes`) — no es parte de Sprint 1.
+- **Modo claro/oscuro**: andando con `next-themes`. `ThemeProvider` envuelve
+  todo en `app/layout.tsx` (`attribute="class"`, sigue el tema del sistema por
+  default). El botón está en `components/theme-toggle.tsx` — cambia con clases
+  `dark:` de Tailwind, no con JS condicional, para no pelear con SSR.
+- **Header**: `components/site-header.tsx` — logo + toggle de tema, sticky
+  arriba de todo. Ahí van los links de navegación a medida que existan páginas
+  reales (por ahora no hay ninguna: login/registro/búsqueda llegan en Fase 1+).
 
 ## Seguridad (no negociable)
 
