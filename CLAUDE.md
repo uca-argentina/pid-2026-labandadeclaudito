@@ -242,13 +242,16 @@ Definido una vez acá para que las pantallas de los 3 se vean como una sola app.
 botones y un card de ejemplo renderizados de verdad. Si hay dudas de cómo se ve
 algo, mirar esa página, no adivinar.
 
-- **Color de marca**: verde cancha (`--primary` en `app/globals.css`, ya
-  cargado). Se usa con las clases de Tailwind (`bg-primary`,
-  `text-primary-foreground`), **nunca** un hex escrito a mano en un componente.
+- **Paleta**: base crema tirando a verde (no blanco/negro puro) + verde cancha
+  como color de marca (`--background`/`--primary` en `app/globals.css`, ya
+  cargados, con su versión para modo oscuro). Se usa con las clases de
+  Tailwind (`bg-background`, `bg-primary`, `text-primary-foreground`),
+  **nunca** un hex escrito a mano en un componente.
 - **Paleta completa** son los tokens que ya trae shadcn: `background`,
   `foreground`, `card`, `secondary`, `muted`, `accent`, `destructive`,
   `border`. Cada uno tiene su clase (`bg-muted`, `text-muted-foreground`, etc.)
-  — se usan esas, no grises sueltos tipo `text-gray-500`.
+  — se usan esas, no grises sueltos tipo `text-gray-500` (además acá
+  desentonarían: son neutros, la paleta tiene un tinte cálido/verde).
 - **Tipografía**: Geist (ya viene de `create-next-app`, wireado en
   `app/layout.tsx`). Escala de títulos: `h1` = `text-3xl font-semibold`, `h2` =
   `text-2xl font-semibold`, `h3` = `text-xl font-semibold`. Cuerpo = `text-base`.
