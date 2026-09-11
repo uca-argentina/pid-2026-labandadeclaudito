@@ -94,6 +94,88 @@ sin IA? Si la respuesta es no, simplificar hasta que sea sí.
   interactividad real (`useState`, `onClick`, calendario).
 - Archivos y componentes chicos, una responsabilidad cada uno.
 
+## Estructura de carpetas
+
+Tres capas. Regla mental: **`app/` recibe el request → `lib/services/` hace el
+trabajo → `lib/validations/` valida.**
+
+```
+auth.ts                     raíz. Config de Auth.js: provider, callbacks,
+                            y authorize() (verificar email+password en login).
+middleware.ts               raíz. Protección de rutas por rol. Corre antes de todo.
+
+app/                        RUTAS (URL) + UI + puerta de entrada HTTP
+  layout.tsx                layout raíz (nav según rol)
+  page.tsx                  landing /
+  (auth)/
+    login/page.tsx          /login — formulario
+    login/actions.ts        Server Action: iniciar sesión
+    registro/page.tsx       /registro — formulario
+    registro/actions.ts     Server Action: crear usuario
+  (jugador)/
+    canchas/page.tsx        /canchas — búsqueda
+    canchas/[id]/page.tsx   detalle + calendario de disponibilidad
+    canchas/[id]/actions.ts reservar turno
+    reservas/page.tsx       historial del jugador
+  (dueno)/
+    complejos/...           ABM complejos (page.tsx + actions.ts por pantalla)
+    complejos/[id]/canchas/ ABM canchas
+  admin/
+    usuarios/page.tsx       listado / baja de usuarios
+  api/
+    auth/[...nextauth]/route.ts   handler que Auth.js EXIGE (único obligatorio)
+    <recurso>/route.ts            SOLO si hace falta un endpoint REST de verdad
+
+lib/
+  db.ts                     cliente Prisma (ya existe)
+  services/                 LA LÓGICA. Funciones normales, testeables, sin HTTP.
+    usuarios.ts               crearUsuario(), buscarPorEmail()
+    password.ts               hashPassword(), verifyPassword() (argon2)
+    complejos.ts
+    canchas.ts
+    reservas.ts
+    disponibilidad.ts         calcular turnos libres de una cancha
+  validations/              SCHEMAS ZOD. Compartidos entre form (client) y action (server).
+    usuario.ts                registroSchema, loginSchema
+    complejo.ts
+    cancha.ts
+    reserva.ts
+
+components/
+  ui/                       shadcn (generado, se edita libre)
+  <propios>.tsx             componentes nuestros
+
+lib/generated/prisma/       cliente Prisma generado (gitignored, no tocar)
+prisma/
+  schema.prisma
+  migrations/
+docs/                       plan y backlog del sprint
+```
+
+**Qué va en cada archivo — ejemplo registro:**
+
+| Cosa                                                | Archivo                          |
+| --------------------------------------------------- | -------------------------------- |
+| Formulario (inputs, React Hook Form)                | `app/(auth)/registro/page.tsx`   |
+| Puerta de entrada: valida con Zod, llama al service | `app/(auth)/registro/actions.ts` |
+| Lógica + DB: crear la fila `Usuario`                | `lib/services/usuarios.ts`       |
+| Hashear el password                                 | `lib/services/password.ts`       |
+| Schema Zod                                          | `lib/validations/usuario.ts`     |
+
+Login es igual, pero "verificar credenciales" no va en un action — va en
+`authorize()` dentro de `auth.ts`, que llama a `usuarios.ts` + `password.ts`.
+
+**Reglas de la estructura:**
+
+- Los `actions.ts` **no tienen lógica**: validan con el schema, llaman a un
+  service, devuelven `{ ok: true }` o `{ error: ... }`. Si un action pasa de
+  ~15 líneas, algo va a un service.
+- Un archivo de service por entidad. Cada función: una operación clara.
+- En App Router **no hay una carpeta `/api` con todo** — los Server Actions
+  reemplazan casi todos los endpoints. `app/api/` solo para Auth.js y REST real.
+- Una página interactiva puede tener su `actions.ts` al lado. Un `page.tsx` que
+  solo muestra datos no necesita `actions.ts`.
+
 ## Seguridad (no negociable)
 
 - Passwords con **argon2**. Nunca en texto plano, nunca en logs.
