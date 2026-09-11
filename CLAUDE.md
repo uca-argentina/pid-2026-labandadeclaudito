@@ -294,8 +294,18 @@ algo, mirar esa página, no adivinar.
 - Antes que nada, la sección **"Código simple y entendible"** de arriba.
 - **Prettier decide el formato** — no pelear con él. `npm run format` antes de
   cada commit (el CI lo chequea).
-- Nombres del dominio en español (`Cancha`, `Reserva`, `Complejo`, `duenio`).
-  Infra técnica en inglés está ok.
+- **Código nuevo en inglés** (funciones, variables, tipos, nombres de archivo):
+  `hashPassword`, `registerSchema`, `lib/validations/user.ts`. Decisión del
+  2026-09-11, no retroactiva — el schema de Prisma ya migrado (`Usuario`,
+  `Complejo`, `Cancha`, `Reserva`, `nombre`, `rol`, etc.) queda como está, NO
+  se renombra (la DB es compartida por los 3, renombrarla implica coordinar
+  una migración nueva con todos).
+- Los campos de un objeto que van directo a Prisma (`db.usuario.create({data:
+{...}})`) **matchean el nombre del campo en el schema**, aunque esté en
+  español — así no hace falta un paso extra de "traducir" antes de guardar.
+  Ejemplo: un schema Zod para crear un Complejo se llama `createComplexSchema`
+  (nombre en inglés) pero sus keys son `nombre`, `direccion`, `zona`, `contacto`
+  (matchean `Complejo` en `schema.prisma`).
 - Comentarios: solo el **por qué** no obvio. No comentar lo que el código ya dice.
   Si hace falta comentar el **qué**, el código es muy complejo → simplificar.
 - Nada de `any`. Si TS se queja, arreglar el tipo con algo simple, no callarlo
