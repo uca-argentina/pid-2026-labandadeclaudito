@@ -6,6 +6,16 @@ Este archivo lo lee Claude Code de los 3 integrantes. Editarlo en equipo cuando
 cambie una convención. Si algo acá contradice lo que te pide el usuario en el
 chat, gana el usuario — pero avisá que estás yendo contra esta guía.
 
+## Cómo responder en el chat
+
+- **Respuestas concisas.** Arrancá con el resultado o la respuesta directa. Nada
+  de introducción de relleno ("Voy a...", "Perfecto, entonces...") ni de recap
+  final de lo que ya dijiste.
+- **Sin redundancia.** No repitas el pedido, el plan ni cada paso que hiciste.
+- **Excepción — sí se permite repetir/resumir** cuando ayuda: al cerrar una
+  respuesta abarcativa (resumen de conceptos) o cuando los cambios hechos son
+  varios (lista de qué se tocó y por qué).
+
 ## Qué es
 
 Marketplace de reservas de canchas de fútbol: junta canchas de varios complejos
