@@ -1,0 +1,124 @@
+// TocaYJuga — modelo de datos Sprint 1
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+  runtime  = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Rol {
+  JUGADOR
+  DUENIO
+}
+
+enum Deporte {
+  FUTBOL_5
+  FUTBOL_7
+  FUTBOL_11
+}
+
+enum TipoSuperficie {
+  CESPED_SINTETICO
+  CESPED_NATURAL
+  CEMENTO
+  PARQUET
+}
+
+enum EstadoReserva {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+  NO_SHOW
+  COMPLETADA
+}
+
+model Usuario {
+  id           String   @id @default(cuid())
+  nombre       String
+  email        String   @unique
+  passwordHash String
+  dni          String?  @unique
+  telefono     String?
+  rol          Rol
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  complejos Complejo[] @relation("DuenioComplejos")
+  reservas  Reserva[]  @relation("JugadorReservas")
+}
+
+model Complejo {
+  id        String   @id @default(cuid())
+  nombre    String
+  direccion String
+  zona      String
+  contacto  String
+  duenioId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  duenio   Usuario          @relation("DuenioComplejos", fields: [duenioId], references: [id])
+  canchas  Cancha[]
+  imagenes ImagenComplejo[]
+
+  @@index([zona])
+  @@index([duenioId])
+}
+
+model ImagenComplejo {
+  id         String @id @default(cuid())
+  complejoId String
+  url        String
+  orden      Int    @default(0)
+
+  complejo Complejo @relation(fields: [complejoId], references: [id], onDelete: Cascade)
+
+  @@index([complejoId])
+}
+
+model Cancha {
+  id               String         @id @default(cuid())
+  complejoId       String
+  deporte          Deporte
+  tipoSuperficie   TipoSuperficie
+  capacidad        Int
+  precioBase       Decimal        @db.Decimal(10, 2)
+  horaApertura     String
+  horaCierre       String
+  duracionTurnoMin Int            @default(60)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  complejo Complejo  @relation(fields: [complejoId], references: [id], onDelete: Cascade)
+  reservas Reserva[]
+
+  @@index([complejoId])
+  @@index([deporte])
+}
+
+model Reserva {
+  id         String        @id @default(cuid())
+  canchaId   String
+  jugadorId  String
+  fecha      DateTime      @db.Date
+  horaInicio String
+  horaFin    String
+  estado     EstadoReserva @default(PENDIENTE)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  cancha  Cancha  @relation(fields: [canchaId], references: [id])
+  jugador Usuario @relation("JugadorReservas", fields: [jugadorId], references: [id])
+
+  // Última defensa contra doble reserva: no puede haber dos reservas
+  // en la misma cancha, fecha y hora de inicio.
+  @@unique([canchaId, fecha, horaInicio])
+  @@index([jugadorId])
+  @@index([canchaId, fecha])
+}
