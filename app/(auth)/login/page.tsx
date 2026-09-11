@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, Lock, LogIn, Mail } from 'lucide-react'
+import { ArrowRight, Lock, LogIn, Mail, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,10 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
 
-  // TODO Paso 3: esto todavía valida con registerSchema y pega a /api/users
-  // (el endpoint de registro). Hay que reemplazarlo por signIn('credentials', ...)
-  // de Auth.js cuando armemos auth.ts.
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
     const form = new FormData(e.currentTarget)
@@ -51,7 +48,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
           <div className="bg-primary text-primary-foreground mx-auto mb-1 flex size-10 items-center justify-center rounded-full">
-            <LogIn className="size-5" />
+            <User className="size-5" />
           </div>
           <CardTitle className="text-2xl">Bienvenido</CardTitle>
           <CardDescription>Ingresá a tu cuenta de TocaYJuga.</CardDescription>

@@ -17,7 +17,7 @@ export default function RegistroPage() {
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
 
