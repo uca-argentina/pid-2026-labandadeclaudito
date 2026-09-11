@@ -38,6 +38,37 @@ Pagos e ingresos son **simulados** por consigna.
 | `npm run db:studio`  | GUI de la base                                 |
 | `npm run db:dev`     | Postgres local sin Docker (`prisma dev`)       |
 
+## Código simple y entendible (la regla más importante)
+
+**Contexto:** en el parcial de la materia nos van a pedir implementar en vivo,
+**sin IA**. Para aprobar tenemos que poder reescribir de memoria cualquier parte
+de este proyecto. Si el código es difícil, no lo podemos rendir.
+
+Por eso, siempre:
+
+- **Elegir lo obvio antes que lo clever.** Si hay una forma "de manual" y una
+  "avanzada pro", va la de manual. Aunque sea un par de líneas más larga.
+- **Nada de abstracciones que la tarea no pidió**: no interfaces con una sola
+  implementación, no factories, no genéricos complicados, no metaprogramación,
+  no helpers "por si acaso".
+- **Pasos explícitos antes que one-liners densos.** Un `for` claro le gana a un
+  `.reduce()` encadenado que hay que descifrar. Variables intermedias con nombre
+  antes que un chain largo.
+- **Código repetido y claro le gana a DRY prematuro.** Tres líneas parecidas
+  repetidas está bien; una abstracción que nadie entiende, no.
+- **Nombres largos y claros** antes que cortos y ambiguos (`reservasDelJugador`,
+  no `rs`).
+- **Si una función necesita un comentario para entenderse, reescribila más
+  simple** en vez de comentarla.
+- **TypeScript simple.** Tipos directos. Nada de conditional types, mapped types
+  encadenados ni utility types anidados. Si TS se pone difícil, casi siempre es
+  señal de que el código es muy complejo.
+- Al terminar una feature, dejá en el PR (en castellano) **qué hace el código
+  nuevo y por qué**, para que los otros dos lo entiendan sin leer línea por línea.
+
+**El test mental:** ¿los 3 podríamos reescribir esto en el parcial, de memoria,
+sin IA? Si la respuesta es no, simplificar hasta que sea sí.
+
 ## Antes de escribir código
 
 - **Next 16 tiene breaking changes** respecto de lo que sabés de memoria. Leer
@@ -78,12 +109,15 @@ Pagos e ingresos son **simulados** por consigna.
 
 ## Convenciones de código
 
+- Antes que nada, la sección **"Código simple y entendible"** de arriba.
 - **Prettier decide el formato** — no pelear con él. `npm run format` antes de
   cada commit (el CI lo chequea).
 - Nombres del dominio en español (`Cancha`, `Reserva`, `Complejo`, `duenio`).
   Infra técnica en inglés está ok.
 - Comentarios: solo el **por qué** no obvio. No comentar lo que el código ya dice.
-- Nada de `any`. Si TS se queja, arreglar el tipo, no callarlo.
+  Si hace falta comentar el **qué**, el código es muy complejo → simplificar.
+- Nada de `any`. Si TS se queja, arreglar el tipo con algo simple, no callarlo
+  ni meter un tipo enrevesado.
 
 ## Git y PRs
 
