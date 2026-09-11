@@ -125,7 +125,7 @@ app/                        RUTAS (URL) + UI
   page.tsx                  landing /
   (auth)/
     login/page.tsx          /login — formulario (fetch al endpoint de Auth.js)
-    registro/page.tsx       /registro — formulario (fetch a /api/users)
+    register/page.tsx       /register — formulario (fetch a /api/users)
   (jugador)/
     canchas/page.tsx        /canchas — búsqueda (Server Component, lee db directo)
     canchas/[id]/page.tsx   detalle + calendario de disponibilidad
@@ -173,7 +173,7 @@ docs/                       plan y backlog del sprint
 
 | Cosa                                          | Archivo                        |
 | --------------------------------------------- | ------------------------------ |
-| Formulario (inputs, React Hook Form, `fetch`) | `app/(auth)/registro/page.tsx` |
+| Formulario (inputs, React Hook Form, `fetch`) | `app/(auth)/register/page.tsx` |
 | Endpoint: valida con Zod, hashea, inserta     | `app/api/users/route.ts`       |
 | Hashear el password (reusado)                 | `lib/passwords.ts`             |
 | Schema Zod (form + endpoint)                  | `lib/validations/user.ts`      |
@@ -274,7 +274,7 @@ algo, mirar esa página, no adivinar.
   `dark:` de Tailwind, no con JS condicional, para no pelear con SSR.
 - **Header**: `components/site-header.tsx` — logo + toggle de tema, sticky
   arriba de todo. Ahí van los links de navegación a medida que existan páginas
-  reales (por ahora no hay ninguna: login/registro/búsqueda llegan en Fase 1+).
+  reales (`/login` y `/register` ya están; búsqueda de canchas llega en Fase 1+).
 
 ## Seguridad (no negociable)
 
