@@ -33,5 +33,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          DATABASE_URL: postgresql://user:pass@localhost:5432/db
-          AUTH_SECRET: ci-placeholder-secret-not-used-at-build
+          # No se conecta a ninguna DB en este paso (prisma generate y el build
+          # no hacen queries) — valor no-URL a propósito para no gatillar
+          # falsos positivos de escaneo de secretos.
+          DATABASE_URL: unused-in-ci-build
+          AUTH_SECRET: unused-in-ci-build
