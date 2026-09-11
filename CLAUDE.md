@@ -87,6 +87,11 @@ sin IA? Si la respuesta es no, simplificar hasta que sea sí.
 - **Prisma 7**: nunca `new PrismaClient()` sin argumentos (tira error). Usar
   siempre `db` importado de `@/lib/db`. El cliente generado vive en
   `lib/generated/prisma` (gitignored, se regenera con `npm run db:generate`).
+- **`proxy.ts`, no `middleware.ts`**: el nombre viejo quedó deprecado en Next 16
+  y por defecto corre en Edge Runtime, donde Prisma/`pg` no cargan (usan
+  módulos de Node como `node:path`) — tira 500 en cualquier ruta protegida.
+  `proxy.ts` corre en Node por default, ahí sí funciona. Ya lo vivimos: costó
+  un rato de debugging encontrar esto.
 - Antes de diseñar una feature nueva, si tenés la skill `superpowers:brainstorming`,
   usala. Si no, igual arrancá alineando alcance con el equipo antes de codear.
 
@@ -118,7 +123,10 @@ valida con Zod → hace la operación → devuelve JSON.**
 ```
 auth.ts                     raíz. Config de Auth.js: provider, callbacks,
                             y authorize() (verificar email+password en login).
-middleware.ts               raíz. Protección de rutas por rol. Corre antes de todo.
+proxy.ts                    raíz. Protección de rutas por rol. Corre antes de todo,
+                            en runtime de Node (no usar el nombre viejo
+                            middleware.ts — está deprecado y fuerza Edge Runtime,
+                            donde Prisma no funciona).
 
 app/                        RUTAS (URL) + UI
   layout.tsx                layout raíz (nav según rol)
