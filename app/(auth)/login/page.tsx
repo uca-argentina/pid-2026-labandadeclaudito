@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import { ArrowRight, Lock, LogIn, Mail, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { registerSchema } from '@/lib/validations/user'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -18,29 +18,23 @@ export default function LoginPage() {
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
+    setCargando(true)
+
     const form = new FormData(e.currentTarget)
-    const datos = {
+    const resultado = await signIn('credentials', {
       email: form.get('email'),
       password: form.get('password'),
-    }
-    const parsed = registerSchema.safeParse(datos)
-    if (!parsed.success) {
-      setError('Revisá los datos, algo no es válido')
-      return
-    }
-    setCargando(true)
-    const res = await fetch('/api/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(parsed.data),
+      redirect: false,
     })
-    if (res.ok) {
-      router.push('/')
+
+    if (resultado?.error) {
+      setError('Email o contraseña incorrectos')
+      setCargando(false)
       return
     }
-    const json = await res.json()
-    setError(json.error)
-    setCargando(false)
+
+    router.push('/')
+    router.refresh()
   }
 
   return (
