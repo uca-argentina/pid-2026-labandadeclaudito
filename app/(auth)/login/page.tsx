@@ -50,7 +50,7 @@ export default function LoginPage() {
     <div className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center px-4 py-10">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
-          <div className="bg-primary text-primary-foreground mb-1 flex size-10 items-center justify-center rounded-full">
+          <div className="bg-primary text-primary-foreground mx-auto mb-1 flex size-10 items-center justify-center rounded-full">
             <LogIn className="size-5" />
           </div>
           <CardTitle className="text-2xl">Bienvenido</CardTitle>
