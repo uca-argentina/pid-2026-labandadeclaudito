@@ -44,8 +44,13 @@ next-env.d.ts
 # prisma generated client
 /lib/generated
 
-# editor / agent skill dirs (prisma init)
+# skills vendoreadas por `prisma init` — no van al repo
 /.windsurf
-/.claude
 /.agents
 /skills-lock.json
+/.claude/skills/prisma-*
+
+# de .claude/ solo se commitea lo compartido del equipo (agents/, skills/
+# propias, settings.json), nunca el estado local de cada uno
+/.claude/settings.local.json
+/.claude/*.local.json
