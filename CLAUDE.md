@@ -129,22 +129,33 @@ proxy.ts                    raíz. Protección de rutas por rol. Corre antes de 
                             donde Prisma no funciona).
 
 app/                        RUTAS (URL) + UI
-  layout.tsx                layout raíz (nav según rol)
-  page.tsx                  landing /
-  (auth)/                   grupo — NO agrega segmento a la URL
-    login/page.tsx          /login — formulario (fetch al endpoint de Auth.js)
-    register/page.tsx       /register — formulario (fetch a /api/users)
-  jugador/                  carpeta real (sin paréntesis) — SÍ agrega /jugador
-    page.tsx                /jugador — home del rol, ya existe
-    canchas/page.tsx        /jugador/canchas — búsqueda (Server Component, lee db directo)
-    canchas/[id]/page.tsx   detalle + calendario de disponibilidad
-    reservas/page.tsx       historial del jugador
-  dueno/                    carpeta real — SÍ agrega /dueno
-    page.tsx                /dueno — home del rol, ya existe
-    complejos/page.tsx      lista + formularios (fetch a /api/complexes)
-    complejos/[id]/canchas/ ABM canchas
-  admin/                    sin rol ADMIN en el schema todavía — no hay nada acá
-    usuarios/page.tsx       listado / baja de usuarios (futuro, cuando exista el rol)
+  layout.tsx                layout raíz — SOLO html/body/fonts/ThemeProvider,
+                            nada de header ni sidebar (cada grupo pone el suyo)
+
+  (public)/                 grupo — NO agrega segmento a la URL. Páginas sin
+                            login: trae el SiteHeader (logo + toggle de tema)
+    layout.tsx                monta <SiteHeader /> + <main>
+    page.tsx                  landing /
+    estilo/page.tsx           /estilo — referencia visual
+    (auth)/                   grupo anidado — tampoco agrega segmento
+      login/page.tsx          /login — formulario (fetch al endpoint de Auth.js)
+      register/page.tsx       /register — formulario (fetch a /api/users)
+
+  (dashboard)/              grupo — NO agrega segmento a la URL. Páginas con
+                            sesión: trae el sidebar en vez del SiteHeader
+    layout.tsx                lee la sesión (auth()), redirige a /login si no
+                              hay, monta <AppSidebar rol={...} /> + contenido
+    jugador/                  carpeta real (SÍ agrega /jugador a la URL)
+      page.tsx                /jugador — home del rol, ya existe
+      canchas/page.tsx        /jugador/canchas — búsqueda (Server Component, lee db directo)
+      canchas/[id]/page.tsx   detalle + calendario de disponibilidad
+      reservas/page.tsx       historial del jugador
+    dueno/                    carpeta real (SÍ agrega /dueno)
+      page.tsx                /dueno — home del rol, ya existe
+      complejos/page.tsx      lista + formularios (fetch a /api/complexes)
+      complejos/[id]/canchas/ ABM canchas
+    admin/                    sin rol ADMIN en el schema todavía — no hay nada acá
+      usuarios/page.tsx       listado / baja de usuarios (futuro, cuando exista el rol)
 
   api/                      TODOS los endpoints (nombres de recurso en inglés)
     auth/[...nextauth]/route.ts   handler que Auth.js EXIGE
@@ -170,7 +181,12 @@ lib/
 
 components/
   ui/                       shadcn (generado, se edita libre)
-  <propios>.tsx             componentes nuestros
+  site-header.tsx           header de las páginas públicas (logo + tema)
+  app-sidebar.tsx           sidebar de las páginas con sesión — nav por rol,
+                            perfil (nombre/email/avatar) y cerrar sesión abajo
+  sign-out-button.tsx       botón de logout, reusado en el sidebar
+  theme-provider.tsx, theme-toggle.tsx   modo claro/oscuro
+  <propios>.tsx             el resto de nuestros componentes
 
 lib/generated/prisma/       cliente Prisma generado (gitignored, no tocar)
 prisma/
@@ -181,16 +197,16 @@ docs/                       plan y backlog del sprint
 
 **Qué va en cada archivo — ejemplo registro:**
 
-| Cosa                                          | Archivo                        |
-| --------------------------------------------- | ------------------------------ |
-| Formulario (inputs, React Hook Form, `fetch`) | `app/(auth)/register/page.tsx` |
-| Endpoint: valida con Zod, hashea, inserta     | `app/api/users/route.ts`       |
-| Hashear el password (reusado)                 | `lib/passwords.ts`             |
-| Schema Zod (form + endpoint)                  | `lib/validations/user.ts`      |
+| Cosa                                          | Archivo                                 |
+| --------------------------------------------- | --------------------------------------- |
+| Formulario (inputs, React Hook Form, `fetch`) | `app/(public)/(auth)/register/page.tsx` |
+| Endpoint: valida con Zod, hashea, inserta     | `app/api/users/route.ts`                |
+| Hashear el password (reusado)                 | `lib/passwords.ts`                      |
+| Schema Zod (form + endpoint)                  | `lib/validations/user.ts`               |
 
 Login: el formulario llama a `signIn('credentials', ...)` de Auth.js; la
 verificación de email+password vive en `authorize()` dentro de `auth.ts`, que
-usa `lib/password.ts`.
+usa `lib/passwords.ts`.
 
 ## Plantillas REST (copiar esta forma siempre)
 
@@ -283,8 +299,13 @@ algo, mirar esa página, no adivinar.
   default). El botón está en `components/theme-toggle.tsx` — cambia con clases
   `dark:` de Tailwind, no con JS condicional, para no pelear con SSR.
 - **Header**: `components/site-header.tsx` — logo + toggle de tema, sticky
-  arriba de todo. Ahí van los links de navegación a medida que existan páginas
-  reales (`/login` y `/register` ya están; búsqueda de canchas llega en Fase 1+).
+  arriba de todo. Solo en páginas públicas (`app/(public)/layout.tsx`).
+- **Sidebar**: `components/app-sidebar.tsx` — solo en páginas con sesión
+  (`app/(dashboard)/layout.tsx`). Plegable a solo-íconos (shadcn `Sidebar`
+  `collapsible="icon"`), nav según `rol` (array `navPorRol` adentro del
+  componente — agregar el link ahí cuando exista la página real, no antes),
+  perfil (avatar con iniciales + nombre + email) y botón de cerrar sesión
+  abajo del todo.
 
 ## Seguridad (no negociable)
 
