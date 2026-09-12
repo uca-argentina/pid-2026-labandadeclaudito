@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { signIn } from 'next-auth/react'
+import { getSession, signIn } from 'next-auth/react'
 import { ArrowRight, Lock, LogIn, Mail, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -33,7 +33,8 @@ export default function LoginPage() {
       return
     }
 
-    router.push('/')
+    const session = await getSession()
+    router.push(session?.user.rol === 'DUENIO' ? '/dueno' : '/jugador')
     router.refresh()
   }
 
