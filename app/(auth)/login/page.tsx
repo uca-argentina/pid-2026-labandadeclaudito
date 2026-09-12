@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getSession, signIn } from 'next-auth/react'
 import { ArrowRight, Lock, LogIn, Mail, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,8 +10,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const cuentaCreada = searchParams.get('registrado') === '1'
+
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
 
@@ -49,6 +52,12 @@ export default function LoginPage() {
           <CardDescription>Ingresá a tu cuenta de TocaYJuga.</CardDescription>
         </CardHeader>
         <CardContent>
+          {cuentaCreada && (
+            <p className="bg-primary/10 text-primary mb-4 rounded-lg px-3 py-2 text-sm">
+              Cuenta creada. Iniciá sesión para continuar.
+            </p>
+          )}
+
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -98,5 +107,13 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }

@@ -45,7 +45,7 @@ export default function RegistroPage() {
       body: JSON.stringify(parsed.data),
     })
     if (res.ok) {
-      router.push('/login')
+      router.push('/login?registrado=1')
       return
     }
     const json = await res.json()
