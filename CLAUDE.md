@@ -132,6 +132,7 @@ app/                        RUTAS (URL) + UI
     reservas/page.tsx       historial del jugador
   (dueno)/
     complejos/page.tsx      lista + formularios (fetch a /api/complejos)
+    complejos/nuevo/page.tsx  /complejos/nuevo — alta de complejo (form)
     complejos/[id]/canchas/ ABM canchas
   admin/
     usuarios/page.tsx       listado / baja de usuarios
@@ -331,3 +332,4 @@ algo, mirar esa página, no adivinar.
 
 - `docs/superpowers/plans/2026-09-09-sprint1-mvp.md` — plan técnico paso a paso
 - `docs/backlog-sprint1.md` — tickets del Sprint 1 con criterios de aceptación
+- `branch_context.md` — contexto particular de cada rama en concreto (si no está, crearla)

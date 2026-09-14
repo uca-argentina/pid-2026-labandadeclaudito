@@ -8,7 +8,15 @@ export function SiteHeader() {
         <Link href="/" className="font-semibold">
           TocaYJuga
         </Link>
-        <ThemeToggle />
+        <div className="flex items-center gap-4">
+          <Link
+            href="/complejos/nuevo"
+            className="text-muted-foreground hover:text-foreground text-sm"
+          >
+            Crear complejo
+          </Link>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   )
