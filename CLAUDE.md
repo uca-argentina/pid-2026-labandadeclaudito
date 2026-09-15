@@ -87,6 +87,11 @@ sin IA? Si la respuesta es no, simplificar hasta que sea sí.
 - **Prisma 7**: nunca `new PrismaClient()` sin argumentos (tira error). Usar
   siempre `db` importado de `@/lib/db`. El cliente generado vive en
   `lib/generated/prisma` (gitignored, se regenera con `npm run db:generate`).
+- **`proxy.ts`, no `middleware.ts`**: el nombre viejo quedó deprecado en Next 16
+  y por defecto corre en Edge Runtime, donde Prisma/`pg` no cargan (usan
+  módulos de Node como `node:path`) — tira 500 en cualquier ruta protegida.
+  `proxy.ts` corre en Node por default, ahí sí funciona. Ya lo vivimos: costó
+  un rato de debugging encontrar esto.
 - Antes de diseñar una feature nueva, si tenés la skill `superpowers:brainstorming`,
   usala. Si no, igual arrancá alineando alcance con el equipo antes de codear.
 
@@ -118,49 +123,70 @@ valida con Zod → hace la operación → devuelve JSON.**
 ```
 auth.ts                     raíz. Config de Auth.js: provider, callbacks,
                             y authorize() (verificar email+password en login).
-middleware.ts               raíz. Protección de rutas por rol. Corre antes de todo.
+proxy.ts                    raíz. Protección de rutas por rol. Corre antes de todo,
+                            en runtime de Node (no usar el nombre viejo
+                            middleware.ts — está deprecado y fuerza Edge Runtime,
+                            donde Prisma no funciona).
 
 app/                        RUTAS (URL) + UI
-  layout.tsx                layout raíz (nav según rol)
-  page.tsx                  landing /
-  (auth)/
-    login/page.tsx          /login — formulario (fetch al endpoint de Auth.js)
-    registro/page.tsx       /registro — formulario (fetch a /api/usuarios)
-  (jugador)/
-    canchas/page.tsx        /canchas — búsqueda (Server Component, lee db directo)
-    canchas/[id]/page.tsx   detalle + calendario de disponibilidad
-    reservas/page.tsx       historial del jugador
-  (dueno)/
-    complejos/page.tsx      lista + formularios (fetch a /api/complejos)
-    complejos/[id]/canchas/ ABM canchas
-  admin/
-    usuarios/page.tsx       listado / baja de usuarios
+  layout.tsx                layout raíz — SOLO html/body/fonts/ThemeProvider,
+                            nada de header ni sidebar (cada grupo pone el suyo)
 
-  api/                      TODOS los endpoints
+  (public)/                 grupo — NO agrega segmento a la URL. Páginas sin
+                            login: trae el SiteHeader (logo + toggle de tema)
+    layout.tsx                monta <SiteHeader /> + <main>
+    page.tsx                  landing /
+    estilo/page.tsx           /estilo — referencia visual
+    (auth)/                   grupo anidado — tampoco agrega segmento
+      login/page.tsx          /login — formulario (fetch al endpoint de Auth.js)
+      register/page.tsx       /register — formulario (fetch a /api/users)
+
+  (dashboard)/              grupo — NO agrega segmento a la URL. Páginas con
+                            sesión: trae el sidebar en vez del SiteHeader
+    layout.tsx                lee la sesión (auth()), redirige a /login si no
+                              hay, monta <AppSidebar rol={...} /> + contenido
+    jugador/                  carpeta real (SÍ agrega /jugador a la URL)
+      page.tsx                /jugador — home del rol, ya existe
+      canchas/page.tsx        /jugador/canchas — búsqueda (Server Component, lee db directo)
+      canchas/[id]/page.tsx   detalle + calendario de disponibilidad
+      reservas/page.tsx       historial del jugador
+    dueno/                    carpeta real (SÍ agrega /dueno)
+      page.tsx                /dueno — home del rol, ya existe
+      complejos/page.tsx      lista + formularios (fetch a /api/complexes)
+      complejos/[id]/canchas/ ABM canchas
+    admin/                    sin rol ADMIN en el schema todavía — no hay nada acá
+      usuarios/page.tsx       listado / baja de usuarios (futuro, cuando exista el rol)
+
+  api/                      TODOS los endpoints (nombres de recurso en inglés)
     auth/[...nextauth]/route.ts   handler que Auth.js EXIGE
-    usuarios/route.ts             POST crear usuario (registro)
-    complejos/route.ts            GET listar míos · POST crear
-    complejos/[id]/route.ts       GET uno · PATCH editar · DELETE borrar
-    complejos/[id]/canchas/route.ts   GET listar · POST crear
-    canchas/[id]/route.ts         PATCH · DELETE
-    canchas/[id]/disponibilidad/route.ts   GET slots libres de una fecha
-    reservas/route.ts             POST reservar · GET mis reservas
+    users/route.ts                 POST crear usuario (registro)
+    complexes/route.ts             GET listar míos · POST crear
+    complexes/[id]/route.ts        GET uno · PATCH editar · DELETE borrar
+    complexes/[id]/courts/route.ts GET listar · POST crear
+    courts/[id]/route.ts           PATCH · DELETE
+    courts/[id]/availability/route.ts   GET slots libres de una fecha
+    bookings/route.ts              POST reservar · GET mis reservas
 
 lib/
   db.ts                     cliente Prisma (ya existe)
-  auth-helpers.ts           getSesion() / requireRol('DUENIO') — usado en casi todo endpoint
-  ownership.ts              getComplejoDelDuenio(id, duenioId) — reusado en varios endpoints
-  password.ts               hashPassword() / verifyPassword() (argon2)
-  disponibilidad.ts         calcular turnos libres de una cancha en una fecha
+  auth-helpers.ts           getSession() / requireRole('DUENIO') — usado en casi todo endpoint
+  ownership.ts              getComplexByOwner(id, ownerId) — reusado en varios endpoints
+  passwords.ts              hashPassword() / verifyPassword() (argon2)
+  availability.ts           calcular turnos libres de una cancha en una fecha
   validations/              SCHEMAS ZOD. Compartidos entre formulario y endpoint.
-    usuario.ts                registroSchema, loginSchema
-    complejo.ts
-    cancha.ts
-    reserva.ts
+    user.ts                   registerSchema, loginSchema
+    complex.ts
+    court.ts
+    booking.ts
 
 components/
   ui/                       shadcn (generado, se edita libre)
-  <propios>.tsx             componentes nuestros
+  site-header.tsx           header de las páginas públicas (logo + tema)
+  app-sidebar.tsx           sidebar de las páginas con sesión — nav por rol,
+                            perfil (nombre/email/avatar) y cerrar sesión abajo
+  sign-out-button.tsx       botón de logout, reusado en el sidebar
+  theme-provider.tsx, theme-toggle.tsx   modo claro/oscuro
+  <propios>.tsx             el resto de nuestros componentes
 
 lib/generated/prisma/       cliente Prisma generado (gitignored, no tocar)
 prisma/
@@ -171,16 +197,16 @@ docs/                       plan y backlog del sprint
 
 **Qué va en cada archivo — ejemplo registro:**
 
-| Cosa                                          | Archivo                        |
-| --------------------------------------------- | ------------------------------ |
-| Formulario (inputs, React Hook Form, `fetch`) | `app/(auth)/registro/page.tsx` |
-| Endpoint: valida con Zod, hashea, inserta     | `app/api/usuarios/route.ts`    |
-| Hashear el password (reusado)                 | `lib/password.ts`              |
-| Schema Zod (form + endpoint)                  | `lib/validations/usuario.ts`   |
+| Cosa                                          | Archivo                                 |
+| --------------------------------------------- | --------------------------------------- |
+| Formulario (inputs, React Hook Form, `fetch`) | `app/(public)/(auth)/register/page.tsx` |
+| Endpoint: valida con Zod, hashea, inserta     | `app/api/users/route.ts`                |
+| Hashear el password (reusado)                 | `lib/passwords.ts`                      |
+| Schema Zod (form + endpoint)                  | `lib/validations/user.ts`               |
 
 Login: el formulario llama a `signIn('credentials', ...)` de Auth.js; la
 verificación de email+password vive en `authorize()` dentro de `auth.ts`, que
-usa `lib/password.ts`.
+usa `lib/passwords.ts`.
 
 ## Plantillas REST (copiar esta forma siempre)
 
@@ -273,8 +299,13 @@ algo, mirar esa página, no adivinar.
   default). El botón está en `components/theme-toggle.tsx` — cambia con clases
   `dark:` de Tailwind, no con JS condicional, para no pelear con SSR.
 - **Header**: `components/site-header.tsx` — logo + toggle de tema, sticky
-  arriba de todo. Ahí van los links de navegación a medida que existan páginas
-  reales (por ahora no hay ninguna: login/registro/búsqueda llegan en Fase 1+).
+  arriba de todo. Solo en páginas públicas (`app/(public)/layout.tsx`).
+- **Sidebar**: `components/app-sidebar.tsx` — solo en páginas con sesión
+  (`app/(dashboard)/layout.tsx`). Plegable a solo-íconos (shadcn `Sidebar`
+  `collapsible="icon"`), nav según `rol` (array `navPorRol` adentro del
+  componente — agregar el link ahí cuando exista la página real, no antes),
+  perfil (avatar con iniciales + nombre + email) y botón de cerrar sesión
+  abajo del todo.
 
 ## Seguridad (no negociable)
 
@@ -294,8 +325,18 @@ algo, mirar esa página, no adivinar.
 - Antes que nada, la sección **"Código simple y entendible"** de arriba.
 - **Prettier decide el formato** — no pelear con él. `npm run format` antes de
   cada commit (el CI lo chequea).
-- Nombres del dominio en español (`Cancha`, `Reserva`, `Complejo`, `duenio`).
-  Infra técnica en inglés está ok.
+- **Código nuevo en inglés** (funciones, variables, tipos, nombres de archivo):
+  `hashPassword`, `registerSchema`, `lib/validations/user.ts`. Decisión del
+  2026-09-11, no retroactiva — el schema de Prisma ya migrado (`Usuario`,
+  `Complejo`, `Cancha`, `Reserva`, `nombre`, `rol`, etc.) queda como está, NO
+  se renombra (la DB es compartida por los 3, renombrarla implica coordinar
+  una migración nueva con todos).
+- Los campos de un objeto que van directo a Prisma (`db.usuario.create({data:
+{...}})`) **matchean el nombre del campo en el schema**, aunque esté en
+  español — así no hace falta un paso extra de "traducir" antes de guardar.
+  Ejemplo: un schema Zod para crear un Complejo se llama `createComplexSchema`
+  (nombre en inglés) pero sus keys son `nombre`, `direccion`, `zona`, `contacto`
+  (matchean `Complejo` en `schema.prisma`).
 - Comentarios: solo el **por qué** no obvio. No comentar lo que el código ya dice.
   Si hace falta comentar el **qué**, el código es muy complejo → simplificar.
 - Nada de `any`. Si TS se queja, arreglar el tipo con algo simple, no callarlo

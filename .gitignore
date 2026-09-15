@@ -54,3 +54,6 @@ next-env.d.ts
 # propias, settings.json), nunca el estado local de cada uno
 /.claude/settings.local.json
 /.claude/*.local.json
+
+# Serena MCP tool config (local, per-dev)
+/.serena
