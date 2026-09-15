@@ -332,4 +332,4 @@ algo, mirar esa página, no adivinar.
 
 - `docs/superpowers/plans/2026-09-09-sprint1-mvp.md` — plan técnico paso a paso
 - `docs/backlog-sprint1.md` — tickets del Sprint 1 con criterios de aceptación
-- `branch_context.md` — contexto particular de cada rama en concreto (si no está, crearla)
+- `branch_context.md` — contexto particular de cada rama en concreto (si no está, crearla excepto para las branches "main", "master", "develop", "dev", "bugfix")
