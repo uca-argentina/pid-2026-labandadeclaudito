@@ -56,3 +56,5 @@ next-env.d.ts
 /.claude/*.local.json
 
 branch_context.md
+# Serena MCP tool config (local, per-dev)
+/.serena
