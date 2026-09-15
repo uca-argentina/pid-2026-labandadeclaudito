@@ -36,7 +36,7 @@ export function FormNuevoComplejo() {
   async function onSubmit(datos: CreateComplexInput) {
     setErrorServidor('')
 
-    const res = await fetch('/api/complejos', {
+    const res = await fetch('/api/complexes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(datos),
