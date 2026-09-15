@@ -11,7 +11,7 @@ export default function CrearComplejoPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
       <Link
-        href="/complejos"
+        href="/dueno/complejos"
         className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
       >
         <ArrowLeft className="size-4" /> Volver a mis complejos

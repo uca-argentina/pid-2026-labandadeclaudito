@@ -10,7 +10,7 @@ function contarDigitos(texto: string) {
   return cantidad
 }
 
-export const complejoSchema = z.object({
+export const createComplexSchema = z.object({
   nombre: z.string().trim().min(3, 'Ingresá el nombre del complejo.'),
   direccion: z.string().trim().min(4, 'Ingresá la dirección.'),
   zona: z.string().trim().min(3, 'Ingresá la zona.'),
@@ -22,4 +22,4 @@ export const complejoSchema = z.object({
     }),
 })
 
-export type ComplejoForm = z.infer<typeof complejoSchema>
+export type CreateComplexInput = z.infer<typeof createComplexSchema>

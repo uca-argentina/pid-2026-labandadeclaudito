@@ -9,7 +9,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { complejoSchema, type ComplejoForm } from '@/lib/validations/complejo'
+import { createComplexSchema, type CreateComplexInput } from '@/lib/validations/complex'
 
 function MensajeError({ mensaje }: { mensaje?: string }) {
   if (!mensaje) {
@@ -24,17 +24,29 @@ function MensajeError({ mensaje }: { mensaje?: string }) {
 
 export function FormNuevoComplejo() {
   const [nombreCreado, setNombreCreado] = useState<string | null>(null)
+  const [errorServidor, setErrorServidor] = useState('')
 
-  const { register, handleSubmit, formState } = useForm<ComplejoForm>({
-    resolver: zodResolver(complejoSchema),
+  const { register, handleSubmit, formState } = useForm<CreateComplexInput>({
+    resolver: zodResolver(createComplexSchema),
     defaultValues: { nombre: '', direccion: '', zona: '', contacto: '' },
   })
   const errores = formState.errors
   const hayErrores = Object.keys(errores).length > 0
 
-  function onSubmit(datos: ComplejoForm) {
-    // Todavía no hay auth (duenioId sale de la sesión), así que el fetch a
-    // /api/complejos se agrega cuando exista. Por ahora solo mostramos el éxito.
+  async function onSubmit(datos: CreateComplexInput) {
+    setErrorServidor('')
+
+    const res = await fetch('/api/complejos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datos),
+    })
+    const json = await res.json()
+    if (!res.ok) {
+      setErrorServidor(json.error)
+      return
+    }
+
     setNombreCreado(datos.nombre)
   }
 
@@ -53,7 +65,10 @@ export function FormNuevoComplejo() {
             </p>
           </div>
           <div className="mt-2 flex flex-wrap justify-center gap-3">
-            <Link href="/complejos" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+            <Link
+              href="/dueno/complejos"
+              className={buttonVariants({ variant: 'outline', size: 'lg' })}
+            >
               Ver mis complejos
             </Link>
             <Button size="lg" disabled>
@@ -71,6 +86,13 @@ export function FormNuevoComplejo() {
         <div className="border-destructive/40 bg-destructive/10 text-destructive flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium">
           <AlertCircle className="size-4 shrink-0" />
           Revisá los campos marcados para poder guardar.
+        </div>
+      )}
+
+      {errorServidor && (
+        <div className="border-destructive/40 bg-destructive/10 text-destructive flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium">
+          <AlertCircle className="size-4 shrink-0" />
+          {errorServidor}
         </div>
       )}
 
@@ -163,11 +185,14 @@ export function FormNuevoComplejo() {
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Link href="/complejos" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+        <Link
+          href="/dueno/complejos"
+          className={buttonVariants({ variant: 'outline', size: 'lg' })}
+        >
           Cancelar
         </Link>
-        <Button type="submit" size="lg">
-          <Save /> Crear complejo
+        <Button type="submit" size="lg" disabled={formState.isSubmitting}>
+          <Save /> {formState.isSubmitting ? 'Creando...' : 'Crear complejo'}
         </Button>
       </div>
     </form>
