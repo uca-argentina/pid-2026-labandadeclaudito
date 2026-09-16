@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { MapPin, Phone, Plus } from 'lucide-react'
+import { MapPin, Phone, Plus, Shapes } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { buttonVariants } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
 export const metadata: Metadata = {
   title: 'Mis complejos | TocaYJuga',
@@ -61,6 +61,14 @@ export default async function MisComplejosPage() {
                   <Phone className="size-4 shrink-0" /> {complejo.contacto}
                 </p>
               </CardContent>
+              <CardFooter>
+                <Link
+                  href={`/dueno/complejos/${complejo.id}/canchas`}
+                  className={buttonVariants({ variant: 'outline', className: 'w-full' })}
+                >
+                  <Shapes /> Ver canchas
+                </Link>
+              </CardFooter>
             </Card>
           ))}
         </div>

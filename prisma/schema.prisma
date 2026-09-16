@@ -85,6 +85,7 @@ model ImagenComplejo {
 model Cancha {
   id               String         @id @default(cuid())
   complejoId       String
+  nombre           String
   deporte          Deporte
   tipoSuperficie   TipoSuperficie
   capacidad        Int
