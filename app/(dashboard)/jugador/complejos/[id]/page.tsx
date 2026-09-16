@@ -5,7 +5,9 @@ import { db } from '@/lib/db'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { CourtSlotPicker } from '@/components/court-slot-picker'
 
-export default async function ComplejoDetallePage({ params }: PageProps<'/jugador/complejos/[id]'>) {
+export default async function ComplejoDetallePage({
+  params,
+}: PageProps<'/jugador/complejos/[id]'>) {
   const { id } = await params
 
   const complejo = await db.complejo.findUnique({
@@ -40,7 +42,9 @@ export default async function ComplejoDetallePage({ params }: PageProps<'/jugado
       <h2 className="mb-4 text-lg font-semibold">Canchas disponibles en este complejo</h2>
 
       {complejo.canchas.length === 0 ? (
-        <p className="text-muted-foreground mt-4 text-sm">Este complejo todavía no cargó canchas.</p>
+        <p className="text-muted-foreground mt-4 text-sm">
+          Este complejo todavía no cargó canchas.
+        </p>
       ) : (
         <div className="mt-6 space-y-5">
           {complejo.canchas.map((cancha) => (
@@ -61,8 +65,12 @@ export default async function ComplejoDetallePage({ params }: PageProps<'/jugado
                   </span>
                 </div>
                 <div className="text-right">
-                  <div className="text-primary text-xl font-bold">{formatPrecio(cancha.precioBase.toString())}</div>
-                  <div className="text-muted-foreground text-xs">por turno de {cancha.duracionTurnoMin} min</div>
+                  <div className="text-primary text-xl font-bold">
+                    {formatPrecio(cancha.precioBase.toString())}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    por turno de {cancha.duracionTurnoMin} min
+                  </div>
                 </div>
               </div>
 

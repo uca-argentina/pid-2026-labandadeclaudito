@@ -4,12 +4,11 @@ import { db } from '@/lib/db'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import type { Deporte } from '@/lib/generated/prisma/client'
 
-export default async function BusquedaCanchasPage({
-  searchParams,
-}: PageProps<'/jugador/canchas'>) {
+export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/jugador/canchas'>) {
   const { zona, deporte } = await searchParams
   const zonaFiltro = typeof zona === 'string' && zona !== '' ? zona : undefined
-  const deporteFiltro = typeof deporte === 'string' && deporte !== '' ? (deporte as Deporte) : undefined
+  const deporteFiltro =
+    typeof deporte === 'string' && deporte !== '' ? (deporte as Deporte) : undefined
 
   const zonas = await db.complejo.findMany({
     distinct: ['zona'],

@@ -27,7 +27,11 @@ export function CourtRowActions({
         <Pencil className="size-3.5" />
         Editar
       </Button>
-      <DeleteCourtDialog courtId={courtId} courtName={courtName} onDeleted={() => router.refresh()} />
+      <DeleteCourtDialog
+        courtId={courtId}
+        courtName={courtName}
+        onDeleted={() => router.refresh()}
+      />
     </div>
   )
 }

@@ -6,7 +6,13 @@ import { CircleCheck, Info, Clock, Loader2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { createCourtSchema } from '@/lib/validations/court'
 import { deporteLabels, superficieLabels } from '@/lib/labels'
 
@@ -23,7 +29,8 @@ function contarTurnos(horaApertura: string, horaCierre: string, duracionTurnoMin
   const [hc, mc] = horaCierre.split(':').map(Number)
   const minutoInicio = ha * 60 + ma
   const minutoCierre = hc * 60 + mc
-  if (!Number.isFinite(minutoInicio) || !Number.isFinite(minutoCierre) || duracionTurnoMin <= 0) return 0
+  if (!Number.isFinite(minutoInicio) || !Number.isFinite(minutoCierre) || duracionTurnoMin <= 0)
+    return 0
   return Math.max(0, Math.floor((minutoCierre - minutoInicio) / duracionTurnoMin))
 }
 
@@ -124,7 +131,12 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
 
           <div className="space-y-2">
             <Label htmlFor="nombrePrefijo">Nombre / prefijo identificador</Label>
-            <Input id="nombrePrefijo" name="nombrePrefijo" placeholder="Cancha" defaultValue="Cancha" />
+            <Input
+              id="nombrePrefijo"
+              name="nombrePrefijo"
+              placeholder="Cancha"
+              defaultValue="Cancha"
+            />
             <p className="text-muted-foreground text-xs">
               Ej: &quot;Cancha&quot; resultará en &quot;Cancha 1&quot;, &quot;Cancha 2&quot;...
             </p>
@@ -141,12 +153,20 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
               value={cantidad}
               onChange={(e) => setCantidad(Number(e.target.value))}
             />
-            <p className="text-muted-foreground text-xs">Crea cada registro individual en la base de datos</p>
+            <p className="text-muted-foreground text-xs">
+              Crea cada registro individual en la base de datos
+            </p>
           </div>
 
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="precioBase">Precio base por turno ($ ARS)</Label>
-            <Input id="precioBase" name="precioBase" type="number" step="0.01" placeholder="24000" />
+            <Input
+              id="precioBase"
+              name="precioBase"
+              type="number"
+              step="0.01"
+              placeholder="24000"
+            />
           </div>
         </div>
       </div>
@@ -199,14 +219,21 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
         <div className="bg-secondary border-border text-secondary-foreground mt-4 flex items-center gap-2 rounded-lg border px-3.5 py-2.5 text-sm">
           <CircleCheck className="text-primary size-4 shrink-0" />
           <span>
-            Se darán de alta <strong>{cantidad} {cantidad === 1 ? 'cancha individual' : 'canchas individuales'}</strong>{' '}
+            Se darán de alta{' '}
+            <strong>
+              {cantidad} {cantidad === 1 ? 'cancha individual' : 'canchas individuales'}
+            </strong>{' '}
             con {turnosPorCancha} turnos de {duracionTurnoMin} min cada una.
           </span>
         </div>
       </div>
 
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" render={<a href={`/dueno/complejos/${complejoId}/canchas`} />}>
+        <Button
+          type="button"
+          variant="outline"
+          render={<a href={`/dueno/complejos/${complejoId}/canchas`} />}
+        >
           Cancelar
         </Button>
         <Button type="submit" disabled={cargando}>

@@ -7,7 +7,14 @@ import { getComplexByOwner } from '@/lib/ownership'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { CourtRowActions } from '@/components/court-row-actions'
 
 export default async function ListadoCanchasPage({
@@ -42,8 +49,8 @@ export default async function ListadoCanchasPage({
         <div className="border-border mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed p-14 text-center">
           <h3 className="text-lg font-semibold">Todavía no cargaste ninguna cancha</h3>
           <p className="text-muted-foreground max-w-md text-sm">
-            Cargá las canchas y turnos para habilitar la disponibilidad inmediata en la búsqueda de los
-            jugadores.
+            Cargá las canchas y turnos para habilitar la disponibilidad inmediata en la búsqueda de
+            los jugadores.
           </p>
           <Button render={<Link href={`/dueno/complejos/${id}/canchas/nueva`} />}>
             <Plus className="size-4" />
@@ -67,17 +74,25 @@ export default async function ListadoCanchasPage({
                 <TableRow key={cancha.id}>
                   <TableCell>
                     <span className="block font-semibold">{cancha.nombre}</span>
-                    <span className="text-muted-foreground text-sm">{deporteLabels[cancha.deporte]}</span>
+                    <span className="text-muted-foreground text-sm">
+                      {deporteLabels[cancha.deporte]}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">{superficieLabels[cancha.tipoSuperficie]}</Badge>
                   </TableCell>
-                  <TableCell className="font-semibold">{formatPrecio(cancha.precioBase.toString())}</TableCell>
+                  <TableCell className="font-semibold">
+                    {formatPrecio(cancha.precioBase.toString())}
+                  </TableCell>
                   <TableCell>
                     {cancha.horaApertura} – {cancha.horaCierre}
                   </TableCell>
                   <TableCell className="text-right">
-                    <CourtRowActions complejoId={id} courtId={cancha.id} courtName={cancha.nombre} />
+                    <CourtRowActions
+                      complejoId={id}
+                      courtId={cancha.id}
+                      courtName={cancha.nombre}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

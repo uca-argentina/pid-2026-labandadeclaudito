@@ -3,7 +3,9 @@ import { auth } from '@/auth'
 import { getComplexByOwner } from '@/lib/ownership'
 import { CourtBatchForm } from '@/components/court-batch-form'
 
-export default async function NuevaCanchaPage({ params }: PageProps<'/dueno/complejos/[id]/canchas/nueva'>) {
+export default async function NuevaCanchaPage({
+  params,
+}: PageProps<'/dueno/complejos/[id]/canchas/nueva'>) {
   const session = await auth()
   if (!session) redirect('/login')
 

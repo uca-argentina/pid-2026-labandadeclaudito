@@ -1,6 +1,10 @@
 import { db } from '@/lib/db'
 
-export function generateSlots(horaApertura: string, horaCierre: string, duracionTurnoMin: number): string[] {
+export function generateSlots(
+  horaApertura: string,
+  horaCierre: string,
+  duracionTurnoMin: number,
+): string[] {
   const [horaAperturaH, horaAperturaM] = horaApertura.split(':').map(Number)
   const [horaCierreH, horaCierreM] = horaCierre.split(':').map(Number)
 
@@ -8,7 +12,11 @@ export function generateSlots(horaApertura: string, horaCierre: string, duracion
   const minutoCierre = horaCierreH * 60 + horaCierreM
 
   const slots: string[] = []
-  for (let minuto = minutoInicio; minuto + duracionTurnoMin <= minutoCierre; minuto += duracionTurnoMin) {
+  for (
+    let minuto = minutoInicio;
+    minuto + duracionTurnoMin <= minutoCierre;
+    minuto += duracionTurnoMin
+  ) {
     const horas = String(Math.floor(minuto / 60)).padStart(2, '0')
     const minutos = String(minuto % 60).padStart(2, '0')
     slots.push(`${horas}:${minutos}`)

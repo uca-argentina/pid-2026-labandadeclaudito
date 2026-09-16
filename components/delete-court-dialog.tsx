@@ -50,8 +50,8 @@ export function DeleteCourtDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>¿Eliminar &quot;{courtName}&quot;?</AlertDialogTitle>
           <AlertDialogDescription>
-            Esta cancha tiene turnos y posibles reservas asociadas. Se despublicará de la búsqueda de los
-            jugadores de forma permanente.
+            Esta cancha tiene turnos y posibles reservas asociadas. Se despublicará de la búsqueda
+            de los jugadores de forma permanente.
           </AlertDialogDescription>
         </AlertDialogHeader>
         {error && <p className="text-destructive text-sm">{error}</p>}

@@ -84,7 +84,10 @@ export function CourtSlotPicker({
     <div className="border-border flex flex-col gap-3.5 border-t pt-4">
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex items-center gap-2">
-          <label htmlFor={`fecha-${courtId}`} className="flex items-center gap-1.5 text-sm font-medium">
+          <label
+            htmlFor={`fecha-${courtId}`}
+            className="flex items-center gap-1.5 text-sm font-medium"
+          >
             <Calendar className="size-3.5" />
             Fecha:
           </label>
@@ -128,8 +131,11 @@ export function CourtSlotPicker({
       {horaSeleccionada && (
         <div className="bg-secondary border-border flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3">
           <div className="text-sm">
-            Turno en <strong>{courtName} ({courtSportLabel})</strong>:{' '}
-            {capitalizar(format(fecha, 'EEEE dd/MM', { locale: es }))} · {horaSeleccionada} a{' '}
+            Turno en{' '}
+            <strong>
+              {courtName} ({courtSportLabel})
+            </strong>
+            : {capitalizar(format(fecha, 'EEEE dd/MM', { locale: es }))} · {horaSeleccionada} a{' '}
             {sumarMinutos(horaSeleccionada, duracionTurnoMin)} hs
           </div>
           <Button onClick={confirmarReserva} disabled={confirmando}>

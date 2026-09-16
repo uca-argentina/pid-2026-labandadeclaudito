@@ -6,7 +6,13 @@ import { AlertCircle, Loader2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { DeleteCourtDialog } from '@/components/delete-court-dialog'
 import { updateCourtSchema } from '@/lib/validations/court'
 import { deporteLabels, superficieLabels } from '@/lib/labels'
@@ -40,7 +46,9 @@ export function CourtEditForm({ complejoId, cancha }: { complejoId: string; canc
     if (!parsed.success) {
       const errores = parsed.error.flatten().fieldErrors
       setFieldErrors(
-        Object.fromEntries(Object.entries(errores).map(([campo, mensajes]) => [campo, mensajes?.[0] ?? ''])),
+        Object.fromEntries(
+          Object.entries(errores).map(([campo, mensajes]) => [campo, mensajes?.[0] ?? '']),
+        ),
       )
       return
     }
@@ -71,7 +79,9 @@ export function CourtEditForm({ complejoId, cancha }: { complejoId: string; canc
               name="nombre"
               defaultValue={cancha.nombre}
               aria-invalid={!!fieldErrors.nombre}
-              className={fieldErrors.nombre ? 'border-destructive ring-destructive/20 ring-3' : undefined}
+              className={
+                fieldErrors.nombre ? 'border-destructive ring-destructive/20 ring-3' : undefined
+              }
             />
             {fieldErrors.nombre && (
               <p className="text-destructive flex items-center gap-1 text-xs font-medium">
@@ -130,7 +140,9 @@ export function CourtEditForm({ complejoId, cancha }: { complejoId: string; canc
               step="0.01"
               defaultValue={cancha.precioBase.toString()}
               aria-invalid={!!fieldErrors.precioBase}
-              className={fieldErrors.precioBase ? 'border-destructive ring-destructive/20 ring-3' : undefined}
+              className={
+                fieldErrors.precioBase ? 'border-destructive ring-destructive/20 ring-3' : undefined
+              }
             />
             {fieldErrors.precioBase && (
               <p className="text-destructive flex items-center gap-1 text-xs font-medium">
@@ -142,7 +154,12 @@ export function CourtEditForm({ complejoId, cancha }: { complejoId: string; canc
 
           <div className="space-y-2">
             <Label htmlFor="horaApertura">Apertura</Label>
-            <Input id="horaApertura" name="horaApertura" type="time" defaultValue={cancha.horaApertura} />
+            <Input
+              id="horaApertura"
+              name="horaApertura"
+              type="time"
+              defaultValue={cancha.horaApertura}
+            />
           </div>
 
           <div className="space-y-2">
