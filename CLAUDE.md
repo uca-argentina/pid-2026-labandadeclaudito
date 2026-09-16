@@ -152,7 +152,7 @@ app/                        RUTAS (URL) + UI
       reservas/page.tsx       historial del jugador
     dueno/                    carpeta real (SÍ agrega /dueno)
       page.tsx                /dueno — home del rol, ya existe
-      complejos/page.tsx      lista + formularios (fetch a /api/complexes)
+      complejos/page.tsx      lista + formularios (fetch a /api/complejos)
       complejos/[id]/canchas/ ABM canchas
     admin/                    sin rol ADMIN en el schema todavía — no hay nada acá
       usuarios/page.tsx       listado / baja de usuarios (futuro, cuando exista el rol)
@@ -372,3 +372,4 @@ algo, mirar esa página, no adivinar.
 
 - `docs/superpowers/plans/2026-09-09-sprint1-mvp.md` — plan técnico paso a paso
 - `docs/backlog-sprint1.md` — tickets del Sprint 1 con criterios de aceptación
+- `branch_context.md` — contexto específico de la rama/fase actual. Crear uno por cada rama que no sea main, master, develop, dev o bugfix (está en .gitignore a propósito). Lo "core" del proyecto va en CLAUDE.md, no aquí.
