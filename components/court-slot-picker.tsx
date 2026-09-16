@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Calendar, Check } from 'lucide-react'
@@ -35,17 +35,25 @@ export function CourtSlotPicker({
   const [mensaje, setMensaje] = useState('')
   const [confirmando, setConfirmando] = useState(false)
 
-  const cargarDisponibilidad = useCallback(async (fechaConsultada: Date) => {
+  async function cargarDisponibilidad(fechaConsultada: Date) {
     const fechaISO = format(fechaConsultada, 'yyyy-MM-dd')
     const res = await fetch(`/api/courts/${courtId}/availability?fecha=${fechaISO}`)
     const json = await res.json()
     if (res.ok) setSlots(json.slots)
-  }, [courtId])
+  }
 
   useEffect(() => {
-    setHoraSeleccionada(null)
-    cargarDisponibilidad(fecha)
-  }, [fecha, cargarDisponibilidad])
+    let ignore = false
+    const fechaISO = format(fecha, 'yyyy-MM-dd')
+    fetch(`/api/courts/${courtId}/availability?fecha=${fechaISO}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (!ignore) setSlots(json.slots)
+      })
+    return () => {
+      ignore = true
+    }
+  }, [fecha, courtId])
 
   async function confirmarReserva() {
     if (!horaSeleccionada) return
@@ -84,7 +92,10 @@ export function CourtSlotPicker({
             id={`fecha-${courtId}`}
             type="date"
             value={format(fecha, 'yyyy-MM-dd')}
-            onChange={(e) => setFecha(new Date(`${e.target.value}T00:00:00`))}
+            onChange={(e) => {
+              setFecha(new Date(`${e.target.value}T00:00:00`))
+              setHoraSeleccionada(null)
+            }}
             className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
           />
         </div>
