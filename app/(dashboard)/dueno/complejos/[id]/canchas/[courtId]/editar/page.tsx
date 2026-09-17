@@ -23,7 +23,10 @@ export default async function EditarCanchaPage({
     <main className="mx-auto max-w-2xl px-6 py-12">
       <h1 className="text-3xl font-semibold">Editar cancha: {cancha.nombre}</h1>
       <div className="mt-6">
-        <CourtEditForm complejoId={id} cancha={cancha} />
+        <CourtEditForm
+          complejoId={id}
+          cancha={{ ...cancha, precioBase: cancha.precioBase.toString() }}
+        />
       </div>
     </main>
   )

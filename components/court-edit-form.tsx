@@ -18,7 +18,15 @@ import { updateCourtSchema } from '@/lib/validations/court'
 import { deporteLabels, superficieLabels } from '@/lib/labels'
 import type { Cancha } from '@/lib/generated/prisma/client'
 
-export function CourtEditForm({ complejoId, cancha }: { complejoId: string; cancha: Cancha }) {
+type CanchaConPrecioString = Omit<Cancha, 'precioBase'> & { precioBase: string }
+
+export function CourtEditForm({
+  complejoId,
+  cancha,
+}: {
+  complejoId: string
+  cancha: CanchaConPrecioString
+}) {
   const router = useRouter()
   const [deporte, setDeporte] = useState(cancha.deporte)
   const [tipoSuperficie, setTipoSuperficie] = useState(cancha.tipoSuperficie)
@@ -138,7 +146,7 @@ export function CourtEditForm({ complejoId, cancha }: { complejoId: string; canc
               name="precioBase"
               type="number"
               step="0.01"
-              defaultValue={cancha.precioBase.toString()}
+              defaultValue={cancha.precioBase}
               aria-invalid={!!fieldErrors.precioBase}
               className={
                 fieldErrors.precioBase ? 'border-destructive ring-destructive/20 ring-3' : undefined
