@@ -35,6 +35,7 @@ const navPorRol: Record<'JUGADOR' | 'DUENIO', ItemNav[]> = {
   DUENIO: [
     { href: '/dueno', label: 'Inicio', icon: Home },
     { href: '/dueno/complejos', label: 'Mis complejos', icon: Building2 },
+    { href: '/dueno/reservas', label: 'Reservas', icon: CalendarDays },
   ],
 }
 
@@ -64,10 +65,11 @@ export function AppSidebar({
     <Sidebar collapsible="icon">
       <SidebarHeader className="h-16 justify-center px-2 py-0">
         {/* Sidebar abierto: logo + nombre, y el botón de plegar a la derecha. */}
-        <div className="flex items-center gap-2.5 group-data-[collapsible=icon]:hidden">
-          <Link href={home} className="flex min-w-0 flex-1 items-center gap-2.5">
+        {/* pl-2 alinea el logo con los íconos del nav: el contenido de abajo
+            suma el p-2 del SidebarContent, del SidebarGroup y del botón. */}
+        <div className="flex items-center justify-between pl-2 group-data-[collapsible=icon]:hidden">
+          <Link href={home} className="flex items-center">
             <Logo className="size-8" />
-            <span className="truncate font-semibold">TocaYJuga</span>
           </Link>
           <SidebarTrigger />
         </div>
@@ -95,6 +97,7 @@ export function AppSidebar({
                     render={<Link href={item.href} />}
                     isActive={pathname === item.href}
                     tooltip={item.label}
+                    className="h-10 text-base [&_svg]:size-5 group-data-[collapsible=icon]:p-1.5!"
                   >
                     <item.icon />
                     <span>{item.label}</span>
