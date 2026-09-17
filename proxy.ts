@@ -13,8 +13,8 @@ export default auth((req) => {
   }
 
   if (esRutaDueno && rol !== 'DUENIO') {
-    // acá adentro rol solo puede ser JUGADOR (los otros dos casos ya
-    // se resolvieron arriba: sin sesión, o rol === 'DUENIO')
+    // acá adentro rol solo puede ser JUGADOR (los otros dos casos
+    // ya se resolvieron arriba: sin sesión, o rol === 'DUENIO')
     return NextResponse.redirect(new URL('/jugador', req.url))
   }
 
