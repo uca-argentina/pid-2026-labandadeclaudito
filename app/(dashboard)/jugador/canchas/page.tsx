@@ -28,10 +28,18 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
   })
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
-      <h1 className="text-3xl font-semibold">Buscar canchas</h1>
+    <main className="mx-auto max-w-5xl px-6 py-12">
+      <div className="mb-8">
+        <h1 className="text-3xl font-semibold tracking-tight">Buscar canchas</h1>
+        <p className="text-muted-foreground mt-2">
+          Filtrá por zona y deporte para encontrar una cancha libre.
+        </p>
+      </div>
 
-      <form method="get" className="mt-6 flex flex-wrap items-end gap-4">
+      <form
+        method="get"
+        className="border-border bg-card flex flex-wrap items-end gap-4 rounded-2xl border p-5"
+      >
         <div className="flex flex-col gap-1.5">
           <label htmlFor="zona" className="text-sm font-medium">
             Zona
@@ -79,18 +87,18 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
       </form>
 
       {canchas.length === 0 ? (
-        <div className="border-border mt-10 flex flex-col items-center gap-2 rounded-2xl border border-dashed p-14 text-center">
+        <div className="border-border mt-8 flex flex-col items-center gap-2.5 rounded-2xl border border-dashed p-16 text-center">
           <SearchX className="text-muted-foreground size-8" />
           <h3 className="text-lg font-semibold">No encontramos canchas con esos filtros</h3>
           <p className="text-muted-foreground text-sm">Probá con otra zona o deporte.</p>
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
           {canchas.map((cancha) => (
             <Link
               key={cancha.id}
               href={`/jugador/complejos/${cancha.complejoId}`}
-              className="border-border bg-card hover:bg-accent block rounded-2xl border p-5"
+              className="border-border bg-card hover:bg-accent block rounded-2xl border p-6 transition-colors"
             >
               <span className="block font-semibold">{cancha.complejo.nombre}</span>
               <span className="text-muted-foreground block text-sm">{cancha.complejo.zona}</span>

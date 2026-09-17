@@ -17,7 +17,7 @@ export default async function ComplejoDetallePage({
   if (!complejo) notFound()
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
+    <main className="mx-auto max-w-4xl px-6 py-12">
       <Link
         href="/jugador/canchas"
         className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"

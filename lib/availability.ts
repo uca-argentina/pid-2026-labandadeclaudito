@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { diaDeReserva, turnoYaPaso } from '@/lib/time'
 
 export function generateSlots(
   horaApertura: string,
@@ -42,8 +43,10 @@ export async function getAvailableSlots(
   })
   const horasOcupadas = new Set(reservas.map((r) => r.horaInicio))
 
+  const dia = diaDeReserva(fecha)
+
   return slots.map((horaInicio) => ({
     horaInicio,
-    disponible: !horasOcupadas.has(horaInicio),
+    disponible: !horasOcupadas.has(horaInicio) && !turnoYaPaso(dia, horaInicio),
   }))
 }

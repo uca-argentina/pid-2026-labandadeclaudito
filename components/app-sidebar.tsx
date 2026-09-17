@@ -14,9 +14,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { SignOutButton } from '@/components/sign-out-button'
+import { Logo } from '@/components/logo'
 
 type ItemNav = {
   href: string
@@ -60,13 +62,27 @@ export function AppSidebar({
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <Link href={home} className="flex items-center gap-2 px-2 py-1.5">
-          <div className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-lg text-sm font-semibold">
-            T
-          </div>
-          <span className="font-semibold group-data-[collapsible=icon]:hidden">TocaYJuga</span>
-        </Link>
+      <SidebarHeader className="h-16 justify-center px-2 py-0">
+        {/* Sidebar abierto: logo + nombre, y el botón de plegar a la derecha. */}
+        <div className="flex items-center gap-2.5 group-data-[collapsible=icon]:hidden">
+          <Link href={home} className="flex min-w-0 flex-1 items-center gap-2.5">
+            <Logo className="size-8" />
+            <span className="truncate font-semibold">TocaYJuga</span>
+          </Link>
+          <SidebarTrigger />
+        </div>
+
+        {/* Sidebar plegado: se ve el logo, y al pasar el mouse por encima
+            aparece en su lugar el botón para volver a abrirlo. */}
+        <div className="group/logo relative mx-auto hidden size-8 group-data-[collapsible=icon]:block">
+          <Link
+            href={home}
+            className="flex size-8 items-center justify-center transition-opacity group-hover/logo:opacity-0"
+          >
+            <Logo className="size-8" />
+          </Link>
+          <SidebarTrigger className="absolute inset-0 size-8 opacity-0 transition-opacity group-hover/logo:opacity-100" />
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
