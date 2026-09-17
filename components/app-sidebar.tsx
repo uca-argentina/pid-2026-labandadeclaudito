@@ -19,6 +19,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { SignOutButton } from '@/components/sign-out-button'
 import { Logo } from '@/components/logo'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 type ItemNav = {
   href: string
@@ -64,8 +65,8 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="h-16 justify-center px-2 py-0">
-        {/* Sidebar abierto: logo + nombre, y el botón de plegar a la derecha. */}
-        {/* pl-2 alinea el logo con los íconos del nav: el contenido de abajo
+        {/* Sidebar abierto: logo a la izquierda y el botón de plegar a la derecha.
+            pl-2 alinea el logo con los íconos del nav: el contenido de abajo
             suma el p-2 del SidebarContent, del SidebarGroup y del botón. */}
         <div className="flex items-center justify-between pl-2 group-data-[collapsible=icon]:hidden">
           <Link href={home} className="flex items-center">
@@ -119,8 +120,9 @@ export function AppSidebar({
             <p className="text-muted-foreground truncate text-xs">{email}</p>
           </div>
         </div>
-        <div className="group-data-[collapsible=icon]:hidden">
-          <SignOutButton className="w-full" />
+        <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+          <SignOutButton className="flex-1 group-data-[collapsible=icon]:hidden" />
+          <ThemeToggle />
         </div>
       </SidebarFooter>
 

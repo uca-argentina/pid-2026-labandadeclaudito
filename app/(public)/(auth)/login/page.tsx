@@ -4,11 +4,12 @@ import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getSession, signIn } from 'next-auth/react'
-import { ArrowRight, Lock, LogIn, Mail, User } from 'lucide-react'
+import { ArrowRight, Lock, LogIn, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Logo } from '@/components/logo'
 
 function LoginForm() {
   const router = useRouter()
@@ -42,12 +43,10 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center px-6 py-12">
+    <div className="flex min-h-dvh items-center justify-center px-6 py-12">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
-          <div className="bg-primary text-primary-foreground mx-auto mb-1 flex size-10 items-center justify-center rounded-full">
-            <User className="size-5" />
-          </div>
+          <Logo className="mx-auto mb-1 size-12" />
           <CardTitle className="text-2xl">Bienvenido</CardTitle>
           <CardDescription>Ingresá a tu cuenta de TocaYJuga.</CardDescription>
         </CardHeader>
