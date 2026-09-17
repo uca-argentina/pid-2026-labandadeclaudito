@@ -1,8 +1,29 @@
+import Image from 'next/image'
 import Link from 'next/link'
-import { SearchX } from 'lucide-react'
+import { ImageIcon, SearchX } from 'lucide-react'
 import { db } from '@/lib/db'
-import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
-import type { Deporte } from '@/lib/generated/prisma/client'
+import { deporteLabels, formatPrecio } from '@/lib/labels'
+import type { Cancha, Deporte } from '@/lib/generated/prisma/client'
+
+function deportesDistintos(canchas: Cancha[]) {
+  const deportes: Deporte[] = []
+  for (const cancha of canchas) {
+    if (!deportes.includes(cancha.deporte)) {
+      deportes.push(cancha.deporte)
+    }
+  }
+  return deportes
+}
+
+function precioMasBajo(canchas: Cancha[]) {
+  let minimo = Number(canchas[0].precioBase)
+  for (const cancha of canchas) {
+    if (Number(cancha.precioBase) < minimo) {
+      minimo = Number(cancha.precioBase)
+    }
+  }
+  return minimo
+}
 
 export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/jugador/canchas'>) {
   const { zona, deporte } = await searchParams
@@ -16,13 +37,15 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
     orderBy: { zona: 'asc' },
   })
 
-  const canchas = await db.cancha.findMany({
+  // Solo complejos con al menos una cancha del deporte elegido (o con alguna cancha si no hay filtro)
+  const complejos = await db.complejo.findMany({
     where: {
-      deporte: deporteFiltro,
-      complejo: zonaFiltro ? { zona: zonaFiltro } : undefined,
+      zona: zonaFiltro,
+      canchas: { some: { deporte: deporteFiltro } },
     },
     include: {
-      complejo: { include: { imagenes: { orderBy: { orden: 'asc' }, take: 1 } } },
+      imagenes: { orderBy: { orden: 'asc' }, take: 1 },
+      canchas: { where: { deporte: deporteFiltro } },
     },
     orderBy: { nombre: 'asc' },
   })
@@ -86,7 +109,7 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
         </button>
       </form>
 
-      {canchas.length === 0 ? (
+      {complejos.length === 0 ? (
         <div className="border-border mt-8 flex flex-col items-center gap-2.5 rounded-2xl border border-dashed p-16 text-center">
           <SearchX className="text-muted-foreground size-8" />
           <h3 className="text-lg font-semibold">No encontramos canchas con esos filtros</h3>
@@ -94,27 +117,62 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
         </div>
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {canchas.map((cancha) => (
-            <Link
-              key={cancha.id}
-              href={`/jugador/complejos/${cancha.complejoId}`}
-              className="border-border bg-card hover:bg-accent block rounded-2xl border p-6 transition-colors"
-            >
-              <span className="block font-semibold">{cancha.complejo.nombre}</span>
-              <span className="text-muted-foreground block text-sm">{cancha.complejo.zona}</span>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1">
-                  {deporteLabels[cancha.deporte]}
-                </span>
-                <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1">
-                  {superficieLabels[cancha.tipoSuperficie]}
-                </span>
-              </div>
-              <span className="text-primary mt-3 block text-lg font-bold">
-                {formatPrecio(cancha.precioBase.toString())}
-              </span>
-            </Link>
-          ))}
+          {complejos.map((complejo) => {
+            const deportes = deportesDistintos(complejo.canchas)
+            const precioMinimo = precioMasBajo(complejo.canchas)
+
+            return (
+              <Link
+                key={complejo.id}
+                href={`/jugador/complejos/${complejo.id}`}
+                className="border-border bg-card hover:bg-accent block overflow-hidden rounded-2xl border transition-colors"
+              >
+                {complejo.imagenes.length > 0 ? (
+                  <div className="relative aspect-video">
+                    <Image
+                      src={complejo.imagenes[0].url}
+                      alt={`Foto de ${complejo.nombre}`}
+                      fill
+                      sizes="(min-width: 640px) 50vw, 100vw"
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="bg-muted text-muted-foreground flex aspect-video flex-col items-center justify-center gap-1 text-sm">
+                    <ImageIcon className="size-5" />
+                    Sin fotos
+                  </div>
+                )}
+
+                <div className="p-6">
+                  <span className="block font-semibold">{complejo.nombre}</span>
+                  <span className="text-muted-foreground block text-sm">
+                    {complejo.direccion} · {complejo.zona}
+                  </span>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                    {deportes.map((deporteDeCancha) => (
+                      <span
+                        key={deporteDeCancha}
+                        className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1"
+                      >
+                        {deporteLabels[deporteDeCancha]}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex items-baseline justify-between gap-3">
+                    <span className="text-primary text-lg font-bold">
+                      desde {formatPrecio(precioMinimo)}
+                    </span>
+                    <span className="text-muted-foreground text-sm">
+                      {complejo.canchas.length === 1
+                        ? '1 cancha'
+                        : `${complejo.canchas.length} canchas`}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
         </div>
       )}
     </main>

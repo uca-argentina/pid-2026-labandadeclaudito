@@ -4,6 +4,7 @@ import { ArrowLeft, BadgeCheck } from 'lucide-react'
 import { db } from '@/lib/db'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { CourtSlotPicker } from '@/components/court-slot-picker'
+import { ComplexGallery } from '@/components/complex-gallery'
 
 export default async function ComplejoDetallePage({
   params,
@@ -12,7 +13,10 @@ export default async function ComplejoDetallePage({
 
   const complejo = await db.complejo.findUnique({
     where: { id },
-    include: { canchas: { orderBy: { nombre: 'asc' } } },
+    include: {
+      canchas: { orderBy: { nombre: 'asc' } },
+      imagenes: { orderBy: { orden: 'asc' } },
+    },
   })
   if (!complejo) notFound()
 
@@ -38,6 +42,8 @@ export default async function ComplejoDetallePage({
           {complejo.direccion} · {complejo.zona} · Contacto: {complejo.contacto}
         </p>
       </div>
+
+      <ComplexGallery imagenes={complejo.imagenes} nombreComplejo={complejo.nombre} />
 
       <h2 className="mb-4 text-lg font-semibold">Canchas disponibles en este complejo</h2>
 

@@ -23,3 +23,18 @@ export const createComplexSchema = z.object({
 })
 
 export type CreateComplexInput = z.infer<typeof createComplexSchema>
+
+export const MAX_IMAGES_PER_COMPLEX = 5
+export const MAX_IMAGE_BYTES = 4 * 1024 * 1024
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+export const complexImageSchema = z.object({
+  imagen: z
+    .instanceof(File, { message: 'Elegí una imagen.' })
+    .refine((archivo) => archivo.size <= MAX_IMAGE_BYTES, {
+      message: 'La foto pesa más de 4 MB.',
+    })
+    .refine((archivo) => ALLOWED_IMAGE_TYPES.includes(archivo.type), {
+      message: 'Solo se aceptan fotos JPG, PNG o WebP.',
+    }),
+})

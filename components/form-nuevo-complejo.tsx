@@ -1,15 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ChangeEvent } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, Building2, Check, ImageIcon, Plus, Save, Star } from 'lucide-react'
+import { AlertCircle, Building2, Check, ImageIcon, Plus, Save, Star, X } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createComplexSchema, type CreateComplexInput } from '@/lib/validations/complex'
+import {
+  complexImageSchema,
+  createComplexSchema,
+  MAX_IMAGES_PER_COMPLEX,
+  type CreateComplexInput,
+} from '@/lib/validations/complex'
+
+type FotoElegida = {
+  archivo: File
+  preview: string
+}
 
 function MensajeError({ mensaje }: { mensaje?: string }) {
   if (!mensaje) {
@@ -24,7 +35,12 @@ function MensajeError({ mensaje }: { mensaje?: string }) {
 
 export function FormNuevoComplejo() {
   const [nombreCreado, setNombreCreado] = useState<string | null>(null)
+  const [idCreado, setIdCreado] = useState('')
   const [errorServidor, setErrorServidor] = useState('')
+  const [fotos, setFotos] = useState<FotoElegida[]>([])
+  const [errorFotos, setErrorFotos] = useState('')
+  const [subiendoFotos, setSubiendoFotos] = useState(false)
+  const [fotosFallidas, setFotosFallidas] = useState(0)
 
   const { register, handleSubmit, formState } = useForm<CreateComplexInput>({
     resolver: zodResolver(createComplexSchema),
@@ -32,6 +48,37 @@ export function FormNuevoComplejo() {
   })
   const errores = formState.errors
   const hayErrores = Object.keys(errores).length > 0
+
+  function agregarFotos(event: ChangeEvent<HTMLInputElement>) {
+    const archivosElegidos = event.target.files
+    if (!archivosElegidos) {
+      return
+    }
+    setErrorFotos('')
+
+    const fotosNuevas = [...fotos]
+    for (const archivo of Array.from(archivosElegidos)) {
+      if (fotosNuevas.length >= MAX_IMAGES_PER_COMPLEX) {
+        setErrorFotos(`Podés subir hasta ${MAX_IMAGES_PER_COMPLEX} fotos.`)
+        break
+      }
+      const parsed = complexImageSchema.safeParse({ imagen: archivo })
+      if (!parsed.success) {
+        setErrorFotos(`${archivo.name}: ${parsed.error.issues[0].message}`)
+        continue
+      }
+      fotosNuevas.push({ archivo, preview: URL.createObjectURL(archivo) })
+    }
+    setFotos(fotosNuevas)
+
+    // Vaciar el input para que se pueda volver a elegir el mismo archivo
+    event.target.value = ''
+  }
+
+  function quitarFoto(indice: number) {
+    URL.revokeObjectURL(fotos[indice].preview)
+    setFotos(fotos.filter((_, i) => i !== indice))
+  }
 
   async function onSubmit(datos: CreateComplexInput) {
     setErrorServidor('')
@@ -47,7 +94,32 @@ export function FormNuevoComplejo() {
       return
     }
 
+    // Una foto por request: Vercel no acepta bodies de más de 4.5 MB
+    setSubiendoFotos(true)
+    let cantidadFallidas = 0
+    for (const foto of fotos) {
+      const formData = new FormData()
+      formData.append('imagen', foto.archivo)
+      const resFoto = await fetch(`/api/complexes/${json.id}/images`, {
+        method: 'POST',
+        body: formData,
+      })
+      if (!resFoto.ok) {
+        cantidadFallidas++
+      }
+    }
+    setSubiendoFotos(false)
+    setFotosFallidas(cantidadFallidas)
+
+    setIdCreado(json.id)
     setNombreCreado(datos.nombre)
+  }
+
+  let textoBotonGuardar = 'Crear complejo'
+  if (subiendoFotos) {
+    textoBotonGuardar = 'Subiendo fotos...'
+  } else if (formState.isSubmitting) {
+    textoBotonGuardar = 'Creando...'
   }
 
   if (nombreCreado) {
@@ -63,6 +135,13 @@ export function FormNuevoComplejo() {
               “{nombreCreado}” ya está en tu cuenta. Para que aparezca en la búsqueda, cargá al
               menos una cancha.
             </p>
+            {fotosFallidas > 0 && (
+              <p className="text-destructive text-sm font-medium">
+                {fotosFallidas === 1
+                  ? '1 foto no se pudo subir.'
+                  : `${fotosFallidas} fotos no se pudieron subir.`}
+              </p>
+            )}
           </div>
           <div className="mt-2 flex flex-wrap justify-center gap-3">
             <Link
@@ -71,9 +150,12 @@ export function FormNuevoComplejo() {
             >
               Ver mis complejos
             </Link>
-            <Button size="lg" disabled>
+            <Link
+              href={`/dueno/complejos/${idCreado}/canchas/nueva`}
+              className={buttonVariants({ size: 'lg' })}
+            >
               <Plus /> Cargar primera cancha
-            </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
@@ -158,7 +240,6 @@ export function FormNuevoComplejo() {
         </CardContent>
       </Card>
 
-      {/* Solo visual: la subida de fotos llega con UCA-16 (Vercel Blob). */}
       <Card>
         <CardHeader className="border-b">
           <CardTitle className="flex items-center gap-2 font-semibold">
@@ -168,15 +249,59 @@ export function FormNuevoComplejo() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <div className="bg-muted text-muted-foreground flex aspect-4/3 flex-col items-center justify-center gap-1 rounded-lg border border-dashed p-2 text-center font-mono text-xs">
-              <span className="font-semibold">foto de portada</span>
-              <span>arrastrá una imagen</span>
-            </div>
-            <div className="text-muted-foreground flex aspect-4/3 flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-sm font-medium">
-              <Plus className="size-4" />
-              Agregar foto
-            </div>
+            {fotos.map((foto, indice) => (
+              <div
+                key={foto.preview}
+                className="relative aspect-4/3 overflow-hidden rounded-lg border"
+              >
+                {/* unoptimized: el preview es una URL blob: local del navegador */}
+                <Image
+                  src={foto.preview}
+                  alt={foto.archivo.name}
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+                {indice === 0 && (
+                  <span className="bg-primary text-primary-foreground absolute top-2 left-2 rounded-full px-2 py-0.5 text-xs font-medium">
+                    Portada
+                  </span>
+                )}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="icon-xs"
+                  className="absolute top-2 right-2"
+                  aria-label={`Quitar ${foto.archivo.name}`}
+                  onClick={() => quitarFoto(indice)}
+                >
+                  <X />
+                </Button>
+              </div>
+            ))}
+
+            {fotos.length < MAX_IMAGES_PER_COMPLEX && (
+              <label
+                htmlFor="fotos"
+                className="text-muted-foreground hover:bg-accent flex aspect-4/3 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-sm font-medium"
+              >
+                <Plus className="size-4" />
+                Agregar foto
+              </label>
+            )}
+            <input
+              id="fotos"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="hidden"
+              onChange={agregarFotos}
+            />
           </div>
+          <p className="text-muted-foreground text-sm">
+            Hasta {MAX_IMAGES_PER_COMPLEX} fotos, JPG, PNG o WebP de 4 MB como máximo.
+          </p>
+          <MensajeError mensaje={errorFotos} />
           <div className="bg-muted flex items-center gap-2 rounded-lg border px-4 py-3 text-sm">
             <Star className="text-primary size-4 shrink-0" />
             La foto de portada es la que aparece en los resultados de búsqueda.
@@ -192,7 +317,7 @@ export function FormNuevoComplejo() {
           Cancelar
         </Link>
         <Button type="submit" size="lg" disabled={formState.isSubmitting}>
-          <Save /> {formState.isSubmitting ? 'Creando...' : 'Crear complejo'}
+          <Save /> {textoBotonGuardar}
         </Button>
       </div>
     </form>
