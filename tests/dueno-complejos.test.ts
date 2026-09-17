@@ -59,9 +59,7 @@ describe('Alta de complejo (POST /api/complexes)', () => {
 
   test('con datos inválidos devuelve 400', async () => {
     loginComo(duenio)
-    const res = await crearComplejo(
-      jsonRequest('POST', { ...datosDeComplejo, contacto: '123' }),
-    )
+    const res = await crearComplejo(jsonRequest('POST', { ...datosDeComplejo, contacto: '123' }))
     expect(res.status).toBe(400)
   })
 

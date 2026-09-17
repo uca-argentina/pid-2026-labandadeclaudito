@@ -54,7 +54,10 @@ describe('Disponibilidad (GET /api/courts/[id]/availability)', () => {
 
   test('con fecha mal formada devuelve 400', async () => {
     loginComo(jugador)
-    const res = await verDisponibilidad(disponibilidadRequest('mañana'), conParams({ id: canchaId }))
+    const res = await verDisponibilidad(
+      disponibilidadRequest('mañana'),
+      conParams({ id: canchaId }),
+    )
     expect(res.status).toBe(400)
   })
 

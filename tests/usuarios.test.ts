@@ -63,7 +63,12 @@ describe('Registro de usuarios (POST /api/users)', () => {
 
   test('rechaza datos inválidos (400)', async () => {
     const passwordCorto = await registrarUsuario(
-      jsonRequest('POST', { nombre: 'Test', email: emailDeTest(), password: '123', rol: 'JUGADOR' }),
+      jsonRequest('POST', {
+        nombre: 'Test',
+        email: emailDeTest(),
+        password: '123',
+        rol: 'JUGADOR',
+      }),
     )
     expect(passwordCorto.status).toBe(400)
 
