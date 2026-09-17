@@ -11,6 +11,7 @@
     "format:check": "prettier --check .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "db:dev": "prisma dev",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",

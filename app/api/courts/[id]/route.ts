@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import { Prisma } from '@/lib/generated/prisma/client'
 import { updateCourtSchema } from '@/lib/validations/court'
 import { requireRole } from '@/lib/auth-helpers'
 import { getCourtWithComplex } from '@/lib/ownership'
+import { getUpcomingBookingIds } from '@/lib/bookings'
 import { db } from '@/lib/db'
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -39,17 +39,16 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Cancha no encontrada' }, { status: 404 })
   }
 
-  try {
-    await db.cancha.delete({ where: { id } })
-  } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
-      return NextResponse.json(
-        { error: 'No se puede borrar: la cancha tiene reservas asociadas' },
-        { status: 409 },
-      )
-    }
-    throw e
-  }
+  // Baja lógica: se conserva la cancha para el historial de reservas
+  const idsDeReservas = await getUpcomingBookingIds([id])
 
-  return NextResponse.json({ ok: true }, { status: 200 })
+  await db.$transaction([
+    db.reserva.updateMany({
+      where: { id: { in: idsDeReservas } },
+      data: { estado: 'CANCELADA' },
+    }),
+    db.cancha.update({ where: { id }, data: { activo: false } }),
+  ])
+
+  return NextResponse.json({ ok: true, reservasCanceladas: idsDeReservas.length }, { status: 200 })
 }

@@ -15,8 +15,12 @@ export default async function DuenoHomePage() {
   const desdeHoy = new Date(diaDeHoy())
   const canchasDelDuenio = { complejo: { duenioId: session.user.id } }
 
-  const totalComplejos = await db.complejo.count({ where: { duenioId: session.user.id } })
-  const totalCanchas = await db.cancha.count({ where: canchasDelDuenio })
+  const totalComplejos = await db.complejo.count({
+    where: { duenioId: session.user.id, activo: true },
+  })
+  const totalCanchas = await db.cancha.count({
+    where: { activo: true, complejo: { duenioId: session.user.id, activo: true } },
+  })
 
   const totalProximasReservas = await db.reserva.count({
     where: {

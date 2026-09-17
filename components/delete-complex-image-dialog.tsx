@@ -15,13 +15,13 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 
-export function DeleteCourtDialog({
-  courtId,
-  courtName,
+export function DeleteComplexImageDialog({
+  complejoId,
+  imageId,
   onDeleted,
 }: {
-  courtId: string
-  courtName: string
+  complejoId: string
+  imageId: string
   onDeleted: () => void
 }) {
   const [error, setError] = useState('')
@@ -30,7 +30,9 @@ export function DeleteCourtDialog({
   async function handleDelete() {
     setError('')
     setBorrando(true)
-    const res = await fetch(`/api/courts/${courtId}`, { method: 'DELETE' })
+    const res = await fetch(`/api/complexes/${complejoId}/images/${imageId}`, {
+      method: 'DELETE',
+    })
     if (res.ok) {
       onDeleted()
       return
@@ -42,23 +44,23 @@ export function DeleteCourtDialog({
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
-        <Trash2 className="size-3.5" />
-        Eliminar
+      <AlertDialogTrigger
+        render={<Button variant="destructive" size="icon-xs" aria-label="Quitar foto" />}
+      >
+        <Trash2 />
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>¿Eliminar &quot;{courtName}&quot;?</AlertDialogTitle>
+          <AlertDialogTitle>¿Quitar esta foto?</AlertDialogTitle>
           <AlertDialogDescription>
-            Se despublica de la búsqueda de los jugadores y se cancelan sus reservas futuras. Las
-            reservas pasadas quedan en el historial.
+            Se borra de forma permanente. Si es la portada, la siguiente foto pasa a ser la portada.
           </AlertDialogDescription>
         </AlertDialogHeader>
         {error && <p className="text-destructive text-sm">{error}</p>}
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction onClick={handleDelete} disabled={borrando}>
-            {borrando ? 'Eliminando...' : 'Sí, eliminar'}
+            {borrando ? 'Quitando...' : 'Sí, quitar'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

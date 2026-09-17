@@ -35,7 +35,9 @@ export default async function JugadorHomePage() {
 
   const totalReservas = await db.reserva.count({ where: { jugadorId: session.user.id } })
 
-  const totalComplejos = await db.complejo.count({ where: { canchas: { some: {} } } })
+  const totalComplejos = await db.complejo.count({
+    where: { activo: true, canchas: { some: { activo: true } } },
+  })
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">

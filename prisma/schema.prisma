@@ -60,6 +60,8 @@ model Complejo {
   zona      String
   contacto  String
   duenioId  String
+  // Baja lógica: al dar de baja no se borra, para conservar el historial de reservas
+  activo    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -72,10 +74,11 @@ model Complejo {
 }
 
 model ImagenComplejo {
-  id         String @id @default(cuid())
+  id         String  @id @default(cuid())
   complejoId String
   url        String
-  orden      Int    @default(0)
+  orden      Int     @default(0)
+  activo     Boolean @default(true)
 
   complejo Complejo @relation(fields: [complejoId], references: [id], onDelete: Cascade)
 
@@ -93,6 +96,7 @@ model Cancha {
   horaApertura     String
   horaCierre       String
   duracionTurnoMin Int            @default(60)
+  activo           Boolean        @default(true)
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 

@@ -18,9 +18,9 @@ export default async function MisComplejosPage() {
   if (session.user.rol !== 'DUENIO') redirect('/jugador')
 
   const complejosDelDuenio = await db.complejo.findMany({
-    where: { duenioId: session.user.id },
+    where: { duenioId: session.user.id, activo: true },
     orderBy: { createdAt: 'desc' },
-    include: { imagenes: { orderBy: { orden: 'asc' }, take: 1 } },
+    include: { imagenes: { where: { activo: true }, orderBy: { orden: 'asc' }, take: 1 } },
   })
 
   return (

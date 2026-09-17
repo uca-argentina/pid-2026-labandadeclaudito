@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { ArrowLeft, CalendarClock, MapPin, Phone, Plus, Shapes } from 'lucide-react'
+import { ArrowLeft, CalendarClock, MapPin, Pencil, Phone, Plus, Shapes } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { diaDeHoy, diaDeReserva, formatearDia } from '@/lib/time'
-import { buttonVariants } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { ComplexGallery } from '@/components/complex-gallery'
 
 export default async function DetalleComplejoDuenoPage({
@@ -18,10 +18,10 @@ export default async function DetalleComplejoDuenoPage({
 
   // Filtrar por duenioId hace de chequeo de ownership: si es de otro dueño, no aparece
   const complejo = await db.complejo.findFirst({
-    where: { id, duenioId: session.user.id },
+    where: { id, duenioId: session.user.id, activo: true },
     include: {
-      imagenes: { orderBy: { orden: 'asc' } },
-      canchas: { orderBy: { nombre: 'asc' } },
+      imagenes: { where: { activo: true }, orderBy: { orden: 'asc' } },
+      canchas: { where: { activo: true }, orderBy: { nombre: 'asc' } },
     },
   })
   if (!complejo) notFound()
@@ -48,7 +48,13 @@ export default async function DetalleComplejoDuenoPage({
       </Link>
 
       <div className="mb-7">
-        <h1 className="text-3xl font-semibold">{complejo.nombre}</h1>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <h1 className="text-3xl font-semibold">{complejo.nombre}</h1>
+          <Button variant="outline" render={<Link href={`/dueno/complejos/${id}/editar`} />}>
+            <Pencil className="size-3.5" />
+            Editar complejo
+          </Button>
+        </div>
         <div className="text-muted-foreground mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
           <p className="flex items-center gap-1.5">
             <MapPin className="size-4 shrink-0" /> {complejo.direccion} · {complejo.zona}

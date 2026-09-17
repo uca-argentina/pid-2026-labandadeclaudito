@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Trash2 } from 'lucide-react'
 import {
   AlertDialog,
@@ -15,29 +16,38 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 
-export function DeleteCourtDialog({
-  courtId,
-  courtName,
-  onDeleted,
+export function DeleteComplexDialog({
+  complejoId,
+  complejoNombre,
+  reservasFuturas,
 }: {
-  courtId: string
-  courtName: string
-  onDeleted: () => void
+  complejoId: string
+  complejoNombre: string
+  reservasFuturas: number
 }) {
+  const router = useRouter()
   const [error, setError] = useState('')
   const [borrando, setBorrando] = useState(false)
 
   async function handleDelete() {
     setError('')
     setBorrando(true)
-    const res = await fetch(`/api/courts/${courtId}`, { method: 'DELETE' })
+    const res = await fetch(`/api/complexes/${complejoId}`, { method: 'DELETE' })
     if (res.ok) {
-      onDeleted()
+      router.push('/dueno/complejos')
+      router.refresh()
       return
     }
     const json = await res.json()
     setError(json.error)
     setBorrando(false)
+  }
+
+  let textoReservas = 'No tiene reservas futuras.'
+  if (reservasFuturas === 1) {
+    textoReservas = 'Se va a cancelar 1 reserva futura.'
+  } else if (reservasFuturas > 1) {
+    textoReservas = `Se van a cancelar ${reservasFuturas} reservas futuras.`
   }
 
   return (
@@ -48,10 +58,10 @@ export function DeleteCourtDialog({
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>¿Eliminar &quot;{courtName}&quot;?</AlertDialogTitle>
+          <AlertDialogTitle>¿Eliminar &quot;{complejoNombre}&quot;?</AlertDialogTitle>
           <AlertDialogDescription>
-            Se despublica de la búsqueda de los jugadores y se cancelan sus reservas futuras. Las
-            reservas pasadas quedan en el historial.
+            Se despublica de la búsqueda de los jugadores junto con todas sus canchas y fotos.{' '}
+            {textoReservas}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {error && <p className="text-destructive text-sm">{error}</p>}

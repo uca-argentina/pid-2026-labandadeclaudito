@@ -14,5 +14,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 
   const slots = await getAvailableSlots(id, new Date(fecha))
+  if (!slots) {
+    return NextResponse.json({ error: 'Cancha no encontrada' }, { status: 404 })
+  }
   return NextResponse.json({ slots }, { status: 200 })
 }

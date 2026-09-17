@@ -14,7 +14,9 @@ export default async function EditarCanchaPage({
   const complejo = await getComplexByOwner(id, session.user.id)
   if (!complejo) redirect('/dueno')
 
-  const cancha = await db.cancha.findFirst({ where: { id: courtId, complejoId: id } })
+  const cancha = await db.cancha.findFirst({
+    where: { id: courtId, complejoId: id, activo: true },
+  })
   if (!cancha) redirect(`/dueno/complejos/${id}/canchas`)
 
   return (

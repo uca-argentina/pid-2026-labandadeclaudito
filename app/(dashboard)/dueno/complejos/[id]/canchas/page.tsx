@@ -28,7 +28,7 @@ export default async function ListadoCanchasPage({
   if (!complejo) redirect('/dueno')
 
   const canchas = await db.cancha.findMany({
-    where: { complejoId: id },
+    where: { complejoId: id, activo: true },
     orderBy: { nombre: 'asc' },
   })
 

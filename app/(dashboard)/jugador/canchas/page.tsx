@@ -32,6 +32,7 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
     typeof deporte === 'string' && deporte !== '' ? (deporte as Deporte) : undefined
 
   const zonas = await db.complejo.findMany({
+    where: { activo: true },
     distinct: ['zona'],
     select: { zona: true },
     orderBy: { zona: 'asc' },
@@ -41,11 +42,12 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
   const complejos = await db.complejo.findMany({
     where: {
       zona: zonaFiltro,
-      canchas: { some: { deporte: deporteFiltro } },
+      activo: true,
+      canchas: { some: { deporte: deporteFiltro, activo: true } },
     },
     include: {
-      imagenes: { orderBy: { orden: 'asc' }, take: 1 },
-      canchas: { where: { deporte: deporteFiltro } },
+      imagenes: { where: { activo: true }, orderBy: { orden: 'asc' }, take: 1 },
+      canchas: { where: { deporte: deporteFiltro, activo: true } },
     },
     orderBy: { nombre: 'asc' },
   })

@@ -11,11 +11,11 @@ export default async function ComplejoDetallePage({
 }: PageProps<'/jugador/complejos/[id]'>) {
   const { id } = await params
 
-  const complejo = await db.complejo.findUnique({
-    where: { id },
+  const complejo = await db.complejo.findFirst({
+    where: { id, activo: true },
     include: {
-      canchas: { orderBy: { nombre: 'asc' } },
-      imagenes: { orderBy: { orden: 'asc' } },
+      canchas: { where: { activo: true }, orderBy: { nombre: 'asc' } },
+      imagenes: { where: { activo: true }, orderBy: { orden: 'asc' } },
     },
   })
   if (!complejo) notFound()

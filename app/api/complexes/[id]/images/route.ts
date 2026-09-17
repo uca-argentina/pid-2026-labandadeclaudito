@@ -23,7 +23,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
   }
 
-  const cantidadDeFotos = await db.imagenComplejo.count({ where: { complejoId } })
+  const cantidadDeFotos = await db.imagenComplejo.count({ where: { complejoId, activo: true } })
   if (cantidadDeFotos >= MAX_IMAGES_PER_COMPLEX) {
     return NextResponse.json({ error: 'El complejo ya tiene 5 fotos' }, { status: 409 })
   }
@@ -34,8 +34,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     addRandomSuffix: true,
   })
 
+  // No se usa la cantidad como orden: al quitar fotos quedan huecos y se repetiría
+  const ultimaFoto = await db.imagenComplejo.findFirst({
+    where: { complejoId },
+    orderBy: { orden: 'desc' },
+  })
+  const orden = ultimaFoto ? ultimaFoto.orden + 1 : 0
+
   const imagen = await db.imagenComplejo.create({
-    data: { complejoId, url: blob.url, orden: cantidadDeFotos },
+    data: { complejoId, url: blob.url, orden },
   })
 
   return NextResponse.json({ id: imagen.id, url: imagen.url }, { status: 201 })

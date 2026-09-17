@@ -16,7 +16,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
   }
 
-  const cancha = await db.cancha.findUnique({ where: { id: parsed.data.canchaId } })
+  const cancha = await db.cancha.findFirst({
+    where: { id: parsed.data.canchaId, activo: true, complejo: { activo: true } },
+  })
   if (!cancha) {
     return NextResponse.json({ error: 'La cancha no existe' }, { status: 404 })
   }

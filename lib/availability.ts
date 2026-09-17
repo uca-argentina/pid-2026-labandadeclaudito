@@ -28,8 +28,13 @@ export function generateSlots(
 export async function getAvailableSlots(
   canchaId: string,
   fecha: Date,
-): Promise<{ horaInicio: string; disponible: boolean }[]> {
-  const cancha = await db.cancha.findUniqueOrThrow({ where: { id: canchaId } })
+): Promise<{ horaInicio: string; disponible: boolean }[] | null> {
+  const cancha = await db.cancha.findFirst({
+    where: { id: canchaId, activo: true, complejo: { activo: true } },
+  })
+  if (!cancha) {
+    return null
+  }
 
   const slots = generateSlots(cancha.horaApertura, cancha.horaCierre, cancha.duracionTurnoMin)
 
