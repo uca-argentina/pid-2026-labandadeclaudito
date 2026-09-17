@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export default async function DashboardLayout({ children }: LayoutProps<'/'>) {
   const session = await auth()
@@ -20,8 +21,9 @@ export default async function DashboardLayout({ children }: LayoutProps<'/'>) {
           email={session.user.email ?? ''}
         />
         <SidebarInset>
-          <div className="flex h-14 shrink-0 items-center border-b px-4">
+          <div className="flex h-14 shrink-0 items-center justify-between border-b px-4">
             <SidebarTrigger />
+            <ThemeToggle />
           </div>
           <div className="flex-1">{children}</div>
         </SidebarInset>
