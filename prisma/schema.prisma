@@ -20,6 +20,8 @@ enum Deporte {
   FUTBOL_5
   FUTBOL_7
   FUTBOL_11
+  TENIS
+  PADEL
 }
 
 enum TipoSuperficie {
@@ -27,6 +29,7 @@ enum TipoSuperficie {
   CESPED_NATURAL
   CEMENTO
   PARQUET
+  POLVO_DE_LADRILLO
 }
 
 enum EstadoReserva {

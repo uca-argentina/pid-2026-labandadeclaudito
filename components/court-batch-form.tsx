@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import type { Deporte, TipoSuperficie } from '@/lib/generated/prisma/client'
 import { createCourtSchema } from '@/lib/validations/court'
 import { deporteLabels, superficieLabels } from '@/lib/labels'
 
@@ -36,10 +37,8 @@ function contarTurnos(horaApertura: string, horaCierre: string, duracionTurnoMin
 
 export function CourtBatchForm({ complejoId }: { complejoId: string }) {
   const router = useRouter()
-  const [deporte, setDeporte] = useState<'FUTBOL_5' | 'FUTBOL_7' | 'FUTBOL_11'>('FUTBOL_5')
-  const [tipoSuperficie, setTipoSuperficie] = useState<
-    'CESPED_SINTETICO' | 'CESPED_NATURAL' | 'CEMENTO' | 'PARQUET'
-  >('CESPED_SINTETICO')
+  const [deporte, setDeporte] = useState<Deporte>('FUTBOL_5')
+  const [tipoSuperficie, setTipoSuperficie] = useState<TipoSuperficie>('CESPED_SINTETICO')
   const [cantidad, setCantidad] = useState(1)
   const [horaApertura, setHoraApertura] = useState('08:00')
   const [horaCierre, setHoraCierre] = useState('23:00')
