@@ -5,14 +5,9 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Calendar, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { diaDeHoy, sumarMinutos } from '@/lib/time'
 
 type Slot = { horaInicio: string; disponible: boolean }
-
-function sumarMinutos(hora: string, minutos: number): string {
-  const [h, m] = hora.split(':').map(Number)
-  const total = h * 60 + m + minutos
-  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
-}
 
 function capitalizar(texto: string): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1)
@@ -94,6 +89,7 @@ export function CourtSlotPicker({
           <input
             id={`fecha-${courtId}`}
             type="date"
+            min={diaDeHoy()}
             value={format(fecha, 'yyyy-MM-dd')}
             onChange={(e) => {
               setFecha(new Date(`${e.target.value}T00:00:00`))

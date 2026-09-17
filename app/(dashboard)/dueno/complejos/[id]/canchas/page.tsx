@@ -33,7 +33,7 @@ export default async function ListadoCanchasPage({
   })
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
+    <main className="mx-auto max-w-4xl px-6 py-12">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold">{complejo.nombre}</h1>
