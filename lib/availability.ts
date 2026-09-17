@@ -1,6 +1,23 @@
 import { db } from '@/lib/db'
 import { diaDeReserva, turnoYaPaso } from '@/lib/time'
 
+function agregarSlots(
+  slots: string[],
+  minutoInicio: number,
+  minutoFin: number,
+  duracionTurnoMin: number,
+): void {
+  for (
+    let minuto = minutoInicio;
+    minuto + duracionTurnoMin <= minutoFin;
+    minuto += duracionTurnoMin
+  ) {
+    const horas = String(Math.floor(minuto / 60)).padStart(2, '0')
+    const minutos = String(minuto % 60).padStart(2, '0')
+    slots.push(`${horas}:${minutos}`)
+  }
+}
+
 export function generateSlots(
   horaApertura: string,
   horaCierre: string,
@@ -13,15 +30,18 @@ export function generateSlots(
   const minutoCierre = horaCierreH * 60 + horaCierreM
 
   const slots: string[] = []
-  for (
-    let minuto = minutoInicio;
-    minuto + duracionTurnoMin <= minutoCierre;
-    minuto += duracionTurnoMin
-  ) {
-    const horas = String(Math.floor(minuto / 60)).padStart(2, '0')
-    const minutos = String(minuto % 60).padStart(2, '0')
-    slots.push(`${horas}:${minutos}`)
+
+  // Si el cierre es a una hora "menor o igual" que la apertura, en realidad
+  // cierra al día siguiente (ej: abre 20:00, cierra 03:00). Generamos primero
+  // los turnos de la madrugada (00:00 al cierre) y después los de la noche
+  // (apertura a medianoche), para que la lista quede ordenada de 00:00 a 23:xx.
+  if (minutoCierre <= minutoInicio) {
+    agregarSlots(slots, 0, minutoCierre, duracionTurnoMin)
+    agregarSlots(slots, minutoInicio, 24 * 60, duracionTurnoMin)
+  } else {
+    agregarSlots(slots, minutoInicio, minutoCierre, duracionTurnoMin)
   }
+
   return slots
 }
 
