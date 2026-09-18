@@ -29,16 +29,18 @@ Para `DATABASE_URL` usá cualquier Postgres: `npx create-db` (Prisma Postgres gr
 
 ## Scripts
 
-| Comando              | Qué hace                                 |
-| -------------------- | ---------------------------------------- |
-| `npm run dev`        | Servidor de desarrollo                   |
-| `npm run build`      | Build de producción                      |
-| `npm run lint`       | ESLint                                   |
-| `npm run format`     | Prettier (escribe)                       |
-| `npm run typecheck`  | `tsc --noEmit`                           |
-| `npm run db:dev`     | Postgres local sin Docker (`prisma dev`) |
-| `npm run db:migrate` | Crear/aplicar migración                  |
-| `npm run db:studio`  | GUI de la base (Prisma Studio)           |
+| Comando                    | Qué hace                                       |
+| -------------------------- | ---------------------------------------------- |
+| `npm run dev`              | Servidor de desarrollo                         |
+| `npm run build`            | Build de producción                            |
+| `npm run lint`             | ESLint                                         |
+| `npm run format`           | Prettier (escribe)                             |
+| `npm run typecheck`        | `tsc --noEmit`                                 |
+| `npm run db:dev`           | Postgres local sin Docker (`prisma dev`)       |
+| `npm run db:migrate`       | Crear/aplicar migración                        |
+| `npm run db:studio`        | GUI de la base (Prisma Studio)                 |
+| `npm run test`             | Corre los tests de lib/                        |
+| `npm run test:integration` | Corre los tests de tests/ escribiendo en la DB |
 
 ## Convenciones
 

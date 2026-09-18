@@ -37,16 +37,18 @@ Pagos e ingresos son **simulados** por consigna.
 
 ## Comandos
 
-| Comando              | Para qué                                       |
-| -------------------- | ---------------------------------------------- |
-| `npm run dev`        | Servidor de desarrollo                         |
-| `npm run build`      | Build de producción                            |
-| `npm run lint`       | ESLint                                         |
-| `npm run format`     | Prettier (escribe) — correr antes de commitear |
-| `npm run typecheck`  | `tsc --noEmit`                                 |
-| `npm run db:migrate` | Crear/aplicar migración                        |
-| `npm run db:studio`  | GUI de la base                                 |
-| `npm run db:dev`     | Postgres local sin Docker (`prisma dev`)       |
+| Comando                    | Para qué                                          |
+| -------------------------- | ------------------------------------------------- |
+| `npm run dev`              | Servidor de desarrollo                            |
+| `npm run build`            | Build de producción                               |
+| `npm run lint`             | ESLint                                            |
+| `npm run format`           | Prettier (escribe) — correr antes de commitear    |
+| `npm run typecheck`        | `tsc --noEmit`                                    |
+| `npm run db:migrate`       | Crear/aplicar migración                           |
+| `npm run db:studio`        | GUI de la base                                    |
+| `npm run db:dev`           | Postgres local sin Docker (`prisma dev`)          |
+| `npm run test`             | Corre los tests de lib/ — correr antes de pushear |
+| `npm run test:integration` | Corre los tests de tests/ escribiendo en la DB    |
 
 ## Código simple y entendible (la regla más importante)
 
