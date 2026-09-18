@@ -47,7 +47,8 @@ export function ComplexPhotosEditor({
         body: formData,
       })
       if (!res.ok) {
-        const json = await res.json()
+        // Un 500 del server viene con el body vacío y res.json() rompe
+        const json = await res.json().catch(() => ({ error: `error ${res.status} del servidor` }))
         setError(`${archivo.name}: ${json.error}`)
         continue
       }

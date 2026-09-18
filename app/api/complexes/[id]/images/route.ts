@@ -29,10 +29,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   const archivo = parsed.data.imagen
-  const blob = await put(`complejos/${complejoId}/${archivo.name}`, archivo, {
-    access: 'public',
-    addRandomSuffix: true,
-  })
+
+  // Si put() falla y no lo agarramos, Next devuelve un 500 con el body vacío
+  // y el cliente no puede mostrar ningún mensaje.
+  let urlDeLaFoto = ''
+  try {
+    const blob = await put(`complejos/${complejoId}/${archivo.name}`, archivo, {
+      access: 'public',
+      addRandomSuffix: true,
+    })
+    urlDeLaFoto = blob.url
+  } catch (error) {
+    console.error('Error al subir la foto a Vercel Blob:', error)
+    return NextResponse.json(
+      { error: 'No se pudo guardar la foto. Revisá BLOB_READ_WRITE_TOKEN.' },
+      { status: 502 }
+    )
+  }
 
   // No se usa la cantidad como orden: al quitar fotos quedan huecos y se repetiría
   const ultimaFoto = await db.imagenComplejo.findFirst({
@@ -42,7 +55,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const orden = ultimaFoto ? ultimaFoto.orden + 1 : 0
 
   const imagen = await db.imagenComplejo.create({
-    data: { complejoId, url: blob.url, orden },
+    data: { complejoId, url: urlDeLaFoto, orden },
   })
 
   return NextResponse.json({ id: imagen.id, url: imagen.url }, { status: 201 })
