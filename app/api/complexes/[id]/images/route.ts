@@ -43,7 +43,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     console.error('Error al subir la foto a Vercel Blob:', error)
     return NextResponse.json(
       { error: 'No se pudo guardar la foto. Revisá BLOB_READ_WRITE_TOKEN.' },
-      { status: 502 }
+      { status: 502 },
     )
   }
 
