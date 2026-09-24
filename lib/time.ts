@@ -34,6 +34,12 @@ export function diaDeHoy(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: ZONA_ARGENTINA })
 }
 
+// 0 (domingo) a 6 (sábado). Igual que diaDeReserva, se lee en UTC porque
+// @db.Date llega como medianoche UTC.
+export function diaSemanaDeReserva(fecha: Date): number {
+  return fecha.getUTCDay()
+}
+
 export function turnoYaPaso(fecha: string, horaInicio: string): boolean {
   const ahora = new Date()
   const fechaDeHoy = diaDeHoy()
