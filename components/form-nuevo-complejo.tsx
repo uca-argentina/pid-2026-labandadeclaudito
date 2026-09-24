@@ -44,7 +44,9 @@ export function FormNuevoComplejo() {
 
   const { register, handleSubmit, formState } = useForm<CreateComplexInput>({
     resolver: zodResolver(createComplexSchema),
-    defaultValues: { nombre: '', direccion: '', zona: '', contacto: '' },
+    // porcentajeSenaDefault no se pide acá (queda en 30), se ajusta después
+    // desde "Editar complejo"
+    defaultValues: { nombre: '', direccion: '', zona: '', contacto: '', porcentajeSenaDefault: 30 },
   })
   const errores = formState.errors
   const hayErrores = Object.keys(errores).length > 0

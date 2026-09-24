@@ -240,6 +240,7 @@ describe('Canchas del complejo', () => {
       horaApertura: '09:00',
       horaCierre: '13:00',
       duracionTurnoMin: 60,
+      porcentajeSena: null,
     }
 
     loginComo(otroDuenio)

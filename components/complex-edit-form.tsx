@@ -15,6 +15,7 @@ type ComplejoAEditar = {
   direccion: string
   zona: string
   contacto: string
+  porcentajeSenaDefault: number
 }
 
 const claseInputConError = 'border-destructive ring-destructive/20 ring-3'
@@ -48,6 +49,7 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
       direccion: form.get('direccion'),
       zona: form.get('zona'),
       contacto: form.get('contacto'),
+      porcentajeSenaDefault: Number(form.get('porcentajeSenaDefault')),
     }
 
     const parsed = createComplexSchema.safeParse(datos)
@@ -133,6 +135,25 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
             className={fieldErrors.contacto ? claseInputConError : undefined}
           />
           <ErrorDeCampo mensaje={fieldErrors.contacto} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="porcentajeSenaDefault">Seña por defecto (%)</Label>
+          <Input
+            id="porcentajeSenaDefault"
+            name="porcentajeSenaDefault"
+            type="number"
+            min={0}
+            max={100}
+            defaultValue={complejo.porcentajeSenaDefault}
+            aria-invalid={!!fieldErrors.porcentajeSenaDefault}
+            className={fieldErrors.porcentajeSenaDefault ? claseInputConError : undefined}
+          />
+          <p className="text-muted-foreground text-xs">
+            Se cobra al reservar en todas tus canchas. Una cancha puede tener su propio % (se
+            configura al editarla).
+          </p>
+          <ErrorDeCampo mensaje={fieldErrors.porcentajeSenaDefault} />
         </div>
       </div>
 

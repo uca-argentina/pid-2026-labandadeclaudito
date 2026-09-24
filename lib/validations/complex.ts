@@ -20,6 +20,15 @@ export const createComplexSchema = z.object({
     .refine((telefono) => contarDigitos(telefono) >= 8, {
       message: 'Ingresá un teléfono con característica. Ej: 11 4589-2231',
     }),
+  // % de seña por defecto de las canchas del complejo. No se pide al crear
+  // (el form de alta lo manda fijo en 30); se ajusta después desde "Editar
+  // complejo". z.number() sin coerce: cada form convierte el string a número
+  // antes de validar (react-hook-form con valueAsNumber, o Number() a mano).
+  porcentajeSenaDefault: z
+    .number()
+    .int('Tiene que ser un número entero')
+    .min(0, 'No puede ser negativo')
+    .max(100, 'No puede ser mayor a 100'),
 })
 
 export type CreateComplexInput = z.infer<typeof createComplexSchema>
