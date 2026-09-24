@@ -165,16 +165,22 @@ app/                        RUTAS (URL) + UI
     complexes/route.ts             GET listar míos · POST crear
     complexes/[id]/route.ts        GET uno · PATCH editar · DELETE borrar
     complexes/[id]/courts/route.ts GET listar · POST crear
+    complexes/[id]/images/route.ts        GET listar · POST subir (Vercel Blob)
+    complexes/[id]/images/[imageId]/route.ts   DELETE borrar imagen
     courts/[id]/route.ts           PATCH · DELETE
     courts/[id]/availability/route.ts   GET slots libres de una fecha
     bookings/route.ts              POST reservar · GET mis reservas
+    bookings/[id]/route.ts         PATCH cancelar
 
 lib/
   db.ts                     cliente Prisma (ya existe)
   auth-helpers.ts           getSession() / requireRole('DUENIO') — usado en casi todo endpoint
   ownership.ts              getComplexByOwner(id, ownerId) — reusado en varios endpoints
   passwords.ts              hashPassword() / verifyPassword() (argon2)
-  availability.ts           calcular turnos libres de una cancha en una fecha
+  availability.ts           calcular turnos libres de una cancha en una fecha (+ test)
+  bookings.ts               lógica compartida de reservas (cancelación, etc.)
+  time.ts                   helpers de fecha/hora — turnos que cruzan medianoche (+ test)
+  labels.ts                 traducción de enums (Deporte, TipoSuperficie, EstadoReserva) a texto UI
   validations/              SCHEMAS ZOD. Compartidos entre formulario y endpoint.
     user.ts                   registerSchema, loginSchema
     complex.ts
@@ -182,12 +188,23 @@ lib/
     booking.ts
 
 components/
-  ui/                       shadcn (generado, se edita libre)
+  ui/                       shadcn (generado, se edita libre) — instalados:
+                            alert-dialog, avatar, badge, button, card, input,
+                            label, radio-group, select, separator, sheet,
+                            sidebar, skeleton, table, toggle, toggle-group, tooltip
   site-header.tsx           header de las páginas públicas (logo + tema)
   app-sidebar.tsx           sidebar de las páginas con sesión — nav por rol,
                             perfil (nombre/email/avatar) y cerrar sesión abajo
   sign-out-button.tsx       botón de logout, reusado en el sidebar
   theme-provider.tsx, theme-toggle.tsx   modo claro/oscuro
+  stat-card.tsx             card de métrica (usado en homes de rol)
+  complex-gallery.tsx, complex-photos-editor.tsx   galería de imágenes de un complejo
+  complex-edit-form.tsx, form-nuevo-complejo.tsx   alta/edición de complejo
+  court-edit-form.tsx, court-batch-form.tsx, court-row-actions.tsx, court-slot-picker.tsx
+                            ABM de canchas + selector de turno disponible
+  delete-complex-dialog.tsx, delete-complex-image-dialog.tsx, delete-court-dialog.tsx
+                            confirmación de baja lógica
+  cancel-booking-button.tsx cancelar una reserva
   <propios>.tsx             el resto de nuestros componentes
 
 lib/generated/prisma/       cliente Prisma generado (gitignored, no tocar)
@@ -364,14 +381,27 @@ algo, mirar esa página, no adivinar.
 ## Fuera de alcance (no implementar hasta que un sprint lo pida)
 
 - Mapas / geocoding
-- Modelo y flujo de **Pago** (está en el DER, no en Sprint 1)
 - Backend separado (nuestros `app/api/` + `lib/` ya son el backend; se movería a
   un server aparte solo si un
   sprint futuro lo justifica — jobs pesados, tiempo real, etc.)
 - Emails reales (por ahora se simulan en la DB)
+- Cron/jobs programados — estados que dependen del reloj (en curso, finalizada)
+  se calculan al leer, no se persisten con un job (ver plan de Sprint 2)
+
+## Sprint 2 (en curso, requisitos del PM del 2026-09-24)
+
+Filtros de búsqueda, seña simulada (congela precio, % configurable), política
+de cancelación de 24hs, precios por día/horario, bloqueo de horarios
+(mantenimiento/torneo/uso interno), historial con canceladas. `Pago` (estaba
+"fuera de alcance" en Sprint 1) entra al scope, simulado.
+
+Todo (plan técnico y tickets, epics UCA-29/33/37/40/43) vive en **Jira**, no
+en `docs/`.
 
 ## Documentación del proyecto
 
-- `docs/superpowers/plans/2026-09-09-sprint1-mvp.md` — plan técnico paso a paso
-- `docs/backlog-sprint1.md` — tickets del Sprint 1 con criterios de aceptación
+`docs/` está en `.gitignore` (decisión 2026-09-24). No se usa para planes ni
+backlog de sprint — todo eso vive en Jira (tickets, y el detalle técnico en la
+descripción del epic/ticket correspondiente).
+
 - `branch_context.md` — contexto específico de la rama/fase actual. Crear uno por cada rama que no sea main, master, develop, dev o bugfix (está en .gitignore a propósito). Lo "core" del proyecto va en CLAUDE.md, no aquí.
