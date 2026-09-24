@@ -82,6 +82,7 @@ export const datosDeComplejo = {
   direccion: 'Calle Falsa 123',
   zona: 'Zona de test',
   contacto: '11 4589-2231',
+  porcentajeSenaDefault: 30,
 }
 
 export const datosDeCanchas = {

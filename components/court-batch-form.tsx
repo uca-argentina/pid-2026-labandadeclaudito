@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select'
 import type { Deporte, TipoSuperficie } from '@/lib/generated/prisma/client'
 import { createCourtSchema } from '@/lib/validations/court'
-import { deporteLabels, superficieLabels } from '@/lib/labels'
+import { deporteLabels, superficieLabels, superficiesPorDeporte } from '@/lib/labels'
 
 const duracionOpciones: Record<string, string> = {
   '30': '30 minutos',
@@ -95,7 +95,18 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Deporte</Label>
-            <Select value={deporte} onValueChange={(v) => setDeporte(v as typeof deporte)}>
+            <Select
+              value={deporte}
+              onValueChange={(v) => {
+                const nuevoDeporte = v as typeof deporte
+                setDeporte(nuevoDeporte)
+                // Si la superficie elegida no tiene sentido para el nuevo deporte,
+                // se pasa a la primera que sí (ej: fútbol nunca en polvo de ladrillo)
+                if (!superficiesPorDeporte[nuevoDeporte].includes(tipoSuperficie)) {
+                  setTipoSuperficie(superficiesPorDeporte[nuevoDeporte][0])
+                }
+              }}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue>{(v: typeof deporte) => deporteLabels[v]}</SelectValue>
               </SelectTrigger>
@@ -112,6 +123,7 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
           <div className="space-y-2">
             <Label>Superficie</Label>
             <Select
+              key={deporte}
               value={tipoSuperficie}
               onValueChange={(v) => setTipoSuperficie(v as typeof tipoSuperficie)}
             >
@@ -119,9 +131,9 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
                 <SelectValue>{(v: typeof tipoSuperficie) => superficieLabels[v]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(superficieLabels).map(([valor, label]) => (
+                {superficiesPorDeporte[deporte].map((valor) => (
                   <SelectItem key={valor} value={valor}>
-                    {label}
+                    {superficieLabels[valor]}
                   </SelectItem>
                 ))}
               </SelectContent>

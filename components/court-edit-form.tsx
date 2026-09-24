@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select'
 import { DeleteCourtDialog } from '@/components/delete-court-dialog'
 import { updateCourtSchema } from '@/lib/validations/court'
-import { deporteLabels, superficieLabels } from '@/lib/labels'
+import { deporteLabels, superficieLabels, superficiesPorDeporte } from '@/lib/labels'
 import type { Cancha } from '@/lib/generated/prisma/client'
 
 type CanchaConPrecioString = Omit<Cancha, 'precioBase'> & { precioBase: string }
@@ -40,6 +40,7 @@ export function CourtEditForm({
     setFieldErrors({})
 
     const form = new FormData(e.currentTarget)
+    const porcentajeSenaTexto = form.get('porcentajeSena') as string
     const datos = {
       nombre: form.get('nombre'),
       deporte,
@@ -48,6 +49,8 @@ export function CourtEditForm({
       horaApertura: form.get('horaApertura'),
       horaCierre: form.get('horaCierre'),
       duracionTurnoMin: form.get('duracionTurnoMin'),
+      // Campo vacío = usar el % de seña por defecto del complejo, no uno propio
+      porcentajeSena: porcentajeSenaTexto === '' ? null : Number(porcentajeSenaTexto),
     }
 
     const parsed = updateCourtSchema.safeParse(datos)
@@ -101,7 +104,18 @@ export function CourtEditForm({
 
           <div className="space-y-2">
             <Label>Deporte</Label>
-            <Select value={deporte} onValueChange={(v) => setDeporte(v as typeof deporte)}>
+            <Select
+              value={deporte}
+              onValueChange={(v) => {
+                const nuevoDeporte = v as typeof deporte
+                setDeporte(nuevoDeporte)
+                // Si la superficie elegida no tiene sentido para el nuevo deporte,
+                // se pasa a la primera que sí (ej: fútbol nunca en polvo de ladrillo)
+                if (!superficiesPorDeporte[nuevoDeporte].includes(tipoSuperficie)) {
+                  setTipoSuperficie(superficiesPorDeporte[nuevoDeporte][0])
+                }
+              }}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue>{(v: typeof deporte) => deporteLabels[v]}</SelectValue>
               </SelectTrigger>
@@ -118,6 +132,7 @@ export function CourtEditForm({
           <div className="space-y-2">
             <Label>Superficie</Label>
             <Select
+              key={deporte}
               value={tipoSuperficie}
               onValueChange={(v) => setTipoSuperficie(v as typeof tipoSuperficie)}
             >
@@ -125,9 +140,9 @@ export function CourtEditForm({
                 <SelectValue>{(v: typeof tipoSuperficie) => superficieLabels[v]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(superficieLabels).map(([valor, label]) => (
+                {superficiesPorDeporte[deporte].map((valor) => (
                   <SelectItem key={valor} value={valor}>
-                    {label}
+                    {superficieLabels[valor]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -185,6 +200,34 @@ export function CourtEditForm({
               max={180}
               defaultValue={cancha.duracionTurnoMin}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="porcentajeSena">Seña propia (%)</Label>
+            <Input
+              id="porcentajeSena"
+              name="porcentajeSena"
+              type="number"
+              min={0}
+              max={100}
+              placeholder="Usa el % del complejo"
+              defaultValue={cancha.porcentajeSena ?? ''}
+              aria-invalid={!!fieldErrors.porcentajeSena}
+              className={
+                fieldErrors.porcentajeSena
+                  ? 'border-destructive ring-destructive/20 ring-3'
+                  : undefined
+              }
+            />
+            <p className="text-muted-foreground text-xs">
+              Vacío = usa el % de seña por defecto del complejo.
+            </p>
+            {fieldErrors.porcentajeSena && (
+              <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                <AlertCircle className="size-3.5" />
+                {fieldErrors.porcentajeSena}
+              </p>
+            )}
           </div>
         </div>
 

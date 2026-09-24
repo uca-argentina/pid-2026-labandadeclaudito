@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { Prisma } from '@/lib/generated/prisma/client'
-import { diaDeReserva, turnoYaPaso } from '@/lib/time'
+import { diaDeReserva, diaSemanaDeReserva, turnoYaPaso } from '@/lib/time'
 
 type PrecioEspecialVigente = {
   diaSemana: number | null
@@ -86,15 +86,26 @@ export function precioDelTurno(
 export async function getAvailableSlots(
   canchaId: string,
   fecha: Date,
-): Promise<{ horaInicio: string; disponible: boolean }[] | null> {
+): Promise<{
+  slots: { horaInicio: string; disponible: boolean; precio: Prisma.Decimal }[]
+  porcentajeSena: number
+} | null> {
   const cancha = await db.cancha.findFirst({
     where: { id: canchaId, activo: true, complejo: { activo: true } },
+    include: {
+      complejo: { select: { porcentajeSenaDefault: true } },
+      preciosEspeciales: { where: { activo: true } },
+    },
   })
   if (!cancha) {
     return null
   }
 
-  const slots = generateSlots(cancha.horaApertura, cancha.horaCierre, cancha.duracionTurnoMin)
+  const horasDeTurnos = generateSlots(
+    cancha.horaApertura,
+    cancha.horaCierre,
+    cancha.duracionTurnoMin,
+  )
 
   const reservas = await db.reserva.findMany({
     where: {
@@ -107,9 +118,16 @@ export async function getAvailableSlots(
   const horasOcupadas = new Set(reservas.map((r) => r.horaInicio))
 
   const dia = diaDeReserva(fecha)
+  const diaSemana = diaSemanaDeReserva(fecha)
 
-  return slots.map((horaInicio) => ({
+  const slots = horasDeTurnos.map((horaInicio) => ({
     horaInicio,
     disponible: !horasOcupadas.has(horaInicio) && !turnoYaPaso(dia, horaInicio),
+    precio: precioDelTurno(cancha.precioBase, cancha.preciosEspeciales, diaSemana, horaInicio),
   }))
+
+  return {
+    slots,
+    porcentajeSena: cancha.porcentajeSena ?? cancha.complejo.porcentajeSenaDefault,
+  }
 }

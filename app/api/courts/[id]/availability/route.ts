@@ -13,9 +13,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Fecha inválida, formato YYYY-MM-DD' }, { status: 400 })
   }
 
-  const slots = await getAvailableSlots(id, new Date(fecha))
-  if (!slots) {
+  const disponibilidad = await getAvailableSlots(id, new Date(fecha))
+  if (!disponibilidad) {
     return NextResponse.json({ error: 'Cancha no encontrada' }, { status: 404 })
   }
-  return NextResponse.json({ slots }, { status: 200 })
+  return NextResponse.json(disponibilidad, { status: 200 })
 }
