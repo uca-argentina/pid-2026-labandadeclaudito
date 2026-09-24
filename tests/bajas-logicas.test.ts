@@ -55,6 +55,7 @@ async function reservarManiana(canchaId: string, horaInicio: string) {
 
 // Una reserva ya jugada no se puede crear por el endpoint: se inserta directo
 async function crearReservaPasada(canchaId: string) {
+  const cancha = await db.cancha.findUniqueOrThrow({ where: { id: canchaId } })
   const reserva = await db.reserva.create({
     data: {
       canchaId,
@@ -63,6 +64,7 @@ async function crearReservaPasada(canchaId: string) {
       horaInicio: '10:00',
       horaFin: '11:00',
       estado: 'CONFIRMADA',
+      precioTurno: cancha.precioBase,
     },
   })
   return reserva.id

@@ -74,6 +74,9 @@ export async function POST(request: Request) {
         horaInicio: parsed.data.horaInicio,
         horaFin,
         estado: 'CONFIRMADA',
+        // TODO(SCRUM-30/31): calcular con PrecioEspecial + simular seña,
+        // por ahora se congela el precio base de la cancha.
+        precioTurno: cancha.precioBase,
       },
     })
     return NextResponse.json({ reserva }, { status: 201 })
