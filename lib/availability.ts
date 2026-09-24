@@ -1,5 +1,13 @@
 import { db } from '@/lib/db'
+import { Prisma } from '@/lib/generated/prisma/client'
 import { diaDeReserva, turnoYaPaso } from '@/lib/time'
+
+type PrecioEspecialVigente = {
+  diaSemana: number | null
+  horaInicio: string | null
+  horaFin: string | null
+  precio: Prisma.Decimal
+}
 
 function agregarSlots(
   slots: string[],
@@ -43,6 +51,36 @@ export function generateSlots(
   }
 
   return slots
+}
+
+// Elige, entre los PrecioEspecial que matchean el día/hora de un turno, el
+// más específico: franja horaria gana sobre solo día, que gana sobre general
+// (ni día ni franja). Sin ninguno que matchee, se usa precioBase.
+export function precioDelTurno(
+  precioBase: Prisma.Decimal,
+  preciosEspeciales: PrecioEspecialVigente[],
+  diaSemana: number,
+  horaInicio: string,
+): Prisma.Decimal {
+  const queMatchean = preciosEspeciales.filter((precioEspecial) => {
+    const diaOk = precioEspecial.diaSemana === null || precioEspecial.diaSemana === diaSemana
+    const franjaOk =
+      precioEspecial.horaInicio === null ||
+      (horaInicio >= precioEspecial.horaInicio && horaInicio < precioEspecial.horaFin!)
+    return diaOk && franjaOk
+  })
+
+  if (queMatchean.length === 0) {
+    return precioBase
+  }
+
+  const masEspecifico = queMatchean.reduce((mejor, actual) => {
+    const puntos = (p: PrecioEspecialVigente) =>
+      (p.horaInicio !== null ? 2 : 0) + (p.diaSemana !== null ? 1 : 0)
+    return puntos(actual) > puntos(mejor) ? actual : mejor
+  })
+
+  return masEspecifico.precio
 }
 
 export async function getAvailableSlots(
