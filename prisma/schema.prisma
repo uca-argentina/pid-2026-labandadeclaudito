@@ -164,5 +164,5 @@ model Pago {
   devuelto   Boolean  @default(false)
   createdAt  DateTime @default(now())
 
-  reserva Reserva @relation(fields: [reservaId], references: [id])
+  reserva Reserva @relation(fields: [reservaId], references: [id], onDelete: Cascade)
 }
