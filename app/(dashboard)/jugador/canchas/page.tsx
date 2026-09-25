@@ -1,9 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ImageIcon, SearchX } from 'lucide-react'
-import { db } from '@/lib/db'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
-import { searchComplexes } from '@/lib/court-search'
+import { filtersToQueryString, getSearchableZones, searchComplexes } from '@/lib/court-search'
 import { searchCourtsSchema } from '@/lib/validations/court-search'
 import type { Cancha, Deporte } from '@/lib/generated/prisma/client'
 
@@ -30,12 +29,7 @@ function precioMasBajo(canchas: Cancha[]) {
 export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/jugador/canchas'>) {
   const filtros = searchCourtsSchema.parse(await searchParams)
 
-  const zonas = await db.complejo.findMany({
-    where: { activo: true },
-    distinct: ['zona'],
-    select: { zona: true },
-    orderBy: { zona: 'asc' },
-  })
+  const zonas = await getSearchableZones()
 
   const complejos = await searchComplexes(filtros)
 
@@ -63,9 +57,9 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
             className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
           >
             <option value="">Todas</option>
-            {zonas.map((z) => (
-              <option key={z.zona} value={z.zona}>
-                {z.zona}
+            {zonas.map((zona) => (
+              <option key={zona} value={zona}>
+                {zona}
               </option>
             ))}
           </select>
@@ -170,7 +164,7 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
             return (
               <Link
                 key={complejo.id}
-                href={`/jugador/complejos/${complejo.id}`}
+                href={`/jugador/complejos/${complejo.id}${filtersToQueryString(filtros)}`}
                 className="border-border bg-card hover:bg-accent block overflow-hidden rounded-2xl border transition-colors"
               >
                 {complejo.imagenes.length > 0 ? (

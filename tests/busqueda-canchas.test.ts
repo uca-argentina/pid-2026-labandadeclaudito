@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { searchComplexes } from '@/lib/court-search'
+import { db } from '@/lib/db'
+import { getComplexDetail, getSearchableZones, searchComplexes } from '@/lib/court-search'
 import {
   datosDeComplejo,
   crearComplejoConCanchas,
@@ -78,5 +79,67 @@ describe('searchComplexes', () => {
   test('por zona solo trae los complejos de esa zona', async () => {
     const complejos = await searchComplexes({ zona: 'Zona que no existe' })
     expect(complejos.length).toBe(0)
+  })
+})
+
+describe('getComplexDetail', () => {
+  test('sin filtros muestra todas las canchas del complejo', async () => {
+    const complejo = await getComplexDetail(complejoId, {})
+    expect(complejo?.canchas.length).toBe(2)
+  })
+
+  test('si se buscó por deporte, solo muestra las canchas de ese deporte', async () => {
+    const complejo = await getComplexDetail(complejoId, { deporte: 'FUTBOL_7' })
+    expect(complejo?.canchas.length).toBe(1)
+    expect(complejo?.canchas[0].nombre).toBe('Cancha 2')
+  })
+
+  test('los demás filtros también se respetan (superficie y precio)', async () => {
+    const porSuperficie = await getComplexDetail(complejoId, { tipoSuperficie: 'CESPED_SINTETICO' })
+    expect(porSuperficie?.canchas.length).toBe(1)
+    expect(porSuperficie?.canchas[0].nombre).toBe('Cancha 1')
+
+    const porPrecio = await getComplexDetail(complejoId, { precioMin: 12000 })
+    expect(porPrecio?.canchas.length).toBe(1)
+    expect(porPrecio?.canchas[0].nombre).toBe('Cancha 2')
+  })
+
+  test('el complejo sigue existiendo aunque ninguna cancha cumpla los filtros', async () => {
+    const complejo = await getComplexDetail(complejoId, { deporte: 'TENIS' })
+    expect(complejo?.id).toBe(complejoId)
+    expect(complejo?.canchas.length).toBe(0)
+  })
+
+  test('un complejo que no existe devuelve null', async () => {
+    expect(await getComplexDetail('no-existe', {})).toBeNull()
+  })
+})
+
+describe('zona', () => {
+  test('la zona se busca sin importar mayúsculas y minúsculas', async () => {
+    const complejo = await buscar({ zona: datosDeComplejo.zona.toUpperCase() })
+    expect(complejo?.id).toBe(complejoId)
+  })
+
+  test('las zonas para elegir son solo las que tienen alguna cancha activa', async () => {
+    const duenio = await crearUsuario('DUENIO')
+    const { complejo, cancha1, cancha2 } = await crearComplejoConCanchas(duenio.id)
+    await db.complejo.update({ where: { id: complejo.id }, data: { zona: 'Zona sin canchas' } })
+
+    expect(await getSearchableZones()).toContain('Zona sin canchas')
+
+    await db.cancha.updateMany({
+      where: { id: { in: [cancha1.id, cancha2.id] } },
+      data: { activo: false },
+    })
+
+    const zonas = await getSearchableZones()
+    expect(zonas).not.toContain('Zona sin canchas')
+    expect(zonas).toContain(datosDeComplejo.zona)
+  })
+
+  test('las zonas no se repiten', async () => {
+    const zonas = await getSearchableZones()
+    expect(zonas.length).toBe(new Set(zonas).size)
   })
 })

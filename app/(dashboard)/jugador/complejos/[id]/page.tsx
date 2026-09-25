@@ -1,29 +1,26 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, BadgeCheck } from 'lucide-react'
-import { db } from '@/lib/db'
+import { getComplexDetail, filtersToQueryString } from '@/lib/court-search'
+import { searchCourtsSchema } from '@/lib/validations/court-search'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { CourtBookingSheet } from '@/components/court-booking-sheet'
 import { ComplexGallery } from '@/components/complex-gallery'
 
 export default async function ComplejoDetallePage({
   params,
+  searchParams,
 }: PageProps<'/jugador/complejos/[id]'>) {
   const { id } = await params
+  const filtros = searchCourtsSchema.parse(await searchParams)
 
-  const complejo = await db.complejo.findFirst({
-    where: { id, activo: true },
-    include: {
-      canchas: { where: { activo: true }, orderBy: { nombre: 'asc' } },
-      imagenes: { where: { activo: true }, orderBy: { orden: 'asc' } },
-    },
-  })
+  const complejo = await getComplexDetail(id, filtros)
   if (!complejo) notFound()
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
       <Link
-        href="/jugador/canchas"
+        href={`/jugador/canchas${filtersToQueryString(filtros)}`}
         className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
       >
         <ArrowLeft className="size-3.5" />
