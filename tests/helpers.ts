@@ -69,6 +69,10 @@ function sumarDias(dias: number) {
   return fecha.toISOString().slice(0, 10)
 }
 
+export function diaEnNDias(dias: number) {
+  return sumarDias(dias)
+}
+
 export function diaDeManiana() {
   return sumarDias(1)
 }
