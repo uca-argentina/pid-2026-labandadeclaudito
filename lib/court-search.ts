@@ -13,13 +13,31 @@ function courtFilter(filtros: SearchCourtsFilters) {
   }
 }
 
+// Las zonas que el jugador puede elegir: solo las de complejos que tienen
+// alguna cancha activa, porque los demás nunca aparecen en los resultados.
+export async function getSearchableZones() {
+  const complejos = await db.complejo.findMany({
+    where: { activo: true, canchas: { some: { activo: true } } },
+    distinct: ['zona'],
+    select: { zona: true },
+    orderBy: { zona: 'asc' },
+  })
+
+  const zonas: string[] = []
+  for (const complejo of complejos) {
+    zonas.push(complejo.zona)
+  }
+  return zonas
+}
+
 export async function searchComplexes(filtros: SearchCourtsFilters) {
   // El filtro de canchas va dos veces: en el `some` decide qué complejos
   // aparecen, y en el `include` deja solo las canchas que lo cumplen (así
   // "desde $X" y la cantidad de canchas reflejan lo filtrado).
   return db.complejo.findMany({
     where: {
-      zona: filtros.zona,
+      // La zona es texto libre: "CABA" y "caba" son la misma zona
+      zona: filtros.zona === undefined ? undefined : { equals: filtros.zona, mode: 'insensitive' },
       activo: true,
       canchas: { some: courtFilter(filtros) },
     },

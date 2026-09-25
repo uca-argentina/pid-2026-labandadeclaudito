@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { getComplexDetail, searchComplexes } from '@/lib/court-search'
+import { db } from '@/lib/db'
+import { getComplexDetail, getSearchableZones, searchComplexes } from '@/lib/court-search'
 import {
   datosDeComplejo,
   crearComplejoConCanchas,
@@ -111,5 +112,34 @@ describe('getComplexDetail', () => {
 
   test('un complejo que no existe devuelve null', async () => {
     expect(await getComplexDetail('no-existe', {})).toBeNull()
+  })
+})
+
+describe('zona', () => {
+  test('la zona se busca sin importar mayúsculas y minúsculas', async () => {
+    const complejo = await buscar({ zona: datosDeComplejo.zona.toUpperCase() })
+    expect(complejo?.id).toBe(complejoId)
+  })
+
+  test('las zonas para elegir son solo las que tienen alguna cancha activa', async () => {
+    const duenio = await crearUsuario('DUENIO')
+    const { complejo, cancha1, cancha2 } = await crearComplejoConCanchas(duenio.id)
+    await db.complejo.update({ where: { id: complejo.id }, data: { zona: 'Zona sin canchas' } })
+
+    expect(await getSearchableZones()).toContain('Zona sin canchas')
+
+    await db.cancha.updateMany({
+      where: { id: { in: [cancha1.id, cancha2.id] } },
+      data: { activo: false },
+    })
+
+    const zonas = await getSearchableZones()
+    expect(zonas).not.toContain('Zona sin canchas')
+    expect(zonas).toContain(datosDeComplejo.zona)
+  })
+
+  test('las zonas no se repiten', async () => {
+    const zonas = await getSearchableZones()
+    expect(zonas.length).toBe(new Set(zonas).size)
   })
 })
