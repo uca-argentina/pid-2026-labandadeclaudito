@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { format } from 'date-fns'
+import { format, parse } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Calendar, Check, CheckCircle2, Loader2, Wallet } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -21,12 +21,22 @@ export function CourtSlotPicker({
   courtId,
   courtName,
   duracionTurnoMin,
+  fechaInicial,
 }: {
   courtId: string
   courtName: string
   duracionTurnoMin: number
+  fechaInicial?: string
 }) {
-  const [fecha, setFecha] = useState(() => new Date())
+  // fechaInicial viene como YYYY-MM-DD de la búsqueda. Se arma con parse (fecha
+  // local): new Date('2026-10-03') sería medianoche UTC y en Argentina mostraría
+  // el día anterior. Una fecha que ya pasó no sirve, se arranca en hoy.
+  const [fecha, setFecha] = useState(() => {
+    if (fechaInicial !== undefined && fechaInicial >= diaDeHoy()) {
+      return parse(fechaInicial, 'yyyy-MM-dd', new Date())
+    }
+    return new Date()
+  })
   const [slots, setSlots] = useState<Slot[]>([])
   const [cargando, setCargando] = useState(true)
   const [porcentajeSena, setPorcentajeSena] = useState(0)

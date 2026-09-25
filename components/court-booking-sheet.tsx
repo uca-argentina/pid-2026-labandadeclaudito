@@ -19,12 +19,14 @@ export function CourtBookingSheet({
   courtSportLabel,
   precioBase,
   duracionTurnoMin,
+  fechaInicial,
 }: {
   courtId: string
   courtName: string
   courtSportLabel: string
   precioBase: string
   duracionTurnoMin: number
+  fechaInicial?: string
 }) {
   return (
     <Sheet>
@@ -48,6 +50,7 @@ export function CourtBookingSheet({
             courtId={courtId}
             courtName={courtName}
             duracionTurnoMin={duracionTurnoMin}
+            fechaInicial={fechaInicial}
           />
         </div>
       </SheetContent>

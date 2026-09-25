@@ -1,9 +1,17 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { ImageIcon, SearchX } from 'lucide-react'
-import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
-import { filtersToQueryString, getSearchableZones, searchComplexes } from '@/lib/court-search'
+import { ImageIcon, SearchX, X } from 'lucide-react'
+import { deporteLabels, formatPrecio } from '@/lib/labels'
+import {
+  activeFilterChips,
+  filtersToQueryString,
+  getSearchableZones,
+  searchComplexes,
+} from '@/lib/court-search'
+import type { CourtWithPrice } from '@/lib/court-search'
 import { searchCourtsSchema } from '@/lib/validations/court-search'
+import { Button } from '@/components/ui/button'
+import { SearchFiltersSheet } from '@/components/search-filters-sheet'
 import type { Cancha, Deporte } from '@/lib/generated/prisma/client'
 
 function deportesDistintos(canchas: Cancha[]) {
@@ -16,11 +24,11 @@ function deportesDistintos(canchas: Cancha[]) {
   return deportes
 }
 
-function precioMasBajo(canchas: Cancha[]) {
-  let minimo = Number(canchas[0].precioBase)
+function precioMasBajo(canchas: CourtWithPrice[]) {
+  let minimo = canchas[0].priceFrom
   for (const cancha of canchas) {
-    if (Number(cancha.precioBase) < minimo) {
-      minimo = Number(cancha.precioBase)
+    if (cancha.priceFrom < minimo) {
+      minimo = cancha.priceFrom
     }
   }
   return minimo
@@ -33,121 +41,42 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
 
   const complejos = await searchComplexes(filtros)
 
+  const filtrosAplicados = activeFilterChips(filtros)
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
       <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Buscar canchas</h1>
         <p className="text-muted-foreground mt-2">
-          Filtrá por zona, deporte, superficie y precio para encontrar una cancha.
+          Filtrá por zona, deporte, superficie, precio, fecha y horario para encontrar una cancha.
         </p>
       </div>
 
-      <form
-        method="get"
-        className="border-border bg-card flex flex-wrap items-end gap-4 rounded-2xl border p-5"
-      >
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="zona" className="text-sm font-medium">
-            Zona
-          </label>
-          <select
-            id="zona"
-            name="zona"
-            defaultValue={filtros.zona ?? ''}
-            className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
+      <div className="flex flex-wrap items-center gap-2">
+        <SearchFiltersSheet
+          zonas={zonas}
+          filtros={filtros}
+          cantidadDeFiltros={filtrosAplicados.length}
+        />
+
+        {filtrosAplicados.map((filtro) => (
+          <Link
+            key={filtro.label}
+            href={`/jugador/canchas${filtersToQueryString(filtro.withoutIt)}`}
+            aria-label={`Quitar filtro ${filtro.label}`}
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/70 inline-flex items-center gap-1.5 rounded-full py-1.5 pr-2.5 pl-3.5 text-sm transition-colors"
           >
-            <option value="">Todas</option>
-            {zonas.map((zona) => (
-              <option key={zona} value={zona}>
-                {zona}
-              </option>
-            ))}
-          </select>
-        </div>
+            {filtro.label}
+            <X className="size-3.5" />
+          </Link>
+        ))}
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="deporte" className="text-sm font-medium">
-            Deporte
-          </label>
-          <select
-            id="deporte"
-            name="deporte"
-            defaultValue={filtros.deporte ?? ''}
-            className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
-          >
-            <option value="">Todos</option>
-            {Object.entries(deporteLabels).map(([valor, label]) => (
-              <option key={valor} value={valor}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="tipoSuperficie" className="text-sm font-medium">
-            Superficie
-          </label>
-          <select
-            id="tipoSuperficie"
-            name="tipoSuperficie"
-            defaultValue={filtros.tipoSuperficie ?? ''}
-            className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
-          >
-            <option value="">Todas</option>
-            {Object.entries(superficieLabels).map(([valor, label]) => (
-              <option key={valor} value={valor}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="precioMin" className="text-sm font-medium">
-            Precio mínimo
-          </label>
-          <input
-            id="precioMin"
-            name="precioMin"
-            type="number"
-            min={0}
-            step={1}
-            placeholder="$"
-            defaultValue={filtros.precioMin ?? ''}
-            className="border-input bg-background h-9 w-28 rounded-lg border px-3 text-sm"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="precioMax" className="text-sm font-medium">
-            Precio máximo
-          </label>
-          <input
-            id="precioMax"
-            name="precioMax"
-            type="number"
-            min={0}
-            step={1}
-            placeholder="$"
-            defaultValue={filtros.precioMax ?? ''}
-            className="border-input bg-background h-9 w-28 rounded-lg border px-3 text-sm"
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="bg-primary text-primary-foreground hover:bg-primary/80 h-9 rounded-lg px-4 text-sm font-medium"
-        >
-          Buscar
-        </button>
-        <Link
-          href="/jugador/canchas"
-          className="text-muted-foreground hover:text-foreground h-9 content-center text-sm underline"
-        >
-          Limpiar filtros
-        </Link>
-      </form>
+        {filtrosAplicados.length > 0 && (
+          <Button variant="ghost" size="sm" render={<Link href="/jugador/canchas" />}>
+            Limpiar todo
+          </Button>
+        )}
+      </div>
 
       {complejos.length === 0 ? (
         <div className="border-border mt-8 flex flex-col items-center gap-2.5 rounded-2xl border border-dashed p-16 text-center">
