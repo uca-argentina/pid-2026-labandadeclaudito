@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { filtersToQueryString, matchingSlots } from './court-search'
+import { activeFilterChips, filtersToQueryString, matchingSlots } from './court-search'
 
 describe('filtersToQueryString', () => {
   test('sin filtros devuelve texto vacío', () => {
@@ -97,5 +97,67 @@ describe('filtersToQueryString — fecha y horario', () => {
 
   test('la fecha sola no agrega horario', () => {
     expect(filtersToQueryString({ fecha: '2026-10-03' })).toBe('?fecha=2026-10-03')
+  })
+})
+
+describe('activeFilterChips', () => {
+  function textos(filtros: Parameters<typeof activeFilterChips>[0]) {
+    return activeFilterChips(filtros).map((chip) => chip.label)
+  }
+
+  test('sin filtros no hay chips', () => {
+    expect(activeFilterChips({})).toEqual([])
+  })
+
+  test('zona, deporte y superficie se muestran con su nombre legible', () => {
+    expect(
+      textos({ zona: 'Palermo', deporte: 'FUTBOL_11', tipoSuperficie: 'CESPED_SINTETICO' }),
+    ).toEqual(['Zona: Palermo', 'Deporte: Fútbol 11', 'Superficie: Césped sintético'])
+  })
+
+  test('el precio mínimo y el máximo son chips separados', () => {
+    expect(textos({ precioMin: 10000, precioMax: 30000 })).toEqual([
+      'Precio mínimo: $10.000',
+      'Precio máximo: $30.000',
+    ])
+  })
+
+  test('la fecha se muestra como día/mes/año', () => {
+    expect(textos({ fecha: '2026-10-03' })).toEqual(['Fecha: 03/10/2026'])
+  })
+
+  test('el horario es un solo chip, con ventana completa o abierta de un lado', () => {
+    const fecha = '2026-10-03'
+    expect(textos({ fecha, horaDesde: '18:00', horaHasta: '22:00' })).toEqual([
+      'Fecha: 03/10/2026',
+      'Horario: 18:00 a 22:00',
+    ])
+    expect(textos({ fecha, horaDesde: '18:00' })).toEqual([
+      'Fecha: 03/10/2026',
+      'Horario: desde 18:00',
+    ])
+    expect(textos({ fecha, horaHasta: '12:00' })).toEqual([
+      'Fecha: 03/10/2026',
+      'Horario: hasta 12:00',
+    ])
+  })
+
+  test('quitar un chip deja todos los otros filtros', () => {
+    const filtros = { zona: 'Palermo', deporte: 'PADEL' as const, precioMax: 30000 }
+    const chipDeDeporte = activeFilterChips(filtros)[1]
+    expect(chipDeDeporte.withoutIt).toEqual({ zona: 'Palermo', precioMax: 30000 })
+  })
+
+  test('quitar el chip de fecha también quita el horario, que sin fecha no significa nada', () => {
+    const filtros = { fecha: '2026-10-03', horaDesde: '18:00', horaHasta: '22:00', zona: 'Palermo' }
+    const chipDeFecha = activeFilterChips(filtros)[1]
+    expect(chipDeFecha.label).toBe('Fecha: 03/10/2026')
+    expect(chipDeFecha.withoutIt).toEqual({ zona: 'Palermo' })
+  })
+
+  test('quitar el chip de horario deja la fecha', () => {
+    const filtros = { fecha: '2026-10-03', horaDesde: '18:00', horaHasta: '22:00' }
+    const chipDeHorario = activeFilterChips(filtros)[1]
+    expect(chipDeHorario.withoutIt).toEqual({ fecha: '2026-10-03' })
   })
 })

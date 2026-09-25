@@ -1,5 +1,7 @@
 import { db } from '@/lib/db'
 import { getAvailableSlots } from '@/lib/availability'
+import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
+import { formatearDia } from '@/lib/time'
 import type { Cancha } from '@/lib/generated/prisma/client'
 import type { SearchCourtsFilters } from '@/lib/validations/court-search'
 
@@ -171,4 +173,59 @@ export function filtersToQueryString(filtros: SearchCourtsFilters): string {
 
   const texto = params.toString()
   return texto === '' ? '' : `?${texto}`
+}
+
+// Un filtro aplicado como "chip" (ej: "Deporte: Pádel"). withoutIt son los
+// filtros que quedan al quitarlo: con eso la página arma el link de la "x".
+export type FilterChip = { label: string; withoutIt: SearchCourtsFilters }
+
+export function activeFilterChips(filtros: SearchCourtsFilters): FilterChip[] {
+  const chips: FilterChip[] = []
+
+  if (filtros.zona !== undefined) {
+    chips.push({ label: `Zona: ${filtros.zona}`, withoutIt: { ...filtros, zona: undefined } })
+  }
+  if (filtros.deporte !== undefined) {
+    chips.push({
+      label: `Deporte: ${deporteLabels[filtros.deporte]}`,
+      withoutIt: { ...filtros, deporte: undefined },
+    })
+  }
+  if (filtros.tipoSuperficie !== undefined) {
+    chips.push({
+      label: `Superficie: ${superficieLabels[filtros.tipoSuperficie]}`,
+      withoutIt: { ...filtros, tipoSuperficie: undefined },
+    })
+  }
+  if (filtros.precioMin !== undefined) {
+    chips.push({
+      label: `Precio mínimo: ${formatPrecio(filtros.precioMin)}`,
+      withoutIt: { ...filtros, precioMin: undefined },
+    })
+  }
+  if (filtros.precioMax !== undefined) {
+    chips.push({
+      label: `Precio máximo: ${formatPrecio(filtros.precioMax)}`,
+      withoutIt: { ...filtros, precioMax: undefined },
+    })
+  }
+  if (filtros.fecha !== undefined) {
+    // Sin fecha el horario no significa nada, así que se va junto con ella
+    chips.push({
+      label: `Fecha: ${formatearDia(filtros.fecha)}`,
+      withoutIt: { ...filtros, fecha: undefined, horaDesde: undefined, horaHasta: undefined },
+    })
+  }
+  if (filtros.horaDesde !== undefined || filtros.horaHasta !== undefined) {
+    let ventana = `${filtros.horaDesde} a ${filtros.horaHasta}`
+    if (filtros.horaHasta === undefined) ventana = `desde ${filtros.horaDesde}`
+    if (filtros.horaDesde === undefined) ventana = `hasta ${filtros.horaHasta}`
+
+    chips.push({
+      label: `Horario: ${ventana}`,
+      withoutIt: { ...filtros, horaDesde: undefined, horaHasta: undefined },
+    })
+  }
+
+  return chips
 }
