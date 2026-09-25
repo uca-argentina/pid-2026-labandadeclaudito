@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { ImageIcon, SearchX } from 'lucide-react'
 import { db } from '@/lib/db'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
-import { searchComplexes } from '@/lib/court-search'
+import { filtersToQueryString, searchComplexes } from '@/lib/court-search'
 import { searchCourtsSchema } from '@/lib/validations/court-search'
 import type { Cancha, Deporte } from '@/lib/generated/prisma/client'
 
@@ -170,7 +170,7 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
             return (
               <Link
                 key={complejo.id}
-                href={`/jugador/complejos/${complejo.id}`}
+                href={`/jugador/complejos/${complejo.id}${filtersToQueryString(filtros)}`}
                 className="border-border bg-card hover:bg-accent block overflow-hidden rounded-2xl border transition-colors"
               >
                 {complejo.imagenes.length > 0 ? (
