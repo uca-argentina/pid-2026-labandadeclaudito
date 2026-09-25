@@ -107,9 +107,29 @@ model Cancha {
   complejo          Complejo         @relation(fields: [complejoId], references: [id], onDelete: Cascade)
   reservas          Reserva[]
   preciosEspeciales PrecioEspecial[]
+  blocks            Block[]
 
   @@index([complejoId])
   @@index([deporte])
+}
+
+// Bloqueo de horario de una cancha (mantenimiento, evento privado, etc).
+// El horario [startTime, endTime) se bloquea todos los días entre startDate y endDate.
+model Block {
+  id        String   @id @default(cuid())
+  courtId   String
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  startTime String
+  endTime   String
+  // Nota interna del dueño, nunca se muestra al jugador
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  court Cancha @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@index([courtId, startDate, endDate])
 }
 
 model PrecioEspecial {
