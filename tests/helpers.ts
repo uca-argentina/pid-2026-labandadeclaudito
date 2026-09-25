@@ -155,6 +155,7 @@ export async function limpiarDatosDeTest() {
   await db.reserva.deleteMany({
     where: { OR: [{ jugadorId: { in: idsDeUsuarios } }, { canchaId: { in: idsDeCanchas } }] },
   })
+  await db.block.deleteMany({ where: { courtId: { in: idsDeCanchas } } })
   await db.imagenComplejo.deleteMany({ where: { complejoId: { in: idsDeComplejos } } })
   await db.cancha.deleteMany({ where: { id: { in: idsDeCanchas } } })
   await db.complejo.deleteMany({ where: { id: { in: idsDeComplejos } } })

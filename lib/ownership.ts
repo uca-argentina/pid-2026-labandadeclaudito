@@ -13,3 +13,10 @@ export async function getCourtWithComplex(courtId: string) {
     include: { complejo: true },
   })
 }
+
+export async function getBlockWithComplex(blockId: string) {
+  return db.block.findFirst({
+    where: { id: blockId, court: { activo: true, complejo: { activo: true } } },
+    include: { court: { include: { complejo: true } } },
+  })
+}
