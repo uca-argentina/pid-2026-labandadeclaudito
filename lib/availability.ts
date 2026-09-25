@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
 import { Prisma } from '@/lib/generated/prisma/client'
 import { diaDeReserva, diaSemanaDeReserva, turnoYaPaso } from '@/lib/time'
 
@@ -116,13 +117,17 @@ export async function getAvailableSlots(
     select: { horaInicio: true },
   })
   const horasOcupadas = new Set(reservas.map((r) => r.horaInicio))
+  const bloqueosDelDia = await getBlocksOfDay(canchaId, fecha)
 
   const dia = diaDeReserva(fecha)
   const diaSemana = diaSemanaDeReserva(fecha)
 
   const slots = horasDeTurnos.map((horaInicio) => ({
     horaInicio,
-    disponible: !horasOcupadas.has(horaInicio) && !turnoYaPaso(dia, horaInicio),
+    disponible:
+      !horasOcupadas.has(horaInicio) &&
+      !turnoYaPaso(dia, horaInicio) &&
+      !isSlotBlocked(horaInicio, cancha.duracionTurnoMin, bloqueosDelDia),
     precio: precioDelTurno(cancha.precioBase, cancha.preciosEspeciales, diaSemana, horaInicio),
   }))
 

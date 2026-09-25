@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { blockOverlapsBooking, blocksOverlap } from './blocks'
+import { blockOverlapsBooking, blocksOverlap, isSlotBlocked } from './blocks'
 
 describe('blocksOverlap', () => {
   it('se solapan cuando comparten día y horario', () => {
@@ -126,5 +126,45 @@ describe('blockOverlapsBooking', () => {
     }
     const booking = { date: '2026-10-01', startTime: '13:00', endTime: '15:00' }
     expect(blockOverlapsBooking(block, booking)).toBe(true)
+  })
+
+  it('se solapan cuando la reserva termina a medianoche (endTime 00:00) y el bloqueo cubre esa hora', () => {
+    const block = {
+      startDate: '2026-10-01',
+      endDate: '2026-10-01',
+      startTime: '22:00',
+      endTime: '23:59',
+    }
+    const booking = { date: '2026-10-01', startTime: '23:00', endTime: '00:00' }
+    expect(blockOverlapsBooking(block, booking)).toBe(true)
+  })
+})
+
+describe('isSlotBlocked', () => {
+  const bloqueoDeTarde = [{ startTime: '14:00', endTime: '18:00' }]
+
+  it('un turno dentro del horario del bloqueo está bloqueado', () => {
+    expect(isSlotBlocked('15:00', 60, bloqueoDeTarde)).toBe(true)
+  })
+
+  it('un turno que empieza antes y termina dentro del bloqueo está bloqueado', () => {
+    expect(isSlotBlocked('13:30', 60, bloqueoDeTarde)).toBe(true)
+  })
+
+  it('un turno que termina justo cuando empieza el bloqueo no está bloqueado', () => {
+    expect(isSlotBlocked('13:00', 60, bloqueoDeTarde)).toBe(false)
+  })
+
+  it('un turno que empieza justo cuando termina el bloqueo no está bloqueado', () => {
+    expect(isSlotBlocked('18:00', 60, bloqueoDeTarde)).toBe(false)
+  })
+
+  it('sin bloqueos ningún turno está bloqueado', () => {
+    expect(isSlotBlocked('15:00', 60, [])).toBe(false)
+  })
+
+  it('el turno de las 23:00 (termina a medianoche) se bloquea si el bloqueo llega hasta las 23:59', () => {
+    const bloqueoDeNoche = [{ startTime: '22:00', endTime: '23:59' }]
+    expect(isSlotBlocked('23:00', 60, bloqueoDeNoche)).toBe(true)
   })
 })

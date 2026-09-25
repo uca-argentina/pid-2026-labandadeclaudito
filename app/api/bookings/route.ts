@@ -3,6 +3,7 @@ import { Prisma } from '@/lib/generated/prisma/client'
 import { createBookingSchema } from '@/lib/validations/booking'
 import { requireRole } from '@/lib/auth-helpers'
 import { generateSlots, precioDelTurno } from '@/lib/availability'
+import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
 import { diaSemanaDeReserva, sumarMinutos, turnoYaPaso } from '@/lib/time'
 import { db } from '@/lib/db'
 
@@ -44,6 +45,11 @@ export async function POST(request: Request) {
 
   const fecha = new Date(parsed.data.fecha)
   const horaFin = sumarMinutos(parsed.data.horaInicio, cancha.duracionTurnoMin)
+
+  const bloqueosDelDia = await getBlocksOfDay(cancha.id, fecha)
+  if (isSlotBlocked(parsed.data.horaInicio, cancha.duracionTurnoMin, bloqueosDelDia)) {
+    return NextResponse.json({ error: 'Ese horario está bloqueado' }, { status: 409 })
+  }
 
   // Precio y seña se calculan siempre acá, nunca se confía en lo que mande
   // el cliente: precioBase puede tener un PrecioEspecial pisándolo, y el %
