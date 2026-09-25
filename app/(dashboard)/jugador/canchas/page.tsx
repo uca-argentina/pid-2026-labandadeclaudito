@@ -2,7 +2,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ImageIcon, SearchX } from 'lucide-react'
 import { db } from '@/lib/db'
-import { deporteLabels, formatPrecio } from '@/lib/labels'
+import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
+import { searchComplexes } from '@/lib/court-search'
+import { searchCourtsSchema } from '@/lib/validations/court-search'
 import type { Cancha, Deporte } from '@/lib/generated/prisma/client'
 
 function deportesDistintos(canchas: Cancha[]) {
@@ -26,10 +28,7 @@ function precioMasBajo(canchas: Cancha[]) {
 }
 
 export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/jugador/canchas'>) {
-  const { zona, deporte } = await searchParams
-  const zonaFiltro = typeof zona === 'string' && zona !== '' ? zona : undefined
-  const deporteFiltro =
-    typeof deporte === 'string' && deporte !== '' ? (deporte as Deporte) : undefined
+  const filtros = searchCourtsSchema.parse(await searchParams)
 
   const zonas = await db.complejo.findMany({
     where: { activo: true },
@@ -38,26 +37,14 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
     orderBy: { zona: 'asc' },
   })
 
-  // Solo complejos con al menos una cancha del deporte elegido (o con alguna cancha si no hay filtro)
-  const complejos = await db.complejo.findMany({
-    where: {
-      zona: zonaFiltro,
-      activo: true,
-      canchas: { some: { deporte: deporteFiltro, activo: true } },
-    },
-    include: {
-      imagenes: { where: { activo: true }, orderBy: { orden: 'asc' }, take: 1 },
-      canchas: { where: { deporte: deporteFiltro, activo: true } },
-    },
-    orderBy: { nombre: 'asc' },
-  })
+  const complejos = await searchComplexes(filtros)
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
       <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Buscar canchas</h1>
         <p className="text-muted-foreground mt-2">
-          Filtrá por zona y deporte para encontrar una cancha libre.
+          Filtrá por zona, deporte, superficie y precio para encontrar una cancha.
         </p>
       </div>
 
@@ -72,7 +59,7 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
           <select
             id="zona"
             name="zona"
-            defaultValue={zonaFiltro ?? ''}
+            defaultValue={filtros.zona ?? ''}
             className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
           >
             <option value="">Todas</option>
@@ -91,7 +78,7 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
           <select
             id="deporte"
             name="deporte"
-            defaultValue={deporteFiltro ?? ''}
+            defaultValue={filtros.deporte ?? ''}
             className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
           >
             <option value="">Todos</option>
@@ -103,19 +90,76 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
           </select>
         </div>
 
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="tipoSuperficie" className="text-sm font-medium">
+            Superficie
+          </label>
+          <select
+            id="tipoSuperficie"
+            name="tipoSuperficie"
+            defaultValue={filtros.tipoSuperficie ?? ''}
+            className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
+          >
+            <option value="">Todas</option>
+            {Object.entries(superficieLabels).map(([valor, label]) => (
+              <option key={valor} value={valor}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="precioMin" className="text-sm font-medium">
+            Precio mínimo
+          </label>
+          <input
+            id="precioMin"
+            name="precioMin"
+            type="number"
+            min={0}
+            step={1}
+            placeholder="$"
+            defaultValue={filtros.precioMin ?? ''}
+            className="border-input bg-background h-9 w-28 rounded-lg border px-3 text-sm"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="precioMax" className="text-sm font-medium">
+            Precio máximo
+          </label>
+          <input
+            id="precioMax"
+            name="precioMax"
+            type="number"
+            min={0}
+            step={1}
+            placeholder="$"
+            defaultValue={filtros.precioMax ?? ''}
+            className="border-input bg-background h-9 w-28 rounded-lg border px-3 text-sm"
+          />
+        </div>
+
         <button
           type="submit"
           className="bg-primary text-primary-foreground hover:bg-primary/80 h-9 rounded-lg px-4 text-sm font-medium"
         >
           Buscar
         </button>
+        <Link
+          href="/jugador/canchas"
+          className="text-muted-foreground hover:text-foreground h-9 content-center text-sm underline"
+        >
+          Limpiar filtros
+        </Link>
       </form>
 
       {complejos.length === 0 ? (
         <div className="border-border mt-8 flex flex-col items-center gap-2.5 rounded-2xl border border-dashed p-16 text-center">
           <SearchX className="text-muted-foreground size-8" />
           <h3 className="text-lg font-semibold">No encontramos canchas con esos filtros</h3>
-          <p className="text-muted-foreground text-sm">Probá con otra zona o deporte.</p>
+          <p className="text-muted-foreground text-sm">Probá aflojando algún filtro.</p>
         </div>
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
