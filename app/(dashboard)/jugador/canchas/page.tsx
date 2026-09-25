@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { ImageIcon, SearchX } from 'lucide-react'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { filtersToQueryString, getSearchableZones, searchComplexes } from '@/lib/court-search'
+import type { CourtWithPrice } from '@/lib/court-search'
+import { diaDeHoy } from '@/lib/time'
 import { searchCourtsSchema } from '@/lib/validations/court-search'
 import type { Cancha, Deporte } from '@/lib/generated/prisma/client'
 
@@ -16,11 +18,11 @@ function deportesDistintos(canchas: Cancha[]) {
   return deportes
 }
 
-function precioMasBajo(canchas: Cancha[]) {
-  let minimo = Number(canchas[0].precioBase)
+function precioMasBajo(canchas: CourtWithPrice[]) {
+  let minimo = canchas[0].priceFrom
   for (const cancha of canchas) {
-    if (Number(cancha.precioBase) < minimo) {
-      minimo = Number(cancha.precioBase)
+    if (cancha.priceFrom < minimo) {
+      minimo = cancha.priceFrom
     }
   }
   return minimo
@@ -38,7 +40,7 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
       <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Buscar canchas</h1>
         <p className="text-muted-foreground mt-2">
-          Filtrá por zona, deporte, superficie y precio para encontrar una cancha.
+          Filtrá por zona, deporte, superficie, precio, fecha y horario para encontrar una cancha.
         </p>
       </div>
 
@@ -134,6 +136,51 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
             className="border-input bg-background h-9 w-28 rounded-lg border px-3 text-sm"
           />
         </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="fecha" className="text-sm font-medium">
+            Fecha
+          </label>
+          <input
+            id="fecha"
+            name="fecha"
+            type="date"
+            min={diaDeHoy()}
+            defaultValue={filtros.fecha ?? ''}
+            className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="horaDesde" className="text-sm font-medium">
+            Desde
+          </label>
+          <input
+            id="horaDesde"
+            name="horaDesde"
+            type="time"
+            defaultValue={filtros.horaDesde ?? ''}
+            className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="horaHasta" className="text-sm font-medium">
+            Hasta
+          </label>
+          <input
+            id="horaHasta"
+            name="horaHasta"
+            type="time"
+            defaultValue={filtros.horaHasta ?? ''}
+            className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
+          />
+        </div>
+
+        <p className="text-muted-foreground w-full text-xs">
+          El horario se aplica solo si elegís una fecha. Se muestran las canchas con algún turno
+          libre que empiece dentro de esa franja.
+        </p>
 
         <button
           type="submit"

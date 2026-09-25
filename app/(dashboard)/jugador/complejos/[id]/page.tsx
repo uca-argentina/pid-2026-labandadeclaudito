@@ -85,6 +85,7 @@ export default async function ComplejoDetallePage({
                   courtSportLabel={deporteLabels[cancha.deporte]}
                   precioBase={cancha.precioBase.toString()}
                   duracionTurnoMin={cancha.duracionTurnoMin}
+                  fechaInicial={filtros.fecha}
                 />
               </div>
             </div>
