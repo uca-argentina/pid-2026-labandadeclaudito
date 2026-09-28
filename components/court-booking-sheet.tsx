@@ -42,13 +42,16 @@ export function CourtBookingSheet({
         <SheetHeader>
           <SheetTitle>{courtName}</SheetTitle>
           <SheetDescription>
-            {courtSportLabel} · {formatPrecio(precioBase)} por turno de {duracionTurnoMin} min
+            {courtSportLabel} · Precio base {formatPrecio(precioBase)} por turno de{' '}
+            {duracionTurnoMin} min. Algunos turnos pueden tener precio especial, se ve al elegir
+            fecha y horario.
           </SheetDescription>
         </SheetHeader>
         <div className="px-4 pb-4">
           <CourtSlotPicker
             courtId={courtId}
             courtName={courtName}
+            precioBase={precioBase}
             duracionTurnoMin={duracionTurnoMin}
             fechaInicial={fechaInicial}
           />
