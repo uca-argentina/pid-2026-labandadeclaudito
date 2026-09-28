@@ -11,7 +11,7 @@ export default async function ReservasDelDuenioPage() {
 
   const reservas = await db.reserva.findMany({
     where: { cancha: { complejo: { duenioId: session.user.id } } },
-    include: { cancha: { include: { complejo: true } }, jugador: true },
+    include: { cancha: { include: { complejo: true } }, jugador: true, pago: true },
     orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
   })
 
@@ -78,9 +78,16 @@ export default async function ReservasDelDuenioPage() {
 
                   <div className="text-right">
                     <div className="text-primary text-xl font-bold">
-                      {formatPrecio(reserva.cancha.precioBase.toString())}
+                      {formatPrecio(reserva.precioTurno.toString())}
                     </div>
                     <div className="text-muted-foreground text-xs">por turno</div>
+                    {reserva.pago && (
+                      <div className="text-muted-foreground text-xs">
+                        Seña {formatPrecio(reserva.pago.monto.toString())} (
+                        {reserva.pago.porcentaje}%)
+                        {reserva.pago.devuelto ? ' · devuelta' : ''}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
