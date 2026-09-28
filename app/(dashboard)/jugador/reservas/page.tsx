@@ -13,7 +13,7 @@ export default async function MisReservasPage() {
 
   const reservas = await db.reserva.findMany({
     where: { jugadorId: session.user.id },
-    include: { cancha: { include: { complejo: true } } },
+    include: { cancha: { include: { complejo: true } }, pago: true },
     orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
   })
 
@@ -80,10 +80,21 @@ export default async function MisReservasPage() {
 
                   <div className="text-right">
                     <div className="text-primary text-xl font-bold">
-                      {formatPrecio(reserva.cancha.precioBase.toString())}
+                      {formatPrecio(reserva.precioTurno.toString())}
                     </div>
-                    <div className="text-muted-foreground mb-2 text-xs">por turno</div>
-                    {!cancelada && !yaPaso && <CancelBookingButton bookingId={reserva.id} />}
+                    <div className="text-muted-foreground text-xs">por turno</div>
+                    {reserva.pago && (
+                      <div className="text-muted-foreground text-xs">
+                        Seña {formatPrecio(reserva.pago.monto.toString())} (
+                        {reserva.pago.porcentaje}%)
+                        {reserva.pago.devuelto ? ' · devuelta' : ''}
+                      </div>
+                    )}
+                    {!cancelada && !yaPaso && (
+                      <div className="mt-2">
+                        <CancelBookingButton bookingId={reserva.id} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
