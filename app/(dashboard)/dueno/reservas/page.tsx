@@ -2,25 +2,45 @@ import { redirect } from 'next/navigation'
 import { CalendarClock } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { deporteLabels, estadoReservaLabels, formatPrecio } from '@/lib/labels'
-import { diaDeReserva, formatearDia } from '@/lib/time'
+import { deporteLabels } from '@/lib/labels'
+import { estadoVisible, montoDelHistorial } from '@/lib/historial'
+import { diaDeReserva, formatearDia, turnoYaPaso } from '@/lib/time'
+
+async function getReservas(duenioId: string) {
+  return db.reserva.findMany({
+    where: { cancha: { complejo: { duenioId } } },
+    include: { cancha: { include: { complejo: true } }, jugador: true, pago: true },
+    orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
+  })
+}
+
+type Reserva = Awaited<ReturnType<typeof getReservas>>[number]
+
+const tonos = {
+  normal: 'text-primary',
+  exito: 'text-green-600',
+  peligro: 'text-destructive',
+}
 
 export default async function ReservasDelDuenioPage() {
   const session = await auth()
   if (!session) redirect('/login')
 
-  const reservas = await db.reserva.findMany({
-    where: { cancha: { complejo: { duenioId: session.user.id } } },
-    include: { cancha: { include: { complejo: true } }, jugador: true, pago: true },
-    orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
-  })
+  const reservas = await getReservas(session.user.id)
+
+  // Próximas: las que todavía se van a jugar, de la más cercana a la más lejana.
+  // Historial: jugadas y canceladas, de la más reciente a la más vieja.
+  const esProxima = (r: Reserva) =>
+    r.estado !== 'CANCELADA' && !turnoYaPaso(diaDeReserva(r.fecha), r.horaInicio)
+  const proximas = reservas.filter(esProxima).reverse()
+  const historial = reservas.filter((r) => !esProxima(r))
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
       <div className="mb-6">
         <h1 className="text-3xl font-semibold">Reservas</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Todos los turnos reservados en tus canchas, del más reciente al más viejo.
+          Los próximos turnos en tus canchas y todo lo que se reservó antes.
         </p>
       </div>
 
@@ -33,68 +53,86 @@ export default async function ReservasDelDuenioPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {reservas.map((reserva) => {
-            const cancelada = reserva.estado === 'CANCELADA'
-
-            return (
-              <div
-                key={reserva.id}
-                className={
-                  cancelada
-                    ? 'border-border bg-card rounded-2xl border p-5 opacity-60'
-                    : 'border-border bg-card rounded-2xl border p-5'
-                }
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold">{reserva.cancha.nombre}</span>
-                      <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
-                        {deporteLabels[reserva.cancha.deporte]}
-                      </span>
-                      <span
-                        className={
-                          cancelada
-                            ? 'bg-destructive/15 text-destructive rounded-full px-2.5 py-1 text-xs font-medium'
-                            : 'bg-primary/15 text-primary rounded-full px-2.5 py-1 text-xs font-medium'
-                        }
-                      >
-                        {estadoReservaLabels[reserva.estado]}
-                      </span>
-                    </div>
-                    <p className="text-muted-foreground mt-1 text-sm">
-                      {reserva.cancha.complejo.nombre}
-                    </p>
-                    <p className="mt-2 text-sm font-medium">
-                      {formatearDia(diaDeReserva(reserva.fecha))} · {reserva.horaInicio} a{' '}
-                      {reserva.horaFin} hs
-                    </p>
-                    <p className="text-muted-foreground mt-2 text-sm">
-                      Reservó {reserva.jugador.nombre} · {reserva.jugador.email}
-                      {reserva.jugador.telefono ? ` · ${reserva.jugador.telefono}` : ''}
-                    </p>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="text-primary text-xl font-bold">
-                      {formatPrecio(reserva.precioTurno.toString())}
-                    </div>
-                    <div className="text-muted-foreground text-xs">por turno</div>
-                    {reserva.pago && (
-                      <div className="text-muted-foreground text-xs">
-                        Seña {formatPrecio(reserva.pago.monto.toString())} (
-                        {reserva.pago.porcentaje}%)
-                        {reserva.pago.devuelto ? ' · devuelta' : ''}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+        <div className="space-y-8">
+          {proximas.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="text-muted-foreground text-sm font-medium">Próximos</h2>
+              {proximas.map((reserva) => (
+                <TarjetaReserva key={reserva.id} reserva={reserva} />
+              ))}
+            </section>
+          )}
+          {historial.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="text-muted-foreground text-sm font-medium">Historial</h2>
+              {historial.map((reserva) => (
+                <TarjetaReserva key={reserva.id} reserva={reserva} />
+              ))}
+            </section>
+          )}
         </div>
       )}
     </main>
+  )
+}
+
+function TarjetaReserva({ reserva }: { reserva: Reserva }) {
+  const dia = diaDeReserva(reserva.fecha)
+  const cancelada = reserva.estado === 'CANCELADA'
+  const yaPaso = turnoYaPaso(dia, reserva.horaInicio)
+  const monto = montoDelHistorial(
+    {
+      estado: reserva.estado,
+      precioTurno: reserva.precioTurno.toString(),
+      pago: reserva.pago && { ...reserva.pago, monto: reserva.pago.monto.toString() },
+    },
+    yaPaso,
+    'DUENIO',
+  )
+
+  return (
+    <div
+      className={
+        cancelada
+          ? 'border-border bg-card rounded-2xl border p-5 opacity-60'
+          : 'border-border bg-card rounded-2xl border p-5'
+      }
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold">{reserva.cancha.nombre}</span>
+            <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
+              {deporteLabels[reserva.cancha.deporte]}
+            </span>
+            <span
+              className={
+                cancelada
+                  ? 'bg-destructive/15 text-destructive rounded-full px-2.5 py-1 text-xs font-medium'
+                  : 'bg-primary/15 text-primary rounded-full px-2.5 py-1 text-xs font-medium'
+              }
+            >
+              {estadoVisible(reserva.estado, yaPaso)}
+            </span>
+          </div>
+          <p className="text-muted-foreground mt-1 text-sm">{reserva.cancha.complejo.nombre}</p>
+          <p className="mt-2 text-sm font-medium">
+            {formatearDia(dia)} · {reserva.horaInicio} a {reserva.horaFin} hs
+          </p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            Reservó {reserva.jugador.nombre} · {reserva.jugador.email}
+            {reserva.jugador.telefono ? ` · ${reserva.jugador.telefono}` : ''}
+          </p>
+        </div>
+
+        {monto && (
+          <div className="text-right">
+            <div className="text-muted-foreground text-xs">{monto.etiqueta}</div>
+            <div className={`text-xl font-bold ${tonos[monto.tono]}`}>{monto.monto}</div>
+            {monto.detalle && <div className="text-muted-foreground text-xs">{monto.detalle}</div>}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
