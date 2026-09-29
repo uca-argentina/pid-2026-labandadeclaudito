@@ -136,7 +136,7 @@ describe('POST /api/courts/[id]/blocks', () => {
     expect(reservaSolapada?.estado).toBe('CANCELADA')
 
     const reservaLibre = await db.reserva.findUnique({ where: { id: reservaLibreId } })
-    expect(reservaLibre?.estado).toBe('CONFIRMADA')
+    expect(reservaLibre?.estado).toBe('PENDIENTE')
   })
 })
 

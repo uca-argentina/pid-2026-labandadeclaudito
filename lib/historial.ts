@@ -44,6 +44,17 @@ export function montoDelHistorial(
       : { etiqueta: 'Seña no devuelta', monto: formatPrecio(pago.monto), tono: 'peligro' }
   }
 
+  if (estado === 'PENDIENTE') {
+    // Nunca se pagó la seña: si el turno ya empezó no hay nada que mostrar.
+    if (yaPaso) return null
+    return {
+      etiqueta: 'Precio del turno',
+      monto: formatPrecio(precioTurno),
+      detalle: esJugador ? 'Pagá la seña para confirmar' : 'Esperando la seña',
+      tono: 'normal',
+    }
+  }
+
   if (yaPaso) {
     return {
       etiqueta: esJugador ? 'Total del turno' : 'Total cobrado',

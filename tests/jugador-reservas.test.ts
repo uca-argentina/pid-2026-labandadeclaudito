@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { GET as verDisponibilidad } from '@/app/api/courts/[id]/availability/route'
 import { POST as reservar } from '@/app/api/bookings/route'
 import { PATCH as cancelarReserva } from '@/app/api/bookings/[id]/route'
+import { POST as pagarSena } from '@/app/api/bookings/[id]/deposit/route'
 import { db } from '@/lib/db'
 import {
   conParams,
@@ -104,8 +105,16 @@ describe('Reservar (POST /api/bookings)', () => {
     reservaId = json.reserva.id
     const reserva = await db.reserva.findUnique({ where: { id: reservaId } })
     expect(reserva?.jugadorId).toBe(jugador.id)
-    expect(reserva?.estado).toBe('CONFIRMADA')
     expect(reserva?.horaFin).toBe('11:00')
+  })
+
+  test('la reserva nace pendiente de seña y sin pago', async () => {
+    const reserva = await db.reserva.findUnique({
+      where: { id: reservaId },
+      include: { pago: true },
+    })
+    expect(reserva?.estado).toBe('PENDIENTE')
+    expect(reserva?.pago).toBeNull()
   })
 
   test('el turno reservado aparece ocupado en la disponibilidad', async () => {
@@ -162,6 +171,35 @@ describe('Reservar (POST /api/bookings)', () => {
   })
 })
 
+describe('Pagar seña (POST /api/bookings/[id]/deposit)', () => {
+  test('otro jugador no puede pagarla (403)', async () => {
+    loginComo(otroJugador)
+    const res = await pagarSena(jsonRequest('POST'), conParams({ id: reservaId }))
+    expect(res.status).toBe(403)
+  })
+
+  test('el jugador paga la seña y la reserva queda confirmada', async () => {
+    loginComo(jugador)
+    const res = await pagarSena(jsonRequest('POST'), conParams({ id: reservaId }))
+    expect(res.status).toBe(200)
+
+    const reserva = await db.reserva.findUnique({
+      where: { id: reservaId },
+      include: { pago: true },
+    })
+    expect(reserva?.estado).toBe('CONFIRMADA')
+    // precio 10000 con la seña del 30% del complejo
+    expect(reserva?.pago?.monto.toString()).toBe('3000')
+    expect(reserva?.pago?.porcentaje).toBe(30)
+  })
+
+  test('pagarla de nuevo devuelve 409', async () => {
+    loginComo(jugador)
+    const res = await pagarSena(jsonRequest('POST'), conParams({ id: reservaId }))
+    expect(res.status).toBe(409)
+  })
+})
+
 describe('Cancelar reserva (PATCH /api/bookings/[id])', () => {
   test('otro jugador no puede cancelarla (403)', async () => {
     loginComo(otroJugador)
@@ -191,8 +229,13 @@ describe('Cancelar reserva (PATCH /api/bookings/[id])', () => {
     )
     expect(res.status).toBe(201)
 
-    const reserva = await db.reserva.findUnique({ where: { id: reservaId } })
+    // Se reusa la fila de la cancelada: vuelve a pendiente y sin el pago viejo.
+    const reserva = await db.reserva.findUnique({
+      where: { id: reservaId },
+      include: { pago: true },
+    })
     expect(reserva?.jugadorId).toBe(otroJugador.id)
-    expect(reserva?.estado).toBe('CONFIRMADA')
+    expect(reserva?.estado).toBe('PENDIENTE')
+    expect(reserva?.pago).toBeNull()
   })
 })

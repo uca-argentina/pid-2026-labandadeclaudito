@@ -7,6 +7,7 @@ import { deporteLabels } from '@/lib/labels'
 import { estadoVisible, montoDelHistorial } from '@/lib/historial'
 import { diaDeReserva, formatearDia, turnoYaPaso } from '@/lib/time'
 import { CancelBookingButton } from '@/components/cancel-booking-button'
+import { PayDepositButton } from '@/components/pay-deposit-button'
 
 async function getReservas(jugadorId: string) {
   return db.reserva.findMany({
@@ -94,6 +95,11 @@ function TarjetaReserva({ reserva }: { reserva: Reserva }) {
     yaPaso,
     'JUGADOR',
   )
+  // Mismo cálculo que hace el endpoint de la seña: es solo para mostrar el
+  // monto en el botón, el que se cobra lo calcula el server.
+  const porcentajeSena =
+    reserva.cancha.porcentajeSena ?? reserva.cancha.complejo.porcentajeSenaDefault
+  const montoSena = ((Number(reserva.precioTurno) * porcentajeSena) / 100).toString()
 
   return (
     <div
@@ -137,6 +143,11 @@ function TarjetaReserva({ reserva }: { reserva: Reserva }) {
                 <div className="text-muted-foreground text-xs">{monto.detalle}</div>
               )}
             </>
+          )}
+          {reserva.estado === 'PENDIENTE' && !yaPaso && (
+            <div className="mt-2">
+              <PayDepositButton bookingId={reserva.id} montoSena={montoSena} />
+            </div>
           )}
           {!cancelada && !yaPaso && (
             <div className="mt-2">
