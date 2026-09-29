@@ -20,11 +20,13 @@ function capitalizar(texto: string): string {
 export function CourtSlotPicker({
   courtId,
   courtName,
+  precioBase,
   duracionTurnoMin,
   fechaInicial,
 }: {
   courtId: string
   courtName: string
+  precioBase: string
   duracionTurnoMin: number
   fechaInicial?: string
 }) {
@@ -142,6 +144,7 @@ export function CourtSlotPicker({
         <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2">
           {slots.map((slot) => {
             const seleccionado = slot.horaInicio === horaSeleccionada
+            const esPrecioEspecial = slot.precio !== precioBase
             return (
               <button
                 key={slot.horaInicio}
@@ -154,13 +157,18 @@ export function CourtSlotPicker({
                 }}
                 className={
                   !slot.disponible
-                    ? 'bg-secondary text-muted-foreground h-9 cursor-not-allowed rounded-lg border text-sm font-medium line-through opacity-45'
+                    ? 'bg-secondary text-muted-foreground flex h-9 cursor-not-allowed flex-col items-center justify-center rounded-lg border text-sm font-medium line-through opacity-45'
                     : seleccionado
-                      ? 'bg-primary text-primary-foreground border-primary h-9 rounded-lg border text-sm font-semibold'
-                      : 'border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground h-9 rounded-lg border text-sm font-medium transition-colors'
+                      ? 'bg-primary text-primary-foreground border-primary flex h-9 flex-col items-center justify-center rounded-lg border text-sm font-semibold'
+                      : 'border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground flex h-9 flex-col items-center justify-center rounded-lg border text-sm font-medium transition-colors'
                 }
               >
                 {slot.horaInicio}
+                {esPrecioEspecial && slot.disponible && (
+                  <span className="text-[10px] leading-none font-normal opacity-80">
+                    {formatPrecio(slot.precio)}
+                  </span>
+                )}
               </button>
             )
           })}
@@ -169,9 +177,18 @@ export function CourtSlotPicker({
 
       {horaSeleccionada && slotSeleccionado && (
         <div className="bg-secondary border-border flex flex-col gap-3 rounded-lg border px-4 py-3">
-          <div className="text-sm font-medium">
-            {capitalizar(format(fecha, 'EEEE dd/MM', { locale: es }))} · {horaSeleccionada} a{' '}
-            {sumarMinutos(horaSeleccionada, duracionTurnoMin)} hs
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-sm font-medium">
+              {capitalizar(format(fecha, 'EEEE dd/MM', { locale: es }))} · {horaSeleccionada} a{' '}
+              {sumarMinutos(horaSeleccionada, duracionTurnoMin)} hs
+            </div>
+            <div className="flex items-center gap-1.5 text-sm">
+              <span className="text-muted-foreground">Precio del turno:</span>
+              <span className="font-semibold">{formatPrecio(slotSeleccionado.precio)}</span>
+              {slotSeleccionado.precio !== precioBase && (
+                <Badge variant="secondary">Precio especial</Badge>
+              )}
+            </div>
           </div>
 
           <div className="bg-primary/10 border-primary/30 flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3.5 py-3">

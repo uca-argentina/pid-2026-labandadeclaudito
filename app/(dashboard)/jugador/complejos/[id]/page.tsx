@@ -76,7 +76,7 @@ export default async function ComplejoDetallePage({
                     {formatPrecio(cancha.precioBase.toString())}
                   </div>
                   <div className="text-muted-foreground text-xs">
-                    por turno de {cancha.duracionTurnoMin} min
+                    Precio base, por turno de {cancha.duracionTurnoMin} min
                   </div>
                 </div>
                 <CourtBookingSheet

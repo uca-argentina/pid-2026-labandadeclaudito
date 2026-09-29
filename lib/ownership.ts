@@ -20,3 +20,10 @@ export async function getBlockWithComplex(blockId: string) {
     include: { court: { include: { complejo: true } } },
   })
 }
+
+export async function getPriceWithComplex(priceId: string) {
+  return db.precioEspecial.findFirst({
+    where: { id: priceId, activo: true, cancha: { activo: true, complejo: { activo: true } } },
+    include: { cancha: { include: { complejo: true } } },
+  })
+}
