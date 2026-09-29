@@ -1,4 +1,5 @@
-import type { Deporte, EstadoReserva, TipoSuperficie } from '@/lib/generated/prisma/client'
+import type { Deporte, TipoSuperficie } from '@/lib/generated/prisma/client'
+import type { EstadoVisible } from '@/lib/estado-reserva'
 
 export const deporteLabels: Record<Deporte, string> = {
   FUTBOL_5: 'Fútbol 5',
@@ -26,12 +27,13 @@ export const superficiesPorDeporte: Record<Deporte, TipoSuperficie[]> = {
   PADEL: ['CESPED_SINTETICO', 'CEMENTO', 'PARQUET'],
 }
 
-export const estadoReservaLabels: Record<EstadoReserva, string> = {
-  PENDIENTE: 'Pendiente',
+export const estadoVisibleLabels: Record<EstadoVisible, string> = {
+  PENDIENTE: 'Pendiente de seña',
   CONFIRMADA: 'Confirmada',
+  EN_CURSO: 'En curso',
+  FINALIZADA: 'Finalizada',
   CANCELADA: 'Cancelada',
   NO_SHOW: 'No se presentó',
-  COMPLETADA: 'Completada',
 }
 
 export function formatPrecio(precio: number | string): string {

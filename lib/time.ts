@@ -54,6 +54,20 @@ export function diaSemanaDeReserva(fecha: Date): number {
   return fecha.getUTCDay()
 }
 
+// El momento actual escrito igual que lo guarda una reserva: día YYYY-MM-DD y
+// hora HH:MM en Argentina. Recibe la fecha por parámetro para poder testear
+// con una hora fija.
+export function momentoActual(ahora: Date = new Date()): { dia: string; hora: string } {
+  return {
+    dia: ahora.toLocaleDateString('en-CA', { timeZone: ZONA_ARGENTINA }),
+    hora: ahora.toLocaleTimeString('en-GB', {
+      timeZone: ZONA_ARGENTINA,
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  }
+}
+
 export function turnoYaPaso(fecha: string, horaInicio: string): boolean {
   const ahora = new Date()
   const fechaDeHoy = diaDeHoy()

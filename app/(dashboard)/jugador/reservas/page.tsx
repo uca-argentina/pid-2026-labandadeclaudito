@@ -4,8 +4,10 @@ import { CalendarCheck } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { deporteLabels } from '@/lib/labels'
-import { estadoVisible, montoDelHistorial } from '@/lib/historial'
-import { diaDeReserva, formatearDia, turnoYaPaso } from '@/lib/time'
+import { montoDelHistorial } from '@/lib/historial'
+import { estadoDeReserva } from '@/lib/estado-reserva'
+import { diaDeReserva, formatearDia, momentoActual, turnoYaPaso } from '@/lib/time'
+import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { CancelBookingButton } from '@/components/cancel-booking-button'
 import { PayDepositButton } from '@/components/pay-deposit-button'
 
@@ -30,11 +32,18 @@ export default async function MisReservasPage() {
   if (!session) redirect('/login')
 
   const reservas = await getReservas(session.user.id)
+  const ahora = momentoActual()
 
-  // Próximas: las que todavía se van a jugar, de la más cercana a la más lejana.
-  // Historial: jugadas y canceladas, de la más reciente a la más vieja.
-  const esProxima = (r: Reserva) =>
-    r.estado !== 'CANCELADA' && !turnoYaPaso(diaDeReserva(r.fecha), r.horaInicio)
+  // Próximas: las que todavía se van a jugar (la que está en curso también),
+  // de la más cercana a la más lejana. Historial: finalizadas y canceladas, de
+  // la más reciente a la más vieja.
+  const esProxima = (r: Reserva) => {
+    const dia = diaDeReserva(r.fecha)
+    const visible = estadoDeReserva(r.estado, dia, r.horaInicio, r.horaFin, ahora)
+    if (visible === 'CONFIRMADA' || visible === 'EN_CURSO') return true
+    // Una pendiente que nunca se pagó deja de ser próxima cuando empieza el turno.
+    return visible === 'PENDIENTE' && !turnoYaPaso(dia, r.horaInicio)
+  }
   const proximas = reservas.filter(esProxima).reverse()
   const historial = reservas.filter((r) => !esProxima(r))
 
@@ -64,7 +73,7 @@ export default async function MisReservasPage() {
             <section className="space-y-4">
               <h2 className="text-muted-foreground text-sm font-medium">Próximos</h2>
               {proximas.map((reserva) => (
-                <TarjetaReserva key={reserva.id} reserva={reserva} />
+                <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
               ))}
             </section>
           )}
@@ -72,7 +81,7 @@ export default async function MisReservasPage() {
             <section className="space-y-4">
               <h2 className="text-muted-foreground text-sm font-medium">Historial</h2>
               {historial.map((reserva) => (
-                <TarjetaReserva key={reserva.id} reserva={reserva} />
+                <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
               ))}
             </section>
           )}
@@ -82,7 +91,13 @@ export default async function MisReservasPage() {
   )
 }
 
-function TarjetaReserva({ reserva }: { reserva: Reserva }) {
+function TarjetaReserva({
+  reserva,
+  ahora,
+}: {
+  reserva: Reserva
+  ahora: { dia: string; hora: string }
+}) {
   const dia = diaDeReserva(reserva.fecha)
   const cancelada = reserva.estado === 'CANCELADA'
   const yaPaso = turnoYaPaso(dia, reserva.horaInicio)
@@ -116,15 +131,13 @@ function TarjetaReserva({ reserva }: { reserva: Reserva }) {
             <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
               {deporteLabels[reserva.cancha.deporte]}
             </span>
-            <span
-              className={
-                cancelada
-                  ? 'bg-destructive/15 text-destructive rounded-full px-2.5 py-1 text-xs font-medium'
-                  : 'bg-primary/15 text-primary rounded-full px-2.5 py-1 text-xs font-medium'
-              }
-            >
-              {estadoVisible(reserva.estado, yaPaso)}
-            </span>
+            <BookingStatusBadge
+              estado={reserva.estado}
+              dia={dia}
+              horaInicio={reserva.horaInicio}
+              horaFin={reserva.horaFin}
+              ahoraInicial={ahora}
+            />
           </div>
           <p className="text-muted-foreground mt-1 text-sm">
             {reserva.cancha.complejo.nombre} · {reserva.cancha.complejo.direccion}

@@ -1,5 +1,5 @@
 import type { EstadoReserva } from '@/lib/generated/prisma/client'
-import { estadoReservaLabels, formatPrecio } from '@/lib/labels'
+import { formatPrecio } from '@/lib/labels'
 
 // Lo mínimo de una reserva que hace falta para armar su tarjeta del historial.
 // Los montos llegan como string (Decimal.toString()) para no depender de Prisma.
@@ -14,13 +14,6 @@ type MontoDelHistorial = {
   monto: string
   detalle?: string
   tono: 'normal' | 'exito' | 'peligro'
-}
-
-// El estado "Jugada" no se guarda en la base: una reserva confirmada cuyo
-// turno ya pasó se muestra como jugada al leerla (así no hace falta un cron).
-export function estadoVisible(estado: EstadoReserva, yaPaso: boolean): string {
-  if (estado === 'CONFIRMADA' && yaPaso) return 'Jugada'
-  return estadoReservaLabels[estado]
 }
 
 // Cada tarjeta muestra un solo monto principal, el que importa según el

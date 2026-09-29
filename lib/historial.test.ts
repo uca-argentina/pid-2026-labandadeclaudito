@@ -1,15 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { estadoVisible, montoDelHistorial } from './historial'
+import { montoDelHistorial } from './historial'
 
 const pago = { monto: '6000', porcentaje: 30, devuelto: false }
-
-describe('estadoVisible', () => {
-  test('una confirmada que ya pasó se muestra como jugada', () => {
-    expect(estadoVisible('CONFIRMADA', true)).toBe('Jugada')
-    expect(estadoVisible('CONFIRMADA', false)).toBe('Confirmada')
-    expect(estadoVisible('CANCELADA', true)).toBe('Cancelada')
-  })
-})
 
 describe('montoDelHistorial', () => {
   test('por jugar: muestra lo que falta pagar y la seña como detalle', () => {

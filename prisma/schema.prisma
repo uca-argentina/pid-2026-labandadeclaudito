@@ -34,7 +34,6 @@ enum EstadoReserva {
   CONFIRMADA
   CANCELADA
   NO_SHOW
-  COMPLETADA
 }
 
 model Usuario {
