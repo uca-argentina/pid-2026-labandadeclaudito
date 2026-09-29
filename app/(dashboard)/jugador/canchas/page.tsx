@@ -1,4 +1,6 @@
 import Image from 'next/image'
+import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
 import Link from 'next/link'
 import { ImageIcon, SearchX, X } from 'lucide-react'
 import { deporteLabels, formatPrecio } from '@/lib/labels'
@@ -35,11 +37,14 @@ function precioMasBajo(canchas: CourtWithPrice[]) {
 }
 
 export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/jugador/canchas'>) {
+  const session = await auth()
+  if (!session) redirect('/login')
+
   const filtros = searchCourtsSchema.parse(await searchParams)
 
   const zonas = await getSearchableZones()
 
-  const complejos = await searchComplexes(filtros)
+  const complejos = await searchComplexes(filtros, session.user.id)
 
   const filtrosAplicados = activeFilterChips(filtros)
 

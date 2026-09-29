@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { sumarMinutos, turnoYaPaso } from './time'
+import { horariosSeSuperponen, sumarMinutos, turnoYaPaso } from './time'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -13,6 +13,25 @@ describe('sumarMinutos', () => {
 
   test('da la vuelta a medianoche', () => {
     expect(sumarMinutos('23:30', 60)).toBe('00:30')
+  })
+})
+
+describe('horariosSeSuperponen', () => {
+  test('mismo horario se superpone', () => {
+    expect(horariosSeSuperponen('10:00', '11:00', '10:00', '11:00')).toBe(true)
+  })
+
+  test('turnos de distinta duración que se cruzan', () => {
+    expect(horariosSeSuperponen('10:00', '11:30', '11:00', '12:00')).toBe(true)
+  })
+
+  test('turnos pegados no se superponen', () => {
+    expect(horariosSeSuperponen('10:00', '11:00', '11:00', '12:00')).toBe(false)
+  })
+
+  test('un turno que termina a medianoche', () => {
+    expect(horariosSeSuperponen('23:00', '00:00', '23:30', '00:00')).toBe(true)
+    expect(horariosSeSuperponen('22:00', '23:00', '23:00', '00:00')).toBe(false)
   })
 })
 

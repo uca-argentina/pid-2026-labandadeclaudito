@@ -11,7 +11,8 @@ import { formatPrecio } from '@/lib/labels'
 import { diaDeHoy, sumarMinutos } from '@/lib/time'
 
 type Slot = { horaInicio: string; disponible: boolean; precio: string }
-type EstadoConfirmacion = 'idle' | 'procesando' | 'exito' | 'error'
+// reservando -> pendiente (reserva creada, falta la seña) -> pagando -> exito
+type EstadoConfirmacion = 'idle' | 'reservando' | 'pendiente' | 'pagando' | 'exito' | 'error'
 
 function capitalizar(texto: string): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1)
@@ -45,7 +46,11 @@ export function CourtSlotPicker({
   const [horaSeleccionada, setHoraSeleccionada] = useState<string | null>(null)
   const [estado, setEstado] = useState<EstadoConfirmacion>('idle')
   const [mensajeError, setMensajeError] = useState('')
-  const [reciboExito, setReciboExito] = useState<{ hora: string; montoSena: number } | null>(null)
+  const [reservaHecha, setReservaHecha] = useState<{
+    id: string
+    hora: string
+    montoSena: number
+  } | null>(null)
 
   async function cargarDisponibilidad(fechaConsultada: Date) {
     const fechaISO = format(fechaConsultada, 'yyyy-MM-dd')
@@ -78,14 +83,11 @@ export function CourtSlotPicker({
     ? (Number(slotSeleccionado.precio) * porcentajeSena) / 100
     : 0
 
-  async function confirmarReserva() {
+  // Paso 1: la reserva se crea PENDIENTE (de seña). El turno ya queda tomado.
+  async function reservar() {
     if (!horaSeleccionada || !slotSeleccionado) return
     setMensajeError('')
-    setEstado('procesando')
-
-    // Delay artificial: acá "se simula" el cobro de la seña antes de pegarle
-    // al endpoint real (que ya calcula y congela todo del lado del server).
-    await new Promise((resolve) => setTimeout(resolve, 900))
+    setEstado('reservando')
 
     const res = await fetch('/api/bookings', {
       method: 'POST',
@@ -98,10 +100,34 @@ export function CourtSlotPicker({
     })
     const json = await res.json()
     if (res.ok) {
-      setReciboExito({ hora: horaSeleccionada, montoSena: montoSenaSeleccionada })
+      setReservaHecha({
+        id: json.reserva.id,
+        hora: horaSeleccionada,
+        montoSena: montoSenaSeleccionada,
+      })
       setHoraSeleccionada(null)
-      setEstado('exito')
+      setEstado('pendiente')
       await cargarDisponibilidad(fecha)
+      return
+    }
+    setMensajeError(json.error)
+    setEstado('error')
+  }
+
+  // Paso 2: pagar la seña pasa la reserva a CONFIRMADA.
+  async function pagarSena() {
+    if (!reservaHecha) return
+    setMensajeError('')
+    setEstado('pagando')
+
+    // Delay artificial: acá "se simula" el cobro de la seña, no hay pasarela
+    // real. El monto lo calcula y congela el server.
+    await new Promise((resolve) => setTimeout(resolve, 900))
+
+    const res = await fetch(`/api/bookings/${reservaHecha.id}/deposit`, { method: 'POST' })
+    const json = await res.json()
+    if (res.ok) {
+      setEstado('exito')
       return
     }
     setMensajeError(json.error)
@@ -128,7 +154,7 @@ export function CourtSlotPicker({
             setCargando(true)
             setHoraSeleccionada(null)
             setEstado('idle')
-            setReciboExito(null)
+            setReservaHecha(null)
           }}
           className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
         />
@@ -196,7 +222,7 @@ export function CourtSlotPicker({
               <Wallet className="text-primary size-4" />
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-medium">Seña a pagar ahora</span>
+                  <span className="text-sm font-medium">Seña para confirmar</span>
                   <Badge variant="secondary">{porcentajeSena}%</Badge>
                 </div>
                 <span className="text-muted-foreground text-xs">
@@ -210,27 +236,42 @@ export function CourtSlotPicker({
             </span>
           </div>
 
-          <Button
-            onClick={confirmarReserva}
-            disabled={estado === 'procesando'}
-            className="self-end"
-          >
-            {estado === 'procesando' ? (
+          <Button onClick={reservar} disabled={estado === 'reservando'} className="self-end">
+            {estado === 'reservando' ? (
               <Loader2 className="size-3.5 animate-spin" />
             ) : (
               <Check className="size-3.5" />
             )}
-            {estado === 'procesando' ? 'Pagando seña...' : 'Confirmar y pagar seña'}
+            {estado === 'reservando' ? 'Reservando...' : 'Reservar'}
           </Button>
         </div>
       )}
 
-      {estado === 'exito' && reciboExito && (
+      {reservaHecha && estado !== 'exito' && (
+        <div className="bg-secondary border-border flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3">
+          <p className="text-sm">
+            Reservaste {courtName} a las {reservaHecha.hora} hs. <strong>Pendiente de seña:</strong>{' '}
+            pagala para confirmar el turno.
+          </p>
+          <Button onClick={pagarSena} disabled={estado === 'pagando'}>
+            {estado === 'pagando' ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Wallet className="size-3.5" />
+            )}
+            {estado === 'pagando'
+              ? 'Pagando seña...'
+              : `Pagar seña ${formatPrecio(reservaHecha.montoSena)}`}
+          </Button>
+        </div>
+      )}
+
+      {estado === 'exito' && reservaHecha && (
         <div className="border-primary/30 bg-primary/10 flex items-center gap-2.5 rounded-lg border px-4 py-3">
           <CheckCircle2 className="text-primary size-5 shrink-0" />
           <p className="text-sm">
-            Reservaste {courtName} a las {reciboExito.hora} hs — seña de{' '}
-            <strong>{formatPrecio(reciboExito.montoSena)}</strong> pagada (simulado).
+            Reserva confirmada: {courtName} a las {reservaHecha.hora} hs — seña de{' '}
+            <strong>{formatPrecio(reservaHecha.montoSena)}</strong> pagada (simulado).
           </p>
         </div>
       )}
