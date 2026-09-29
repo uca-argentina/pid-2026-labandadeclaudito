@@ -14,6 +14,20 @@ export function sumarMinutos(hora: string, minutos: number): string {
   return `${horas}:${mins}`
 }
 
+// Dos horarios del mismo día se superponen si cada uno empieza antes de que
+// termine el otro. Un turno que termina a medianoche tiene fin "00:00", que
+// como texto es menor que cualquier hora: se lo compara como "24:00".
+export function horariosSeSuperponen(
+  inicioA: string,
+  finA: string,
+  inicioB: string,
+  finB: string,
+): boolean {
+  const finAComparable = finA === '00:00' ? '24:00' : finA
+  const finBComparable = finB === '00:00' ? '24:00' : finB
+  return inicioA < finBComparable && inicioB < finAComparable
+}
+
 // Las fechas de reserva son un día de calendario (@db.Date) y Prisma las
 // devuelve como medianoche UTC: hay que leer el día en UTC o en Argentina se
 // ve el día anterior.

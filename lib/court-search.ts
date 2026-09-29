@@ -72,9 +72,12 @@ export type CourtWithPrice = Cancha & { priceFrom: number }
 // real de cada cancha (reservas, bloqueos y turnos que ya pasaron) y se dejan
 // solo las que tienen algún turno que cumple ventana y precio. Las canchas se
 // consultan en paralelo porque cada una son varias consultas a la DB.
+// jugadorId (opcional): los turnos que se cruzan con otra reserva del
+// jugador no cuentan como libres (no puede estar en dos canchas a la vez).
 async function courtsThatMatch(
   canchas: Cancha[],
   filtros: SearchCourtsFilters,
+  jugadorId?: string,
 ): Promise<CourtWithPrice[]> {
   const fecha = filtros.fecha
   if (fecha === undefined) {
@@ -83,7 +86,7 @@ async function courtsThatMatch(
 
   const canchasConTurnos = await Promise.all(
     canchas.map(async (cancha) => {
-      const disponibilidad = await getAvailableSlots(cancha.id, new Date(fecha))
+      const disponibilidad = await getAvailableSlots(cancha.id, new Date(fecha), jugadorId)
       if (disponibilidad === null) return null
 
       const slots = disponibilidad.slots.map((slot) => ({
@@ -113,7 +116,7 @@ async function courtsThatMatch(
   return resultado
 }
 
-export async function searchComplexes(filtros: SearchCourtsFilters) {
+export async function searchComplexes(filtros: SearchCourtsFilters, jugadorId?: string) {
   // El filtro de la DB va dos veces: en el `some` decide qué complejos pueden
   // aparecer, y en el `include` deja solo las canchas que lo cumplen. Después,
   // con fecha, courtsThatMatch descarta las que no tienen turno libre y los
@@ -135,7 +138,7 @@ export async function searchComplexes(filtros: SearchCourtsFilters) {
   const complejosConCanchas = await Promise.all(
     complejos.map(async (complejo) => ({
       ...complejo,
-      canchas: await courtsThatMatch(complejo.canchas, filtros),
+      canchas: await courtsThatMatch(complejo.canchas, filtros, jugadorId),
     })),
   )
 
@@ -144,7 +147,11 @@ export async function searchComplexes(filtros: SearchCourtsFilters) {
 
 // Detalle de un complejo mostrando solo las canchas que cumplen los filtros
 // con los que el jugador llegó desde la búsqueda.
-export async function getComplexDetail(id: string, filtros: SearchCourtsFilters) {
+export async function getComplexDetail(
+  id: string,
+  filtros: SearchCourtsFilters,
+  jugadorId?: string,
+) {
   const complejo = await db.complejo.findFirst({
     where: { id, activo: true },
     include: {
@@ -154,7 +161,7 @@ export async function getComplexDetail(id: string, filtros: SearchCourtsFilters)
   })
   if (!complejo) return null
 
-  return { ...complejo, canchas: await courtsThatMatch(complejo.canchas, filtros) }
+  return { ...complejo, canchas: await courtsThatMatch(complejo.canchas, filtros, jugadorId) }
 }
 
 // Los filtros como texto para la URL (?deporte=PADEL&precioMax=30000), para

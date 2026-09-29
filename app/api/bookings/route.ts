@@ -4,7 +4,7 @@ import { createBookingSchema } from '@/lib/validations/booking'
 import { requireRole } from '@/lib/auth-helpers'
 import { generateSlots, precioDelTurno } from '@/lib/availability'
 import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
-import { diaSemanaDeReserva, sumarMinutos, turnoYaPaso } from '@/lib/time'
+import { diaSemanaDeReserva, horariosSeSuperponen, sumarMinutos, turnoYaPaso } from '@/lib/time'
 import { db } from '@/lib/db'
 
 export async function POST(request: Request) {
@@ -46,6 +46,27 @@ export async function POST(request: Request) {
   const bloqueosDelDia = await getBlocksOfDay(cancha.id, fecha)
   if (isSlotBlocked(parsed.data.horaInicio, cancha.duracionTurnoMin, bloqueosDelDia)) {
     return NextResponse.json({ error: 'Ese horario está bloqueado' }, { status: 409 })
+  }
+
+  // Un jugador no puede estar en dos canchas a la vez: se busca otra reserva
+  // suya ese mismo día cuyo horario se cruce con el turno pedido.
+  const reservasDelJugador = await db.reserva.findMany({
+    where: { jugadorId: session.user.id, fecha, estado: { not: 'CANCELADA' } },
+  })
+  for (const otraReserva of reservasDelJugador) {
+    if (
+      horariosSeSuperponen(
+        parsed.data.horaInicio,
+        horaFin,
+        otraReserva.horaInicio,
+        otraReserva.horaFin,
+      )
+    ) {
+      return NextResponse.json(
+        { error: 'Ya tenés otra reserva que se superpone con ese horario' },
+        { status: 409 },
+      )
+    }
   }
 
   // El precio se calcula siempre acá, nunca se confía en lo que mande el

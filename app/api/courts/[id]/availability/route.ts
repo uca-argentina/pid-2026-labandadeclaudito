@@ -13,7 +13,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Fecha inválida, formato YYYY-MM-DD' }, { status: 400 })
   }
 
-  const disponibilidad = await getAvailableSlots(id, new Date(fecha))
+  // El dueño también ve la grilla, pero solo al jugador se le marcan los
+  // turnos que se cruzan con sus otras reservas.
+  const jugadorId = session.user.rol === 'JUGADOR' ? session.user.id : undefined
+  const disponibilidad = await getAvailableSlots(id, new Date(fecha), jugadorId)
   if (!disponibilidad) {
     return NextResponse.json({ error: 'Cancha no encontrada' }, { status: 404 })
   }

@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
+import { auth } from '@/auth'
 import { ArrowLeft, BadgeCheck } from 'lucide-react'
 import { getComplexDetail, filtersToQueryString } from '@/lib/court-search'
 import { searchCourtsSchema } from '@/lib/validations/court-search'
@@ -11,10 +12,13 @@ export default async function ComplejoDetallePage({
   params,
   searchParams,
 }: PageProps<'/jugador/complejos/[id]'>) {
+  const session = await auth()
+  if (!session) redirect('/login')
+
   const { id } = await params
   const filtros = searchCourtsSchema.parse(await searchParams)
 
-  const complejo = await getComplexDetail(id, filtros)
+  const complejo = await getComplexDetail(id, filtros, session.user.id)
   if (!complejo) notFound()
 
   return (
