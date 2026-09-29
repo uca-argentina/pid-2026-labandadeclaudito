@@ -21,6 +21,26 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
   }
 
+  // Los turnos arrancan en la hora de apertura y se suceden cada
+  // duracionTurnoMin: si cambia cualquiera de los dos, los turnos nuevos
+  // quedan corridos y se pisan con las reservas ya hechas. Solo se permite
+  // si la cancha no tiene reservas por jugar.
+  const cambianLosTurnos =
+    parsed.data.duracionTurnoMin !== cancha.duracionTurnoMin ||
+    parsed.data.horaApertura !== cancha.horaApertura
+  if (cambianLosTurnos) {
+    const idsDeReservas = await getUpcomingBookingIds([id])
+    if (idsDeReservas.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            'No se puede cambiar la duración del turno ni la hora de apertura mientras la cancha tenga reservas por jugar',
+        },
+        { status: 409 },
+      )
+    }
+  }
+
   const actualizada = await db.cancha.update({
     where: { id },
     data: parsed.data,

@@ -4,7 +4,7 @@ import { createBookingSchema } from '@/lib/validations/booking'
 import { requireRole } from '@/lib/auth-helpers'
 import { generateSlots, precioDelTurno } from '@/lib/availability'
 import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
-import { diaSemanaDeReserva, sumarMinutos, turnoYaPaso } from '@/lib/time'
+import { diaSemanaDeReserva, horariosSeSuperponen, sumarMinutos, turnoYaPaso } from '@/lib/time'
 import { db } from '@/lib/db'
 
 export async function POST(request: Request) {
@@ -19,10 +19,7 @@ export async function POST(request: Request) {
 
   const cancha = await db.cancha.findFirst({
     where: { id: parsed.data.canchaId, activo: true, complejo: { activo: true } },
-    include: {
-      complejo: { select: { porcentajeSenaDefault: true } },
-      preciosEspeciales: { where: { activo: true } },
-    },
+    include: { preciosEspeciales: { where: { activo: true } } },
   })
   if (!cancha) {
     return NextResponse.json({ error: 'La cancha no existe' }, { status: 404 })
@@ -51,18 +48,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Ese horario está bloqueado' }, { status: 409 })
   }
 
-  // Precio y seña se calculan siempre acá, nunca se confía en lo que mande
-  // el cliente: precioBase puede tener un PrecioEspecial pisándolo, y el %
-  // de seña puede ser el de la cancha o, si no tiene uno propio, el del
-  // complejo. Ambos quedan congelados en la Reserva/Pago para siempre.
+  // Un jugador no puede estar en dos canchas a la vez: se busca otra reserva
+  // suya ese mismo día cuyo horario se cruce con el turno pedido.
+  const reservasDelJugador = await db.reserva.findMany({
+    where: { jugadorId: session.user.id, fecha, estado: { not: 'CANCELADA' } },
+  })
+  for (const otraReserva of reservasDelJugador) {
+    if (
+      horariosSeSuperponen(
+        parsed.data.horaInicio,
+        horaFin,
+        otraReserva.horaInicio,
+        otraReserva.horaFin,
+      )
+    ) {
+      return NextResponse.json(
+        { error: 'Ya tenés otra reserva que se superpone con ese horario' },
+        { status: 409 },
+      )
+    }
+  }
+
+  // El precio se calcula siempre acá, nunca se confía en lo que mande el
+  // cliente: precioBase puede tener un PrecioEspecial pisándolo. Queda
+  // congelado en la Reserva para siempre.
   const precioTurno = precioDelTurno(
     cancha.precioBase,
     cancha.preciosEspeciales,
     diaSemanaDeReserva(fecha),
     parsed.data.horaInicio,
   )
-  const porcentajeSena = cancha.porcentajeSena ?? cancha.complejo.porcentajeSenaDefault
-  const montoSena = precioTurno.mul(porcentajeSena).div(100)
 
   const reservaExistente = await db.reserva.findUnique({
     where: {
@@ -84,37 +99,29 @@ export async function POST(request: Request) {
     const reserva = await db.$transaction(async (tx) => {
       const reserva = await tx.reserva.update({
         where: { id: reservaExistente.id },
-        data: { jugadorId: session.user.id, horaFin, estado: 'CONFIRMADA', precioTurno },
+        data: { jugadorId: session.user.id, horaFin, estado: 'PENDIENTE', precioTurno },
       })
       // La fila se reusa, así que el Pago de la reserva cancelada anterior
-      // también: se pisa con los datos de esta nueva reserva.
-      await tx.pago.upsert({
-        where: { reservaId: reserva.id },
-        create: { reservaId: reserva.id, monto: montoSena, porcentaje: porcentajeSena },
-        update: { monto: montoSena, porcentaje: porcentajeSena, devuelto: false },
-      })
+      // quedaría colgado: se borra, la nueva reserva todavía no pagó seña.
+      await tx.pago.deleteMany({ where: { reservaId: reserva.id } })
       return reserva
     })
     return NextResponse.json({ reserva }, { status: 201 })
   }
 
+  // La reserva nace PENDIENTE (de seña): pasa a CONFIRMADA recién cuando el
+  // jugador paga la seña en POST /api/bookings/[id]/deposit.
   try {
-    const reserva = await db.$transaction(async (tx) => {
-      const reserva = await tx.reserva.create({
-        data: {
-          canchaId: cancha.id,
-          jugadorId: session.user.id,
-          fecha,
-          horaInicio: parsed.data.horaInicio,
-          horaFin,
-          estado: 'CONFIRMADA',
-          precioTurno,
-        },
-      })
-      await tx.pago.create({
-        data: { reservaId: reserva.id, monto: montoSena, porcentaje: porcentajeSena },
-      })
-      return reserva
+    const reserva = await db.reserva.create({
+      data: {
+        canchaId: cancha.id,
+        jugadorId: session.user.id,
+        fecha,
+        horaInicio: parsed.data.horaInicio,
+        horaFin,
+        estado: 'PENDIENTE',
+        precioTurno,
+      },
     })
     return NextResponse.json({ reserva }, { status: 201 })
   } catch (e) {

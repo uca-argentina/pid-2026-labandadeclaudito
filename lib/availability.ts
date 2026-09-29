@@ -1,7 +1,13 @@
 import { db } from '@/lib/db'
 import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
 import { Prisma } from '@/lib/generated/prisma/client'
-import { diaDeReserva, diaSemanaDeReserva, turnoYaPaso } from '@/lib/time'
+import {
+  diaDeReserva,
+  diaSemanaDeReserva,
+  horariosSeSuperponen,
+  sumarMinutos,
+  turnoYaPaso,
+} from '@/lib/time'
 
 type PrecioEspecialVigente = {
   diaSemana: number | null
@@ -87,6 +93,7 @@ export function precioDelTurno(
 export async function getAvailableSlots(
   canchaId: string,
   fecha: Date,
+  jugadorId?: string,
 ): Promise<{
   slots: { horaInicio: string; disponible: boolean; precio: Prisma.Decimal }[]
   porcentajeSena: number
@@ -122,14 +129,33 @@ export async function getAvailableSlots(
   const dia = diaDeReserva(fecha)
   const diaSemana = diaSemanaDeReserva(fecha)
 
-  const slots = horasDeTurnos.map((horaInicio) => ({
-    horaInicio,
-    disponible:
-      !horasOcupadas.has(horaInicio) &&
-      !turnoYaPaso(dia, horaInicio) &&
-      !isSlotBlocked(horaInicio, cancha.duracionTurnoMin, bloqueosDelDia),
-    precio: precioDelTurno(cancha.precioBase, cancha.preciosEspeciales, diaSemana, horaInicio),
-  }))
+  // Si mira un jugador, también se marcan ocupados los turnos que se cruzan
+  // con otra reserva suya (en cualquier cancha): no puede estar en dos
+  // lados a la vez. POST /api/bookings hace el mismo chequeo.
+  let reservasDelJugador: { horaInicio: string; horaFin: string }[] = []
+  if (jugadorId) {
+    reservasDelJugador = await db.reserva.findMany({
+      where: { jugadorId, fecha, estado: { not: 'CANCELADA' } },
+      select: { horaInicio: true, horaFin: true },
+    })
+  }
+
+  const slots = horasDeTurnos.map((horaInicio) => {
+    const horaFin = sumarMinutos(horaInicio, cancha.duracionTurnoMin)
+    const seCruzaConReservaDelJugador = reservasDelJugador.some((reserva) =>
+      horariosSeSuperponen(horaInicio, horaFin, reserva.horaInicio, reserva.horaFin),
+    )
+
+    return {
+      horaInicio,
+      disponible:
+        !horasOcupadas.has(horaInicio) &&
+        !turnoYaPaso(dia, horaInicio) &&
+        !isSlotBlocked(horaInicio, cancha.duracionTurnoMin, bloqueosDelDia) &&
+        !seCruzaConReservaDelJugador,
+      precio: precioDelTurno(cancha.precioBase, cancha.preciosEspeciales, diaSemana, horaInicio),
+    }
+  })
 
   return {
     slots,
