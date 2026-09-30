@@ -62,7 +62,7 @@ export default async function ListadoBloqueosPage({
             render={<Link href={`/dueno/complejos/${id}/canchas/${courtId}/bloqueos/nuevo`} />}
           >
             <Plus className="size-4" />
-            Cargar el primer bloqueo
+            Cargar bloqueo
           </Button>
         </div>
       ) : (

@@ -52,6 +52,7 @@ export default async function EditarComplejoPage({
             zona: complejo.zona,
             contacto: complejo.contacto,
             porcentajeSenaDefault: complejo.porcentajeSenaDefault,
+            minAdvanceMinutesDefault: complejo.minAdvanceMinutesDefault,
           }}
         />
         <ComplexPhotosEditor complejoId={id} imagenes={complejo.imagenes} />

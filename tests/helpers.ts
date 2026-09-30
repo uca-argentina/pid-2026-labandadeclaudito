@@ -87,6 +87,7 @@ export const datosDeComplejo = {
   zona: 'Zona de test',
   contacto: '11 4589-2231',
   porcentajeSenaDefault: 30,
+  minAdvanceMinutesDefault: 0,
 }
 
 export const datosDeCanchas = {

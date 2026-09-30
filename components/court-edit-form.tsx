@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DeleteCourtDialog } from '@/components/delete-court-dialog'
+import { MinAdvanceInput } from '@/components/min-advance-input'
+import { timeTextToMinutes } from '@/lib/time'
 import { updateCourtSchema } from '@/lib/validations/court'
 import { deporteLabels, superficieLabels, superficiesPorDeporte } from '@/lib/labels'
 import type { Cancha } from '@/lib/generated/prisma/client'
@@ -51,6 +53,8 @@ export function CourtEditForm({
       duracionTurnoMin: form.get('duracionTurnoMin'),
       // Campo vacío = usar el % de seña por defecto del complejo, no uno propio
       porcentajeSena: porcentajeSenaTexto === '' ? null : Number(porcentajeSenaTexto),
+      // Campo vacío = usar la anticipación mínima por defecto del complejo
+      minAdvanceMinutes: timeTextToMinutes(form.get('minAdvance') as string),
     }
 
     const parsed = updateCourtSchema.safeParse(datos)
@@ -229,6 +233,14 @@ export function CourtEditForm({
               </p>
             )}
           </div>
+
+          <MinAdvanceInput
+            name="minAdvance"
+            label="Anticipación mínima propia"
+            defaultMinutes={cancha.minAdvanceMinutes}
+            help="Vacío = usa la anticipación mínima por defecto del complejo."
+            error={fieldErrors.minAdvanceMinutes}
+          />
         </div>
 
         <div className="flex justify-end gap-3">

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { ArrowLeft, Plus } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { getComplexByOwner } from '@/lib/ownership'
@@ -44,6 +44,14 @@ export default async function ListadoCanchasPage({
           Nueva cancha
         </Button>
       </div>
+
+      <Link
+        href={`/dueno/complejos/${id}`}
+        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
+      >
+        <ArrowLeft className="size-3.5" />
+        Volver al complejo
+      </Link>
 
       {canchas.length === 0 ? (
         <div className="border-border mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed p-14 text-center">

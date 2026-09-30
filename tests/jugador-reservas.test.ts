@@ -10,6 +10,7 @@ import {
   crearUsuario,
   diaDeAyer,
   diaDeManiana,
+  diaEnNDias,
   jsonRequest,
   limpiarDatosDeTest,
   loginComo,
@@ -23,6 +24,8 @@ let duenio: Usuario
 let jugador: Usuario
 let otroJugador: Usuario
 let canchaId: string
+let otraCanchaId: string
+let complejoId: string
 let reservaId: string
 
 function disponibilidadRequest(fecha: string) {
@@ -34,8 +37,10 @@ beforeAll(async () => {
   duenio = await crearUsuario('DUENIO')
   jugador = await crearUsuario('JUGADOR')
   otroJugador = await crearUsuario('JUGADOR')
-  const { cancha1 } = await crearComplejoConCanchas(duenio.id)
+  const { complejo, cancha1, cancha2 } = await crearComplejoConCanchas(duenio.id)
+  complejoId = complejo.id
   canchaId = cancha1.id
+  otraCanchaId = cancha2.id
 })
 
 afterAll(async () => {
@@ -237,5 +242,60 @@ describe('Cancelar reserva (PATCH /api/bookings/[id])', () => {
     expect(reserva?.jugadorId).toBe(otroJugador.id)
     expect(reserva?.estado).toBe('PENDIENTE')
     expect(reserva?.pago).toBeNull()
+  })
+})
+
+// Se usan anticipaciones de días (no de horas) para que el resultado no
+// dependa de a qué hora se corre el test: 3 días de anticipación siempre
+// deja afuera todos los turnos de mañana y nunca los de dentro de 5 días.
+describe('Anticipación mínima para reservar', () => {
+  const tresDiasEnMinutos = 3 * 24 * 60
+
+  test('con la anticipación del complejo, los turnos de mañana aparecen no disponibles', async () => {
+    await db.complejo.update({
+      where: { id: complejoId },
+      data: { minAdvanceMinutesDefault: tresDiasEnMinutos },
+    })
+
+    loginComo(jugador)
+    const res = await verDisponibilidad(
+      disponibilidadRequest(diaDeManiana()),
+      conParams({ id: otraCanchaId }),
+    )
+    const json = await res.json()
+
+    expect(json.minAdvanceMinutes).toBe(tresDiasEnMinutos)
+    for (const slot of json.slots as Slot[]) {
+      expect(slot.disponible).toBe(false)
+    }
+  })
+
+  test('reservar un turno dentro de la anticipación devuelve 400', async () => {
+    loginComo(jugador)
+    const res = await reservar(
+      jsonRequest('POST', { canchaId: otraCanchaId, fecha: diaDeManiana(), horaInicio: '09:00' }),
+    )
+    expect(res.status).toBe(400)
+
+    const reservas = await db.reserva.findMany({ where: { canchaId: otraCanchaId } })
+    expect(reservas.length).toBe(0)
+  })
+
+  test('un turno fuera de la anticipación se reserva normal', async () => {
+    loginComo(jugador)
+    const res = await reservar(
+      jsonRequest('POST', { canchaId: otraCanchaId, fecha: diaEnNDias(5), horaInicio: '09:00' }),
+    )
+    expect(res.status).toBe(201)
+  })
+
+  test('la anticipación de la cancha pisa la del complejo', async () => {
+    await db.cancha.update({ where: { id: otraCanchaId }, data: { minAdvanceMinutes: 0 } })
+
+    loginComo(jugador)
+    const res = await reservar(
+      jsonRequest('POST', { canchaId: otraCanchaId, fecha: diaDeManiana(), horaInicio: '09:00' }),
+    )
+    expect(res.status).toBe(201)
   })
 })

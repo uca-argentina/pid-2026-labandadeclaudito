@@ -4,7 +4,13 @@ import { createBookingSchema } from '@/lib/validations/booking'
 import { requireRole } from '@/lib/auth-helpers'
 import { generateSlots, precioDelTurno } from '@/lib/availability'
 import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
-import { diaSemanaDeReserva, horariosSeSuperponen, sumarMinutos, turnoYaPaso } from '@/lib/time'
+import {
+  diaSemanaDeReserva,
+  formatAdvanceTime,
+  horariosSeSuperponen,
+  isTooSoonToBook,
+  sumarMinutos,
+} from '@/lib/time'
 import { db } from '@/lib/db'
 
 export async function POST(request: Request) {
@@ -19,14 +25,26 @@ export async function POST(request: Request) {
 
   const cancha = await db.cancha.findFirst({
     where: { id: parsed.data.canchaId, activo: true, complejo: { activo: true } },
-    include: { preciosEspeciales: { where: { activo: true } } },
+    include: {
+      preciosEspeciales: { where: { activo: true } },
+      complejo: { select: { minAdvanceMinutesDefault: true } },
+    },
   })
   if (!cancha) {
     return NextResponse.json({ error: 'La cancha no existe' }, { status: 404 })
   }
 
-  if (turnoYaPaso(parsed.data.fecha, parsed.data.horaInicio)) {
-    return NextResponse.json({ error: 'Ese turno ya pasó' }, { status: 400 })
+  const minAdvanceMinutes = cancha.minAdvanceMinutes ?? cancha.complejo.minAdvanceMinutesDefault
+  if (isTooSoonToBook(parsed.data.fecha, parsed.data.horaInicio, minAdvanceMinutes)) {
+    if (minAdvanceMinutes === 0) {
+      return NextResponse.json({ error: 'Ese turno ya pasó' }, { status: 400 })
+    }
+    return NextResponse.json(
+      {
+        error: `Este turno se reserva con al menos ${formatAdvanceTime(minAdvanceMinutes)} de anticipación`,
+      },
+      { status: 400 },
+    )
   }
 
   // La grilla de turnos también se muestra en el cliente, pero acá hay que

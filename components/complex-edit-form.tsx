@@ -7,7 +7,9 @@ import { AlertCircle, Loader2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { MinAdvanceInput } from '@/components/min-advance-input'
 import { createComplexSchema } from '@/lib/validations/complex'
+import { timeTextToMinutes } from '@/lib/time'
 
 type ComplejoAEditar = {
   id: string
@@ -16,6 +18,7 @@ type ComplejoAEditar = {
   zona: string
   contacto: string
   porcentajeSenaDefault: number
+  minAdvanceMinutesDefault: number
 }
 
 const claseInputConError = 'border-destructive ring-destructive/20 ring-3'
@@ -50,6 +53,8 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
       zona: form.get('zona'),
       contacto: form.get('contacto'),
       porcentajeSenaDefault: Number(form.get('porcentajeSenaDefault')),
+      // Campo vacío en el complejo = sin anticipación (0)
+      minAdvanceMinutesDefault: timeTextToMinutes(form.get('minAdvance') as string) ?? 0,
     }
 
     const parsed = createComplexSchema.safeParse(datos)
@@ -155,6 +160,14 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
           </p>
           <ErrorDeCampo mensaje={fieldErrors.porcentajeSenaDefault} />
         </div>
+
+        <MinAdvanceInput
+          name="minAdvance"
+          label="Anticipación mínima para reservar"
+          defaultMinutes={complejo.minAdvanceMinutesDefault}
+          help="Cuánto antes del turno se puede reservar como mínimo. 0 = hasta que empieza. Una cancha puede tener la suya (se configura al editarla)."
+          error={fieldErrors.minAdvanceMinutesDefault}
+        />
       </div>
 
       <div className="flex justify-end gap-3">

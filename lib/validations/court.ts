@@ -65,6 +65,13 @@ export const updateCourtSchema = z
       .min(0, 'No puede ser negativo')
       .max(100, 'No puede ser mayor a 100')
       .nullable(),
+    // null = usa la anticipación mínima por defecto del complejo
+    minAdvanceMinutes: z
+      .number()
+      .int('Tiene que ser un número entero')
+      .min(0, 'No puede ser negativo')
+      .max(1439, 'No puede ser más de 23:59 horas')
+      .nullable(),
   })
   .superRefine((data, ctx) =>
     validarCombinacionDeporteSuperficie(data.deporte, data.tipoSuperficie, ctx),

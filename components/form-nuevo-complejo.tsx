@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ChangeEvent } from 'react'
+import { useState, type BaseSyntheticEvent, type ChangeEvent } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -10,6 +10,8 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { MinAdvanceInput } from '@/components/min-advance-input'
+import { timeTextToMinutes } from '@/lib/time'
 import {
   complexImageSchema,
   createComplexSchema,
@@ -41,12 +43,22 @@ export function FormNuevoComplejo() {
   const [errorFotos, setErrorFotos] = useState('')
   const [subiendoFotos, setSubiendoFotos] = useState(false)
   const [fotosFallidas, setFotosFallidas] = useState(0)
+  const [errorAnticipacion, setErrorAnticipacion] = useState('')
 
   const { register, handleSubmit, formState } = useForm<CreateComplexInput>({
     resolver: zodResolver(createComplexSchema),
     // porcentajeSenaDefault no se pide acá (queda en 30), se ajusta después
-    // desde "Editar complejo"
-    defaultValues: { nombre: '', direccion: '', zona: '', contacto: '', porcentajeSenaDefault: 30 },
+    // desde "Editar complejo". minAdvanceMinutesDefault se carga con un
+    // input type="time" que no maneja react-hook-form: se pasa a minutos en
+    // onSubmit.
+    defaultValues: {
+      nombre: '',
+      direccion: '',
+      zona: '',
+      contacto: '',
+      porcentajeSenaDefault: 30,
+      minAdvanceMinutesDefault: 180,
+    },
   })
   const errores = formState.errors
   const hayErrores = Object.keys(errores).length > 0
@@ -82,13 +94,29 @@ export function FormNuevoComplejo() {
     setFotos(fotos.filter((_, i) => i !== indice))
   }
 
-  async function onSubmit(datos: CreateComplexInput) {
+  async function onSubmit(datos: CreateComplexInput, event?: BaseSyntheticEvent) {
     setErrorServidor('')
+    setErrorAnticipacion('')
+
+    if (!(event?.target instanceof HTMLFormElement)) {
+      return
+    }
+    const form = new FormData(event.target)
+    const datosCompletos = {
+      ...datos,
+      // Campo vacío = sin anticipación (0)
+      minAdvanceMinutesDefault: timeTextToMinutes(form.get('minAdvance') as string) ?? 0,
+    }
+    const parsed = createComplexSchema.safeParse(datosCompletos)
+    if (!parsed.success) {
+      setErrorAnticipacion(parsed.error.issues[0].message)
+      return
+    }
 
     const res = await fetch('/api/complexes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(datos),
+      body: JSON.stringify(parsed.data),
     })
     const json = await res.json()
     if (!res.ok) {
@@ -238,6 +266,16 @@ export function FormNuevoComplejo() {
               Lo usamos para que los jugadores te contacten por una reserva.
             </p>
             <MensajeError mensaje={errores.contacto?.message} />
+          </div>
+
+          <div className="sm:col-span-2">
+            <MinAdvanceInput
+              name="minAdvance"
+              label="Anticipación mínima para reservar"
+              defaultMinutes={180}
+              help="Cuánto antes del turno se puede reservar como mínimo. 0 = hasta que empieza. Después cada cancha puede tener la suya."
+              error={errorAnticipacion}
+            />
           </div>
         </CardContent>
       </Card>
