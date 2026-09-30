@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatPrecio } from '@/lib/labels'
-import { diaDeHoy, sumarMinutos } from '@/lib/time'
+import { diaDeHoy, formatAdvanceTime, sumarMinutos } from '@/lib/time'
 
 type Slot = { horaInicio: string; disponible: boolean; precio: string }
 // reservando -> pendiente (reserva creada, falta la seña) -> pagando -> exito
@@ -165,7 +165,8 @@ export function CourtSlotPicker({
 
       {minAdvanceMinutes > 0 && (
         <p className="text-muted-foreground text-sm">
-          Los turnos se reservan con al menos {minAdvanceMinutes} minutos de anticipación.
+          Los turnos se reservan con al menos {formatAdvanceTime(minAdvanceMinutes)} de
+          anticipación.
         </p>
       )}
 

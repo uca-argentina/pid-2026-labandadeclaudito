@@ -83,6 +83,36 @@ export function turnoYaPaso(fecha: string, horaInicio: string): boolean {
   return horaInicio < horaDeAhora
 }
 
+// La anticipación se guarda en minutos, pero en los formularios se carga con
+// un input type="time" ("HH:MM"). Input vacío = sin valor propio (null).
+export function timeTextToMinutes(texto: string): number | null {
+  if (texto === '') {
+    return null
+  }
+  const [horas, minutos] = texto.split(':').map(Number)
+  return horas * 60 + minutos
+}
+
+// 90 → "01:30", para precargar el input type="time"
+export function minutesToTimeText(totalMinutos: number): string {
+  const horas = String(Math.floor(totalMinutos / 60)).padStart(2, '0')
+  const minutos = String(totalMinutos % 60).padStart(2, '0')
+  return `${horas}:${minutos}`
+}
+
+// 180 → "3 h", 90 → "1 h 30 min", 45 → "45 min"
+export function formatAdvanceTime(totalMinutos: number): string {
+  const horas = Math.floor(totalMinutos / 60)
+  const minutos = totalMinutos % 60
+  if (horas === 0) {
+    return `${minutos} min`
+  }
+  if (minutos === 0) {
+    return `${horas} h`
+  }
+  return `${horas} h ${minutos} min`
+}
+
 // Un turno se puede reservar si empieza después de "ahora + anticipación
 // mínima". Se suma la anticipación al momento actual y recién después se
 // pasa a día/hora de Argentina, así el límite puede caer al día siguiente.

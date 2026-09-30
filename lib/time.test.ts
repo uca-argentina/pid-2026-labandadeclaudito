@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { horariosSeSuperponen, isTooSoonToBook, sumarMinutos, turnoYaPaso } from './time'
+import {
+  formatAdvanceTime,
+  horariosSeSuperponen,
+  isTooSoonToBook,
+  minutesToTimeText,
+  sumarMinutos,
+  timeTextToMinutes,
+  turnoYaPaso,
+} from './time'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -63,6 +71,30 @@ describe('turnoYaPaso', () => {
     fijarAhora('2026-09-17T02:00:00Z')
     expect(turnoYaPaso('2026-09-16', '23:30')).toBe(false)
     expect(turnoYaPaso('2026-09-16', '22:00')).toBe(true)
+  })
+})
+
+describe('anticipación con input HH:MM', () => {
+  test('pasa HH:MM a minutos', () => {
+    expect(timeTextToMinutes('03:00')).toBe(180)
+    expect(timeTextToMinutes('01:30')).toBe(90)
+    expect(timeTextToMinutes('00:45')).toBe(45)
+  })
+
+  test('input vacío es null', () => {
+    expect(timeTextToMinutes('')).toBeNull()
+  })
+
+  test('pasa minutos a HH:MM para precargar el input', () => {
+    expect(minutesToTimeText(180)).toBe('03:00')
+    expect(minutesToTimeText(90)).toBe('01:30')
+    expect(minutesToTimeText(0)).toBe('00:00')
+  })
+
+  test('formatea para mostrar', () => {
+    expect(formatAdvanceTime(180)).toBe('3 h')
+    expect(formatAdvanceTime(90)).toBe('1 h 30 min')
+    expect(formatAdvanceTime(45)).toBe('45 min')
   })
 })
 

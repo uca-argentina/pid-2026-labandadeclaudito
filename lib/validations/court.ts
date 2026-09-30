@@ -70,7 +70,7 @@ export const updateCourtSchema = z
       .number()
       .int('Tiene que ser un número entero')
       .min(0, 'No puede ser negativo')
-      .max(10080, 'No puede ser más de una semana (10080 minutos)')
+      .max(1439, 'No puede ser más de 23:59 horas')
       .nullable(),
   })
   .superRefine((data, ctx) =>

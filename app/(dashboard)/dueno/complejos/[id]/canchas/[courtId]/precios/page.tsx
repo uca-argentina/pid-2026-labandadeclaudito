@@ -65,7 +65,7 @@ export default async function ListadoPreciosPage({
             render={<Link href={`/dueno/complejos/${id}/canchas/${courtId}/precios/nuevo`} />}
           >
             <Plus className="size-4" />
-            Cargar el primer precio especial
+            Cargar precio especial
           </Button>
         </div>
       ) : (

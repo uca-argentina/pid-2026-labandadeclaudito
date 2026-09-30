@@ -7,7 +7,9 @@ import { AlertCircle, Loader2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { MinAdvanceInput } from '@/components/min-advance-input'
 import { createComplexSchema } from '@/lib/validations/complex'
+import { timeTextToMinutes } from '@/lib/time'
 
 type ComplejoAEditar = {
   id: string
@@ -51,7 +53,8 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
       zona: form.get('zona'),
       contacto: form.get('contacto'),
       porcentajeSenaDefault: Number(form.get('porcentajeSenaDefault')),
-      minAdvanceMinutesDefault: Number(form.get('minAdvanceMinutesDefault')),
+      // Campo vacío en el complejo = sin anticipación (0)
+      minAdvanceMinutesDefault: timeTextToMinutes(form.get('minAdvance') as string) ?? 0,
     }
 
     const parsed = createComplexSchema.safeParse(datos)
@@ -158,24 +161,13 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
           <ErrorDeCampo mensaje={fieldErrors.porcentajeSenaDefault} />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="minAdvanceMinutesDefault">Anticipación mínima (minutos)</Label>
-          <Input
-            id="minAdvanceMinutesDefault"
-            name="minAdvanceMinutesDefault"
-            type="number"
-            min={0}
-            max={10080}
-            defaultValue={complejo.minAdvanceMinutesDefault}
-            aria-invalid={!!fieldErrors.minAdvanceMinutesDefault}
-            className={fieldErrors.minAdvanceMinutesDefault ? claseInputConError : undefined}
-          />
-          <p className="text-muted-foreground text-xs">
-            Cuánto antes del turno se puede reservar como mínimo. 0 = hasta que empieza. Una cancha
-            puede tener la suya (se configura al editarla).
-          </p>
-          <ErrorDeCampo mensaje={fieldErrors.minAdvanceMinutesDefault} />
-        </div>
+        <MinAdvanceInput
+          name="minAdvance"
+          label="Anticipación mínima para reservar"
+          defaultMinutes={complejo.minAdvanceMinutesDefault}
+          help="Cuánto antes del turno se puede reservar como mínimo. 0 = hasta que empieza. Una cancha puede tener la suya (se configura al editarla)."
+          error={fieldErrors.minAdvanceMinutesDefault}
+        />
       </div>
 
       <div className="flex justify-end gap-3">

@@ -29,12 +29,13 @@ export const createComplexSchema = z.object({
     .int('Tiene que ser un número entero')
     .min(0, 'No puede ser negativo')
     .max(100, 'No puede ser mayor a 100'),
-  // Igual que la seña: no se pide al crear (va fijo en 0), se ajusta al editar.
+  // Minutos. En los forms se carga como HH:MM con un input type="time"
+  // (por eso el máximo es 23:59). Default: 3 h.
   minAdvanceMinutesDefault: z
     .number()
     .int('Tiene que ser un número entero')
     .min(0, 'No puede ser negativo')
-    .max(10080, 'No puede ser más de una semana (10080 minutos)'),
+    .max(1439, 'No puede ser más de 23:59 horas'),
 })
 
 export type CreateComplexInput = z.infer<typeof createComplexSchema>

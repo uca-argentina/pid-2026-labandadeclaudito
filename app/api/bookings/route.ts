@@ -4,7 +4,13 @@ import { createBookingSchema } from '@/lib/validations/booking'
 import { requireRole } from '@/lib/auth-helpers'
 import { generateSlots, precioDelTurno } from '@/lib/availability'
 import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
-import { diaSemanaDeReserva, horariosSeSuperponen, isTooSoonToBook, sumarMinutos } from '@/lib/time'
+import {
+  diaSemanaDeReserva,
+  formatAdvanceTime,
+  horariosSeSuperponen,
+  isTooSoonToBook,
+  sumarMinutos,
+} from '@/lib/time'
 import { db } from '@/lib/db'
 
 export async function POST(request: Request) {
@@ -35,7 +41,7 @@ export async function POST(request: Request) {
     }
     return NextResponse.json(
       {
-        error: `Este turno se reserva con al menos ${minAdvanceMinutes} minutos de anticipación`,
+        error: `Este turno se reserva con al menos ${formatAdvanceTime(minAdvanceMinutes)} de anticipación`,
       },
       { status: 400 },
     )

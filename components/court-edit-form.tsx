@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DeleteCourtDialog } from '@/components/delete-court-dialog'
+import { MinAdvanceInput } from '@/components/min-advance-input'
+import { timeTextToMinutes } from '@/lib/time'
 import { updateCourtSchema } from '@/lib/validations/court'
 import { deporteLabels, superficieLabels, superficiesPorDeporte } from '@/lib/labels'
 import type { Cancha } from '@/lib/generated/prisma/client'
@@ -41,7 +43,6 @@ export function CourtEditForm({
 
     const form = new FormData(e.currentTarget)
     const porcentajeSenaTexto = form.get('porcentajeSena') as string
-    const minAdvanceMinutesTexto = form.get('minAdvanceMinutes') as string
     const datos = {
       nombre: form.get('nombre'),
       deporte,
@@ -53,7 +54,7 @@ export function CourtEditForm({
       // Campo vacío = usar el % de seña por defecto del complejo, no uno propio
       porcentajeSena: porcentajeSenaTexto === '' ? null : Number(porcentajeSenaTexto),
       // Campo vacío = usar la anticipación mínima por defecto del complejo
-      minAdvanceMinutes: minAdvanceMinutesTexto === '' ? null : Number(minAdvanceMinutesTexto),
+      minAdvanceMinutes: timeTextToMinutes(form.get('minAdvance') as string),
     }
 
     const parsed = updateCourtSchema.safeParse(datos)
@@ -233,33 +234,13 @@ export function CourtEditForm({
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="minAdvanceMinutes">Anticipación mínima propia (minutos)</Label>
-            <Input
-              id="minAdvanceMinutes"
-              name="minAdvanceMinutes"
-              type="number"
-              min={0}
-              max={10080}
-              placeholder="Usa la del complejo"
-              defaultValue={cancha.minAdvanceMinutes ?? ''}
-              aria-invalid={!!fieldErrors.minAdvanceMinutes}
-              className={
-                fieldErrors.minAdvanceMinutes
-                  ? 'border-destructive ring-destructive/20 ring-3'
-                  : undefined
-              }
-            />
-            <p className="text-muted-foreground text-xs">
-              Vacío = usa la anticipación mínima por defecto del complejo.
-            </p>
-            {fieldErrors.minAdvanceMinutes && (
-              <p className="text-destructive flex items-center gap-1 text-xs font-medium">
-                <AlertCircle className="size-3.5" />
-                {fieldErrors.minAdvanceMinutes}
-              </p>
-            )}
-          </div>
+          <MinAdvanceInput
+            name="minAdvance"
+            label="Anticipación mínima propia"
+            defaultMinutes={cancha.minAdvanceMinutes}
+            help="Vacío = usa la anticipación mínima por defecto del complejo."
+            error={fieldErrors.minAdvanceMinutes}
+          />
         </div>
 
         <div className="flex justify-end gap-3">
