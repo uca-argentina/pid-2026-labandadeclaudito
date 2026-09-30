@@ -8,6 +8,7 @@ const base = {
   horaCierre: '23:00',
   duracionTurnoMin: 60,
   porcentajeSena: null,
+  minAdvanceMinutes: null,
 }
 
 describe('updateCourtSchema — combinación deporte/superficie', () => {

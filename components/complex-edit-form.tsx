@@ -16,6 +16,7 @@ type ComplejoAEditar = {
   zona: string
   contacto: string
   porcentajeSenaDefault: number
+  minAdvanceMinutesDefault: number
 }
 
 const claseInputConError = 'border-destructive ring-destructive/20 ring-3'
@@ -50,6 +51,7 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
       zona: form.get('zona'),
       contacto: form.get('contacto'),
       porcentajeSenaDefault: Number(form.get('porcentajeSenaDefault')),
+      minAdvanceMinutesDefault: Number(form.get('minAdvanceMinutesDefault')),
     }
 
     const parsed = createComplexSchema.safeParse(datos)
@@ -154,6 +156,25 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
             configura al editarla).
           </p>
           <ErrorDeCampo mensaje={fieldErrors.porcentajeSenaDefault} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="minAdvanceMinutesDefault">Anticipación mínima (minutos)</Label>
+          <Input
+            id="minAdvanceMinutesDefault"
+            name="minAdvanceMinutesDefault"
+            type="number"
+            min={0}
+            max={10080}
+            defaultValue={complejo.minAdvanceMinutesDefault}
+            aria-invalid={!!fieldErrors.minAdvanceMinutesDefault}
+            className={fieldErrors.minAdvanceMinutesDefault ? claseInputConError : undefined}
+          />
+          <p className="text-muted-foreground text-xs">
+            Cuánto antes del turno se puede reservar como mínimo. 0 = hasta que empieza. Una cancha
+            puede tener la suya (se configura al editarla).
+          </p>
+          <ErrorDeCampo mensaje={fieldErrors.minAdvanceMinutesDefault} />
         </div>
       </div>
 

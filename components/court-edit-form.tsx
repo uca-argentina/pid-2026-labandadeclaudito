@@ -41,6 +41,7 @@ export function CourtEditForm({
 
     const form = new FormData(e.currentTarget)
     const porcentajeSenaTexto = form.get('porcentajeSena') as string
+    const minAdvanceMinutesTexto = form.get('minAdvanceMinutes') as string
     const datos = {
       nombre: form.get('nombre'),
       deporte,
@@ -51,6 +52,8 @@ export function CourtEditForm({
       duracionTurnoMin: form.get('duracionTurnoMin'),
       // Campo vacío = usar el % de seña por defecto del complejo, no uno propio
       porcentajeSena: porcentajeSenaTexto === '' ? null : Number(porcentajeSenaTexto),
+      // Campo vacío = usar la anticipación mínima por defecto del complejo
+      minAdvanceMinutes: minAdvanceMinutesTexto === '' ? null : Number(minAdvanceMinutesTexto),
     }
 
     const parsed = updateCourtSchema.safeParse(datos)
@@ -226,6 +229,34 @@ export function CourtEditForm({
               <p className="text-destructive flex items-center gap-1 text-xs font-medium">
                 <AlertCircle className="size-3.5" />
                 {fieldErrors.porcentajeSena}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="minAdvanceMinutes">Anticipación mínima propia (minutos)</Label>
+            <Input
+              id="minAdvanceMinutes"
+              name="minAdvanceMinutes"
+              type="number"
+              min={0}
+              max={10080}
+              placeholder="Usa la del complejo"
+              defaultValue={cancha.minAdvanceMinutes ?? ''}
+              aria-invalid={!!fieldErrors.minAdvanceMinutes}
+              className={
+                fieldErrors.minAdvanceMinutes
+                  ? 'border-destructive ring-destructive/20 ring-3'
+                  : undefined
+              }
+            />
+            <p className="text-muted-foreground text-xs">
+              Vacío = usa la anticipación mínima por defecto del complejo.
+            </p>
+            {fieldErrors.minAdvanceMinutes && (
+              <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                <AlertCircle className="size-3.5" />
+                {fieldErrors.minAdvanceMinutes}
               </p>
             )}
           </div>

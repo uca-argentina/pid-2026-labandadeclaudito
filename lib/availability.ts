@@ -6,7 +6,7 @@ import {
   diaSemanaDeReserva,
   horariosSeSuperponen,
   sumarMinutos,
-  turnoYaPaso,
+  isTooSoonToBook,
 } from '@/lib/time'
 
 type PrecioEspecialVigente = {
@@ -97,11 +97,12 @@ export async function getAvailableSlots(
 ): Promise<{
   slots: { horaInicio: string; disponible: boolean; precio: Prisma.Decimal }[]
   porcentajeSena: number
+  minAdvanceMinutes: number
 } | null> {
   const cancha = await db.cancha.findFirst({
     where: { id: canchaId, activo: true, complejo: { activo: true } },
     include: {
-      complejo: { select: { porcentajeSenaDefault: true } },
+      complejo: { select: { porcentajeSenaDefault: true, minAdvanceMinutesDefault: true } },
       preciosEspeciales: { where: { activo: true } },
     },
   })
@@ -127,6 +128,7 @@ export async function getAvailableSlots(
   const bloqueosDelDia = await getBlocksOfDay(canchaId, fecha)
 
   const dia = diaDeReserva(fecha)
+  const minAdvanceMinutes = cancha.minAdvanceMinutes ?? cancha.complejo.minAdvanceMinutesDefault
   const diaSemana = diaSemanaDeReserva(fecha)
 
   // Si mira un jugador, también se marcan ocupados los turnos que se cruzan
@@ -150,7 +152,7 @@ export async function getAvailableSlots(
       horaInicio,
       disponible:
         !horasOcupadas.has(horaInicio) &&
-        !turnoYaPaso(dia, horaInicio) &&
+        !isTooSoonToBook(dia, horaInicio, minAdvanceMinutes) &&
         !isSlotBlocked(horaInicio, cancha.duracionTurnoMin, bloqueosDelDia) &&
         !seCruzaConReservaDelJugador,
       precio: precioDelTurno(cancha.precioBase, cancha.preciosEspeciales, diaSemana, horaInicio),
@@ -160,5 +162,6 @@ export async function getAvailableSlots(
   return {
     slots,
     porcentajeSena: cancha.porcentajeSena ?? cancha.complejo.porcentajeSenaDefault,
+    minAdvanceMinutes,
   }
 }

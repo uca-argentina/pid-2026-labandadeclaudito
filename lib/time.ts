@@ -82,3 +82,20 @@ export function turnoYaPaso(fecha: string, horaInicio: string): boolean {
   if (fecha > fechaDeHoy) return false
   return horaInicio < horaDeAhora
 }
+
+// Un turno se puede reservar si empieza después de "ahora + anticipación
+// mínima". Se suma la anticipación al momento actual y recién después se
+// pasa a día/hora de Argentina, así el límite puede caer al día siguiente.
+export function isTooSoonToBook(
+  fecha: string,
+  horaInicio: string,
+  minAdvanceMinutes: number,
+  ahora: Date = new Date(),
+): boolean {
+  const momentoLimite = new Date(ahora.getTime() + minAdvanceMinutes * 60 * 1000)
+  const limite = momentoActual(momentoLimite)
+
+  if (fecha < limite.dia) return true
+  if (fecha > limite.dia) return false
+  return horaInicio < limite.hora
+}

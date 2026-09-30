@@ -27,6 +27,7 @@ export async function POST(request: Request) {
       zona: parsed.data.zona,
       contacto: parsed.data.contacto,
       porcentajeSenaDefault: parsed.data.porcentajeSenaDefault,
+      minAdvanceMinutesDefault: parsed.data.minAdvanceMinutesDefault,
       duenioId: session.user.id,
     },
   })

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { horariosSeSuperponen, sumarMinutos, turnoYaPaso } from './time'
+import { horariosSeSuperponen, isTooSoonToBook, sumarMinutos, turnoYaPaso } from './time'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -63,5 +63,29 @@ describe('turnoYaPaso', () => {
     fijarAhora('2026-09-17T02:00:00Z')
     expect(turnoYaPaso('2026-09-16', '23:30')).toBe(false)
     expect(turnoYaPaso('2026-09-16', '22:00')).toBe(true)
+  })
+})
+
+describe('isTooSoonToBook', () => {
+  // 16:00 UTC = 13:00 en Argentina.
+  const alMediodia = new Date('2026-09-16T16:00:00Z')
+
+  test('sin anticipación solo bloquea lo que ya pasó', () => {
+    expect(isTooSoonToBook('2026-09-16', '12:00', 0, alMediodia)).toBe(true)
+    expect(isTooSoonToBook('2026-09-16', '13:00', 0, alMediodia)).toBe(false)
+  })
+
+  test('con 120 minutos bloquea los turnos de las próximas 2 horas', () => {
+    expect(isTooSoonToBook('2026-09-16', '14:00', 120, alMediodia)).toBe(true)
+    expect(isTooSoonToBook('2026-09-16', '15:00', 120, alMediodia)).toBe(false)
+    expect(isTooSoonToBook('2026-09-16', '16:00', 120, alMediodia)).toBe(false)
+  })
+
+  test('el límite puede caer al día siguiente', () => {
+    // 02:00 UTC del 17 = 23:00 del 16 en Argentina. Límite: 01:00 del 17.
+    const deNoche = new Date('2026-09-17T02:00:00Z')
+    expect(isTooSoonToBook('2026-09-16', '23:30', 120, deNoche)).toBe(true)
+    expect(isTooSoonToBook('2026-09-17', '00:30', 120, deNoche)).toBe(true)
+    expect(isTooSoonToBook('2026-09-17', '01:30', 120, deNoche)).toBe(false)
   })
 })

@@ -43,6 +43,7 @@ export function CourtSlotPicker({
   const [slots, setSlots] = useState<Slot[]>([])
   const [cargando, setCargando] = useState(true)
   const [porcentajeSena, setPorcentajeSena] = useState(0)
+  const [minAdvanceMinutes, setMinAdvanceMinutes] = useState(0)
   const [horaSeleccionada, setHoraSeleccionada] = useState<string | null>(null)
   const [estado, setEstado] = useState<EstadoConfirmacion>('idle')
   const [mensajeError, setMensajeError] = useState('')
@@ -59,6 +60,7 @@ export function CourtSlotPicker({
     if (res.ok) {
       setSlots(json.slots)
       setPorcentajeSena(json.porcentajeSena)
+      setMinAdvanceMinutes(json.minAdvanceMinutes)
     }
   }
 
@@ -71,6 +73,7 @@ export function CourtSlotPicker({
         if (ignore) return
         setSlots(json.slots)
         setPorcentajeSena(json.porcentajeSena)
+        setMinAdvanceMinutes(json.minAdvanceMinutes)
         setCargando(false)
       })
     return () => {
@@ -159,6 +162,12 @@ export function CourtSlotPicker({
           className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
         />
       </div>
+
+      {minAdvanceMinutes > 0 && (
+        <p className="text-muted-foreground text-sm">
+          Los turnos se reservan con al menos {minAdvanceMinutes} minutos de anticipación.
+        </p>
+      )}
 
       {cargando ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2">

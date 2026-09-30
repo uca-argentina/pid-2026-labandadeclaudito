@@ -52,18 +52,21 @@ model Usuario {
 }
 
 model Complejo {
-  id                    String   @id @default(cuid())
-  nombre                String
-  direccion             String
-  zona                  String
-  contacto              String
-  duenioId              String
+  id                       String   @id @default(cuid())
+  nombre                   String
+  direccion                String
+  zona                     String
+  contacto                 String
+  duenioId                 String
   // Baja lógica: al dar de baja no se borra, para conservar el historial de reservas
-  activo                Boolean  @default(true)
+  activo                   Boolean  @default(true)
   // % de seña por defecto de sus canchas; cada Cancha puede pisarlo con el propio
-  porcentajeSenaDefault Int      @default(30)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  porcentajeSenaDefault    Int      @default(30)
+  // Minutos de anticipación mínima para reservar, por defecto de sus canchas;
+  // cada Cancha puede pisarlo con el propio. 0 = hasta que empieza el turno
+  minAdvanceMinutesDefault Int      @default(0)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   duenio   Usuario          @relation("DuenioComplejos", fields: [duenioId], references: [id])
   canchas  Cancha[]
@@ -86,21 +89,23 @@ model ImagenComplejo {
 }
 
 model Cancha {
-  id               String         @id @default(cuid())
-  complejoId       String
-  nombre           String
-  deporte          Deporte
-  tipoSuperficie   TipoSuperficie
-  capacidad        Int
-  precioBase       Decimal        @db.Decimal(10, 2)
-  horaApertura     String
-  horaCierre       String
-  duracionTurnoMin Int            @default(60)
+  id                String         @id @default(cuid())
+  complejoId        String
+  nombre            String
+  deporte           Deporte
+  tipoSuperficie    TipoSuperficie
+  capacidad         Int
+  precioBase        Decimal        @db.Decimal(10, 2)
+  horaApertura      String
+  horaCierre        String
+  duracionTurnoMin  Int            @default(60)
   // % de seña propio; si es null, se usa el porcentajeSenaDefault del complejo
-  porcentajeSena   Int?
-  activo           Boolean        @default(true)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  porcentajeSena    Int?
+  // Anticipación mínima propia; si es null, se usa minAdvanceMinutesDefault del complejo
+  minAdvanceMinutes Int?
+  activo            Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   complejo          Complejo         @relation(fields: [complejoId], references: [id], onDelete: Cascade)
   reservas          Reserva[]
