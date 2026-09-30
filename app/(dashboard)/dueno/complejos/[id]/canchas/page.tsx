@@ -34,6 +34,13 @@ export default async function ListadoCanchasPage({
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
+      <Link
+        href={`/dueno/complejos/${id}`}
+        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
+      >
+        <ArrowLeft className="size-3.5" />
+        Volver al complejo
+      </Link>
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold">{complejo.nombre}</h1>
@@ -44,15 +51,6 @@ export default async function ListadoCanchasPage({
           Nueva cancha
         </Button>
       </div>
-
-      <Link
-        href={`/dueno/complejos/${id}`}
-        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
-      >
-        <ArrowLeft className="size-3.5" />
-        Volver al complejo
-      </Link>
-
       {canchas.length === 0 ? (
         <div className="border-border mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed p-14 text-center">
           <h3 className="text-lg font-semibold">Todavía no cargaste ninguna cancha</h3>
