@@ -7,6 +7,7 @@ import { montoDelHistorial } from '@/lib/historial'
 import { estadoDeReserva } from '@/lib/estado-reserva'
 import { diaDeReserva, formatearDia, momentoActual, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
+import { AttendanceButtons } from '@/components/attendance-buttons'
 
 async function getReservas(duenioId: string) {
   return db.reserva.findMany({
@@ -36,7 +37,10 @@ export default async function ReservasDelDuenioPage() {
   // la más reciente a la más vieja.
   const esProxima = (r: Reserva) => {
     const dia = diaDeReserva(r.fecha)
-    const visible = estadoDeReserva(r.estado, dia, r.horaInicio, r.horaFin, ahora)
+    const visible = estadoDeReserva(
+      { estado: r.estado, asistio: r.asistio, dia, horaInicio: r.horaInicio, horaFin: r.horaFin },
+      ahora,
+    )
     if (visible === 'CONFIRMADA' || visible === 'EN_CURSO') return true
     // Una pendiente que nunca se pagó deja de ser próxima cuando empieza el turno.
     return visible === 'PENDIENTE' && !turnoYaPaso(dia, r.horaInicio)
@@ -98,12 +102,27 @@ function TarjetaReserva({
   const monto = montoDelHistorial(
     {
       estado: reserva.estado,
+      asistio: reserva.asistio,
       precioTurno: reserva.precioTurno.toString(),
       pago: reserva.pago && { ...reserva.pago, monto: reserva.pago.monto.toString() },
     },
     yaPaso,
     'DUENIO',
   )
+
+  // El dueño marca la asistencia recién cuando el turno terminó.
+  const visible = estadoDeReserva(
+    {
+      estado: reserva.estado,
+      asistio: reserva.asistio,
+      dia,
+      horaInicio: reserva.horaInicio,
+      horaFin: reserva.horaFin,
+    },
+    ahora,
+  )
+  const seMarcaAsistencia =
+    visible === 'FINALIZADA' || visible === 'ASISTIO' || visible === 'NO_SHOW'
 
   return (
     <div
@@ -122,6 +141,7 @@ function TarjetaReserva({
             </span>
             <BookingStatusBadge
               estado={reserva.estado}
+              asistio={reserva.asistio}
               dia={dia}
               horaInicio={reserva.horaInicio}
               horaFin={reserva.horaFin}
@@ -138,13 +158,22 @@ function TarjetaReserva({
           </p>
         </div>
 
-        {monto && (
-          <div className="text-right">
-            <div className="text-muted-foreground text-xs">{monto.etiqueta}</div>
-            <div className={`text-xl font-bold ${tonos[monto.tono]}`}>{monto.monto}</div>
-            {monto.detalle && <div className="text-muted-foreground text-xs">{monto.detalle}</div>}
-          </div>
-        )}
+        <div className="text-right">
+          {monto && (
+            <>
+              <div className="text-muted-foreground text-xs">{monto.etiqueta}</div>
+              <div className={`text-xl font-bold ${tonos[monto.tono]}`}>{monto.monto}</div>
+              {monto.detalle && (
+                <div className="text-muted-foreground text-xs">{monto.detalle}</div>
+              )}
+            </>
+          )}
+          {seMarcaAsistencia && (
+            <div className="mt-2">
+              <AttendanceButtons bookingId={reserva.id} asistio={reserva.asistio} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

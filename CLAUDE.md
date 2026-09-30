@@ -403,5 +403,3 @@ en `docs/`.
 `docs/` está en `.gitignore` (decisión 2026-09-24). No se usa para planes ni
 backlog de sprint — todo eso vive en Jira (tickets, y el detalle técnico en la
 descripción del epic/ticket correspondiente).
-
-- `branch_context.md` — contexto específico de la rama/fase actual. Crear uno por cada rama que no sea main, master, develop, dev o bugfix (está en .gitignore a propósito). Lo "core" del proyecto va en CLAUDE.md, no aquí.

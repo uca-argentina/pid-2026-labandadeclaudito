@@ -33,7 +33,6 @@ enum EstadoReserva {
   PENDIENTE
   CONFIRMADA
   CANCELADA
-  NO_SHOW
 }
 
 model Usuario {
@@ -155,6 +154,7 @@ model Reserva {
   horaInicio  String
   horaFin     String
   estado      EstadoReserva @default(PENDIENTE)
+  asistio     Boolean?
   // Precio del turno congelado al momento de reservar (no se recalcula
   // aunque después cambie precioBase o haya un PrecioEspecial nuevo).
   precioTurno Decimal       @db.Decimal(10, 2)

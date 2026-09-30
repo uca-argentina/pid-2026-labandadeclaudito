@@ -7,3 +7,7 @@ export const createBookingSchema = z.object({
 })
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>
+
+export const markAttendanceSchema = z.object({
+  asistio: z.boolean(),
+})

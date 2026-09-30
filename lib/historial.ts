@@ -5,6 +5,7 @@ import { formatPrecio } from '@/lib/labels'
 // Los montos llegan como string (Decimal.toString()) para no depender de Prisma.
 type ReservaDelHistorial = {
   estado: EstadoReserva
+  asistio: boolean | null
   precioTurno: string
   pago: { monto: string; porcentaje: number; devuelto: boolean } | null
 }
@@ -19,6 +20,7 @@ type MontoDelHistorial = {
 // Cada tarjeta muestra un solo monto principal, el que importa según el
 // momento de la reserva:
 // - cancelada: qué pasó con la seña (el precio del turno ya no importa)
+// - no se presentó: la seña, que es lo único que llegó a cobrarse
 // - ya jugada: el total del turno
 // - por jugar: lo que falta pagar en el complejo, con la seña como detalle
 export function montoDelHistorial(
@@ -26,7 +28,7 @@ export function montoDelHistorial(
   yaPaso: boolean,
   rol: 'JUGADOR' | 'DUENIO',
 ): MontoDelHistorial | null {
-  const { estado, precioTurno, pago } = reserva
+  const { estado, asistio, precioTurno, pago } = reserva
   const esJugador = rol === 'JUGADOR'
 
   if (estado === 'CANCELADA') {
@@ -35,6 +37,16 @@ export function montoDelHistorial(
     return pago.devuelto
       ? { etiqueta: 'Seña devuelta', monto: formatPrecio(pago.monto), tono: 'exito' }
       : { etiqueta: 'Seña no devuelta', monto: formatPrecio(pago.monto), tono: 'peligro' }
+  }
+
+  if (asistio === false) {
+    // No se presentó: el complejo se quedó con la seña y nunca cobró el resto.
+    if (!pago) return null
+    return {
+      etiqueta: esJugador ? 'Seña perdida' : 'Seña retenida',
+      monto: formatPrecio(pago.monto),
+      tono: 'peligro',
+    }
   }
 
   if (estado === 'PENDIENTE') {

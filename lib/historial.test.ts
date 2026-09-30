@@ -6,7 +6,7 @@ const pago = { monto: '6000', porcentaje: 30, devuelto: false }
 describe('montoDelHistorial', () => {
   test('por jugar: muestra lo que falta pagar y la seña como detalle', () => {
     const r = montoDelHistorial(
-      { estado: 'CONFIRMADA', precioTurno: '20000', pago },
+      { estado: 'CONFIRMADA', asistio: null, precioTurno: '20000', pago },
       false,
       'JUGADOR',
     )
@@ -17,7 +17,7 @@ describe('montoDelHistorial', () => {
 
   test('por jugar sin seña: falta pagar todo', () => {
     const r = montoDelHistorial(
-      { estado: 'CONFIRMADA', precioTurno: '20000', pago: null },
+      { estado: 'CONFIRMADA', asistio: null, precioTurno: '20000', pago: null },
       false,
       'DUENIO',
     )
@@ -28,7 +28,7 @@ describe('montoDelHistorial', () => {
 
   test('ya jugada: muestra el total del turno', () => {
     const r = montoDelHistorial(
-      { estado: 'CONFIRMADA', precioTurno: '20000', pago },
+      { estado: 'CONFIRMADA', asistio: null, precioTurno: '20000', pago },
       true,
       'JUGADOR',
     )
@@ -37,7 +37,7 @@ describe('montoDelHistorial', () => {
 
   test('cancelada: muestra solo qué pasó con la seña', () => {
     const noDevuelta = montoDelHistorial(
-      { estado: 'CANCELADA', precioTurno: '20000', pago },
+      { estado: 'CANCELADA', asistio: null, precioTurno: '20000', pago },
       false,
       'JUGADOR',
     )
@@ -48,7 +48,12 @@ describe('montoDelHistorial', () => {
     })
 
     const devuelta = montoDelHistorial(
-      { estado: 'CANCELADA', precioTurno: '20000', pago: { ...pago, devuelto: true } },
+      {
+        estado: 'CANCELADA',
+        asistio: null,
+        precioTurno: '20000',
+        pago: { ...pago, devuelto: true },
+      },
       false,
       'JUGADOR',
     )
@@ -56,10 +61,48 @@ describe('montoDelHistorial', () => {
 
     expect(
       montoDelHistorial(
-        { estado: 'CANCELADA', precioTurno: '20000', pago: null },
+        { estado: 'CANCELADA', asistio: null, precioTurno: '20000', pago: null },
         false,
         'JUGADOR',
       ),
     ).toBeNull()
+  })
+
+  test('no se presentó: la seña es lo único que se cobró, no el turno entero', () => {
+    const paraElJugador = montoDelHistorial(
+      { estado: 'CONFIRMADA', asistio: false, precioTurno: '20000', pago },
+      true,
+      'JUGADOR',
+    )
+    expect(paraElJugador).toMatchObject({
+      etiqueta: 'Seña perdida',
+      monto: '$6.000',
+      tono: 'peligro',
+    })
+
+    const paraElDuenio = montoDelHistorial(
+      { estado: 'CONFIRMADA', asistio: false, precioTurno: '20000', pago },
+      true,
+      'DUENIO',
+    )
+    expect(paraElDuenio?.etiqueta).toBe('Seña retenida')
+
+    expect(
+      montoDelHistorial(
+        { estado: 'CONFIRMADA', asistio: false, precioTurno: '20000', pago: null },
+        true,
+        'DUENIO',
+      ),
+    ).toBeNull()
+  })
+
+  test('asistió: muestra el total del turno como cualquier jugada', () => {
+    const r = montoDelHistorial(
+      { estado: 'CONFIRMADA', asistio: true, precioTurno: '20000', pago },
+      true,
+      'DUENIO',
+    )
+    expect(r?.etiqueta).toBe('Total cobrado')
+    expect(r?.monto).toBe('$20.000')
   })
 })

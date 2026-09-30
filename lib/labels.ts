@@ -32,8 +32,9 @@ export const estadoVisibleLabels: Record<EstadoVisible, string> = {
   CONFIRMADA: 'Confirmada',
   EN_CURSO: 'En curso',
   FINALIZADA: 'Finalizada',
-  CANCELADA: 'Cancelada',
+  ASISTIO: 'Asistió',
   NO_SHOW: 'No se presentó',
+  CANCELADA: 'Cancelada',
 }
 
 export function formatPrecio(precio: number | string): string {

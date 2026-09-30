@@ -6,7 +6,10 @@ import { estadoDeReserva } from './estado-reserva'
 const dia = '2026-09-29'
 
 function estadoALas(hora: string, diaDeAhora = dia) {
-  return estadoDeReserva('CONFIRMADA', dia, '20:00', '21:00', { dia: diaDeAhora, hora })
+  return estadoDeReserva(
+    { estado: 'CONFIRMADA', asistio: null, dia, horaInicio: '20:00', horaFin: '21:00' },
+    { dia: diaDeAhora, hora },
+  )
 }
 
 describe('estadoDeReserva', () => {
@@ -23,13 +26,20 @@ describe('estadoDeReserva', () => {
   })
 
   test('un turno que termina a medianoche sigue en curso a las 23:30', () => {
-    const ahora = { dia, hora: '23:30' }
-    expect(estadoDeReserva('CONFIRMADA', dia, '23:00', '00:00', ahora)).toBe('EN_CURSO')
+    expect(
+      estadoDeReserva(
+        { estado: 'CONFIRMADA', asistio: null, dia, horaInicio: '23:00', horaFin: '00:00' },
+        { dia, hora: '23:30' },
+      ),
+    ).toBe('EN_CURSO')
   })
 
   test('un turno de media hora transiciona igual que uno de una hora', () => {
     const turnoCorto = (hora: string) =>
-      estadoDeReserva('CONFIRMADA', dia, '20:00', '20:30', { dia, hora })
+      estadoDeReserva(
+        { estado: 'CONFIRMADA', asistio: null, dia, horaInicio: '20:00', horaFin: '20:30' },
+        { dia, hora },
+      )
 
     expect(turnoCorto('20:00')).toBe('EN_CURSO')
     expect(turnoCorto('20:29')).toBe('EN_CURSO')
@@ -37,13 +47,51 @@ describe('estadoDeReserva', () => {
   })
 
   test('el reloj no pisa los estados que decidió una persona', () => {
-    const enMedioDelTurno = { dia, hora: '20:30' }
-    expect(estadoDeReserva('CANCELADA', dia, '20:00', '21:00', enMedioDelTurno)).toBe('CANCELADA')
-    expect(estadoDeReserva('NO_SHOW', dia, '20:00', '21:00', enMedioDelTurno)).toBe('NO_SHOW')
+    expect(
+      estadoDeReserva(
+        { estado: 'CANCELADA', asistio: null, dia, horaInicio: '20:00', horaFin: '21:00' },
+        { dia, hora: '20:30' },
+      ),
+    ).toBe('CANCELADA')
   })
 
   test('una pendiente con el turno terminado sigue pendiente', () => {
-    const despuesDelTurno = { dia, hora: '22:00' }
-    expect(estadoDeReserva('PENDIENTE', dia, '20:00', '21:00', despuesDelTurno)).toBe('PENDIENTE')
+    expect(
+      estadoDeReserva(
+        { estado: 'PENDIENTE', asistio: null, dia, horaInicio: '20:00', horaFin: '21:00' },
+        { dia, hora: '22:00' },
+      ),
+    ).toBe('PENDIENTE')
+  })
+})
+
+describe('estadoDeReserva con la asistencia marcada', () => {
+  function terminadaCon(asistio: boolean | null) {
+    return estadoDeReserva(
+      { estado: 'CONFIRMADA', asistio, dia, horaInicio: '20:00', horaFin: '21:00' },
+      { dia, hora: '22:00' },
+    )
+  }
+
+  test('terminado el turno, manda lo que marcó el dueño', () => {
+    expect(terminadaCon(null)).toBe('FINALIZADA')
+    expect(terminadaCon(true)).toBe('ASISTIO')
+    expect(terminadaCon(false)).toBe('NO_SHOW')
+  })
+
+  test('la marca no adelanta el estado: primero tiene que terminar el turno', () => {
+    const enCurso = estadoDeReserva(
+      { estado: 'CONFIRMADA', asistio: false, dia, horaInicio: '20:00', horaFin: '21:00' },
+      { dia, hora: '20:30' },
+    )
+    expect(enCurso).toBe('EN_CURSO')
+  })
+
+  test('una cancelada marcada como asistida sigue cancelada', () => {
+    const cancelada = estadoDeReserva(
+      { estado: 'CANCELADA', asistio: true, dia, horaInicio: '20:00', horaFin: '21:00' },
+      { dia, hora: '22:00' },
+    )
+    expect(cancelada).toBe('CANCELADA')
   })
 })

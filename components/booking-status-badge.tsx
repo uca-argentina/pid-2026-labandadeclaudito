@@ -12,12 +12,14 @@ const estilos: Record<EstadoVisible, string> = {
   CONFIRMADA: 'bg-primary/15 text-primary',
   EN_CURSO: 'bg-primary text-primary-foreground',
   FINALIZADA: 'bg-muted text-muted-foreground',
-  CANCELADA: 'bg-destructive/15 text-destructive',
+  ASISTIO: 'bg-green-600/15 text-green-700 dark:text-green-500',
   NO_SHOW: 'bg-destructive/15 text-destructive',
+  CANCELADA: 'bg-destructive/15 text-destructive',
 }
 
 type Props = {
   estado: EstadoReserva
+  asistio: boolean | null
   dia: string
   horaInicio: string
   horaFin: string
@@ -26,7 +28,14 @@ type Props = {
   ahoraInicial: { dia: string; hora: string }
 }
 
-export function BookingStatusBadge({ estado, dia, horaInicio, horaFin, ahoraInicial }: Props) {
+export function BookingStatusBadge({
+  estado,
+  asistio,
+  dia,
+  horaInicio,
+  horaFin,
+  ahoraInicial,
+}: Props) {
   const [ahora, setAhora] = useState(ahoraInicial)
 
   // El estado depende del reloj, así que se recalcula solo mientras la página
@@ -37,7 +46,7 @@ export function BookingStatusBadge({ estado, dia, horaInicio, horaFin, ahoraInic
     return () => clearInterval(id)
   }, [])
 
-  const visible = estadoDeReserva(estado, dia, horaInicio, horaFin, ahora)
+  const visible = estadoDeReserva({ estado, asistio, dia, horaInicio, horaFin }, ahora)
 
   return (
     <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${estilos[visible]}`}>

@@ -39,7 +39,10 @@ export default async function MisReservasPage() {
   // la más reciente a la más vieja.
   const esProxima = (r: Reserva) => {
     const dia = diaDeReserva(r.fecha)
-    const visible = estadoDeReserva(r.estado, dia, r.horaInicio, r.horaFin, ahora)
+    const visible = estadoDeReserva(
+      { estado: r.estado, asistio: r.asistio, dia, horaInicio: r.horaInicio, horaFin: r.horaFin },
+      ahora,
+    )
     if (visible === 'CONFIRMADA' || visible === 'EN_CURSO') return true
     // Una pendiente que nunca se pagó deja de ser próxima cuando empieza el turno.
     return visible === 'PENDIENTE' && !turnoYaPaso(dia, r.horaInicio)
@@ -104,6 +107,7 @@ function TarjetaReserva({
   const monto = montoDelHistorial(
     {
       estado: reserva.estado,
+      asistio: reserva.asistio,
       precioTurno: reserva.precioTurno.toString(),
       pago: reserva.pago && { ...reserva.pago, monto: reserva.pago.monto.toString() },
     },
@@ -133,6 +137,7 @@ function TarjetaReserva({
             </span>
             <BookingStatusBadge
               estado={reserva.estado}
+              asistio={reserva.asistio}
               dia={dia}
               horaInicio={reserva.horaInicio}
               horaFin={reserva.horaFin}
