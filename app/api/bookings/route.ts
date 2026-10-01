@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server'
 import { Prisma } from '@/lib/generated/prisma/client'
 import { createBookingSchema } from '@/lib/validations/booking'
 import { requireRole } from '@/lib/auth-helpers'
-import { generateSlots, precioDelTurno } from '@/lib/availability'
+import { precioDelTurno } from '@/lib/availability'
 import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
 import {
   diaSemanaDeReserva,
   formatAdvanceTime,
+  generateSlots,
   horariosSeSuperponen,
   isTooSoonToBook,
-  sumarMinutos,
 } from '@/lib/time'
 import { db } from '@/lib/db'
 
@@ -51,7 +51,8 @@ export async function POST(request: Request) {
   // recalcularla: un POST directo podría pedir un horario fuera del horario
   // de la cancha o pisado entre dos turnos.
   const slots = generateSlots(cancha.horaApertura, cancha.horaCierre, cancha.duracionTurnoMin)
-  if (!slots.includes(parsed.data.horaInicio)) {
+  const turnoPedido = slots.find((slot) => slot.horaInicio === parsed.data.horaInicio)
+  if (!turnoPedido) {
     return NextResponse.json(
       { error: 'Ese horario no es un turno de esta cancha' },
       { status: 400 },
@@ -59,10 +60,10 @@ export async function POST(request: Request) {
   }
 
   const fecha = new Date(parsed.data.fecha)
-  const horaFin = sumarMinutos(parsed.data.horaInicio, cancha.duracionTurnoMin)
+  const horaFin = turnoPedido.horaFin
 
   const bloqueosDelDia = await getBlocksOfDay(cancha.id, fecha)
-  if (isSlotBlocked(parsed.data.horaInicio, cancha.duracionTurnoMin, bloqueosDelDia)) {
+  if (isSlotBlocked(parsed.data.horaInicio, horaFin, bloqueosDelDia)) {
     return NextResponse.json({ error: 'Ese horario está bloqueado' }, { status: 409 })
   }
 
