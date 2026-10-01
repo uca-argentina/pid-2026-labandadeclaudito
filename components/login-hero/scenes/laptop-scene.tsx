@@ -13,64 +13,36 @@ import {
   SLEEVE_LIGHT,
   SLEEVE_SHADE,
 } from './mouse-hand-paths'
+import { CAPTION_RESERVE, SceneCaption } from './scene-caption'
+import { DesktopScreens } from './desktop-screens'
 
-// Escena 1 (0–3 s): laptop en un escritorio. Una mano mueve el mouse, el
-// cursor hace clic en un horario del calendario y aparece un check.
+// Escena del grupo A: laptop en un escritorio con la web app real. Una mano
+// mueve el mouse y el cursor recorre el flujo de reserva: Filtros → Deporte
+// (pasa por todas las opciones) → Ver resultados → Reservar → horario.
 // La mano con el mouse es la ilustración de referencia vectorizada (ver
 // mouse-hand-paths.ts).
 // Los elementos animados son siempre un <g> interno: la posición fija va en el
 // atributo transform del padre, porque el transform de CSS pisa al del SVG.
 export function LaptopScene() {
   return (
-    <svg viewBox="0 0 400 300" className="absolute inset-0 size-full">
+    <svg viewBox="0 0 400 340" className="absolute inset-0 size-full">
       <g className="hero-laptop">
         {/* Escritorio */}
         <rect x="0" y="192" width="400" height="108" className="fill-accent" />
 
         {/* Laptop: marco, pantalla y base */}
-        <rect x="110" y="64" width="180" height="124" rx="8" className="fill-muted-foreground" />
-        <rect x="117" y="71" width="166" height="110" rx="3" className="fill-card" />
-        <path d="M96 188 H304 L294 198 H106 Z" className="fill-muted-foreground/70" />
+        <rect x="56" y="18" width="288" height="170" rx="8" className="fill-muted-foreground" />
+        <rect x="63" y="25" width="274" height="156" rx="3" className="fill-card" />
+        <path d="M44 188 H356 L346 198 H54 Z" className="fill-muted-foreground/70" />
 
-        {/* Calendario verde */}
-        <rect x="117" y="71" width="166" height="16" className="fill-primary" />
-        <circle cx="127" cy="79" r="2.5" className="fill-primary-foreground/70" />
-        <circle cx="135" cy="79" r="2.5" className="fill-primary-foreground/70" />
-        <CalendarRow y={95} />
-        <CalendarRow y={124} />
-        <CalendarRow y={153} />
-        <text
-          x="219.5"
-          y="167"
-          fontSize="8"
-          fontWeight="600"
-          textAnchor="middle"
-          className="fill-primary"
-        >
-          21:00
-        </text>
+        {/* La web app, igual que el front real (ver desktop-screens.tsx) */}
+        <DesktopScreens />
 
-        {/* Horario elegido: se pinta de verde y aparece el check */}
-        <rect
-          x="203"
-          y="153"
-          width="33"
-          height="22"
-          rx="3"
-          className="hero-laptop-slot fill-primary"
-        />
-        <path
-          d="M213 164 l4.5 4.5 l8 -9"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="hero-laptop-check stroke-primary-foreground fill-none"
-        />
-
-        {/* Cursor: la punta arranca en (160, 105) y viaja hasta el horario */}
+        {/* Cursor: la punta está en el (0, 0) del dibujo y el CSS lo lleva a
+            cada botón con translate (hero-cursor) */}
         <g className="hero-cursor">
           <path
-            d="M160 105 v16 l4.5 -4 l3 7 l3 -1.4 l-3 -6.8 h6 Z"
+            d="M0 0 v16 l4.5 -4 l3 7 l3 -1.4 l-3 -6.8 h6 Z"
             strokeWidth="1"
             strokeLinejoin="round"
             className="fill-foreground stroke-card"
@@ -149,19 +121,9 @@ export function LaptopScene() {
             </g>
           </g>
         </g>
+        <SceneCaption text={CAPTION_RESERVE} />
       </g>
     </svg>
-  )
-}
-
-function CalendarRow({ y }: { y: number }) {
-  return (
-    <>
-      <rect x="125" y={y} width="33" height="22" rx="3" className="fill-primary/15" />
-      <rect x="164" y={y} width="33" height="22" rx="3" className="fill-primary/15" />
-      <rect x="203" y={y} width="33" height="22" rx="3" className="fill-primary/15" />
-      <rect x="242" y={y} width="33" height="22" rx="3" className="fill-primary/15" />
-    </>
   )
 }
 
