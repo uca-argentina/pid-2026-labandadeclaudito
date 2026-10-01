@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Prisma } from '@/lib/generated/prisma/client'
-import { precioDelTurno } from './availability'
+import { precioDelTurno, precioProporcional } from './availability'
 
 describe('precioDelTurno', () => {
   const precioBase = new Prisma.Decimal(1000)
@@ -43,5 +43,24 @@ describe('precioDelTurno', () => {
     }
     const precio = precioDelTurno(precioBase, [otroDia, otraFranja], MARTES, '18:00')
     expect(precio.equals(precioBase)).toBe(true)
+  })
+})
+
+describe('precioProporcional', () => {
+  const precioCompleto = new Prisma.Decimal(9000)
+
+  it('un turno completo cobra el precio entero', () => {
+    const precio = precioProporcional(precioCompleto, '14:00', '15:30', 90)
+    expect(precio.equals(precioCompleto)).toBe(true)
+  })
+
+  it('un turno de 30 min en una cancha de turnos de 90 cobra 1/3', () => {
+    const precio = precioProporcional(precioCompleto, '15:30', '16:00', 90)
+    expect(precio.equals(new Prisma.Decimal(3000))).toBe(true)
+  })
+
+  it('un turno corto que termina a medianoche también cobra la parte proporcional', () => {
+    const precio = precioProporcional(precioCompleto, '23:30', '00:00', 90)
+    expect(precio.equals(new Prisma.Decimal(3000))).toBe(true)
   })
 })

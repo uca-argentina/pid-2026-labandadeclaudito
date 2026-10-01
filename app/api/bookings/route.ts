@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { Prisma } from '@/lib/generated/prisma/client'
 import { createBookingSchema } from '@/lib/validations/booking'
 import { requireRole } from '@/lib/auth-helpers'
-import { precioDelTurno } from '@/lib/availability'
+import { precioDelTurno, precioProporcional } from '@/lib/availability'
 import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
 import {
   diaSemanaDeReserva,
@@ -91,11 +91,17 @@ export async function POST(request: Request) {
   // El precio se calcula siempre acá, nunca se confía en lo que mande el
   // cliente: precioBase puede tener un PrecioEspecial pisándolo. Queda
   // congelado en la Reserva para siempre.
-  const precioTurno = precioDelTurno(
+  const precioCompleto = precioDelTurno(
     cancha.precioBase,
     cancha.preciosEspeciales,
     diaSemanaDeReserva(fecha),
     parsed.data.horaInicio,
+  )
+  const precioTurno = precioProporcional(
+    precioCompleto,
+    parsed.data.horaInicio,
+    horaFin,
+    cancha.duracionTurnoMin,
   )
 
   const reservaExistente = await db.reserva.findUnique({

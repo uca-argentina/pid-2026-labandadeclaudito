@@ -46,6 +46,31 @@ export function precioDelTurno(
   return masEspecifico.precio
 }
 
+// El último turno del día puede ser más corto que duracionTurnoMin (ver
+// agregarSlots en lib/time.ts). Ese turno cobra la parte proporcional:
+// 30 min de un turno de 90 = 1/3 del precio.
+export function precioProporcional(
+  precio: Prisma.Decimal,
+  horaInicio: string,
+  horaFin: string,
+  duracionTurnoMin: number,
+): Prisma.Decimal {
+  const [inicioH, inicioM] = horaInicio.split(':').map(Number)
+  const [finH, finM] = horaFin.split(':').map(Number)
+
+  let minutosDelTurno = finH * 60 + finM - (inicioH * 60 + inicioM)
+  // Un turno que termina a las 00:00 da negativo: termina al día siguiente
+  if (minutosDelTurno <= 0) {
+    minutosDelTurno += 24 * 60
+  }
+
+  if (minutosDelTurno >= duracionTurnoMin) {
+    return precio
+  }
+
+  return precio.mul(minutosDelTurno).div(duracionTurnoMin).toDecimalPlaces(2)
+}
+
 export async function getAvailableSlots(
   canchaId: string,
   fecha: Date,
@@ -107,7 +132,12 @@ export async function getAvailableSlots(
         !isTooSoonToBook(dia, horaInicio, minAdvanceMinutes) &&
         !isSlotBlocked(horaInicio, horaFin, bloqueosDelDia) &&
         !seCruzaConReservaDelJugador,
-      precio: precioDelTurno(cancha.precioBase, cancha.preciosEspeciales, diaSemana, horaInicio),
+      precio: precioProporcional(
+        precioDelTurno(cancha.precioBase, cancha.preciosEspeciales, diaSemana, horaInicio),
+        horaInicio,
+        horaFin,
+        cancha.duracionTurnoMin,
+      ),
     }
   })
 
