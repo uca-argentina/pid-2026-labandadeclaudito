@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { ArrowLeft, Plus } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { getComplexByOwner } from '@/lib/ownership'
@@ -37,9 +37,17 @@ export default async function ListadoBloqueosPage({
   })
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
+    <main className="mx-auto max-w-5xl px-6 py-12">
+      <Link
+        href={`/dueno/complejos/${id}/canchas`}
+        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
+      >
+        <ArrowLeft className="size-3.5" />
+        Volver a canchas
+      </Link>
       <div className="flex items-start justify-between gap-4">
         <div>
+          <p className="text-muted-foreground text-sm">{complejo.nombre}</p>
           <h1 className="text-3xl font-semibold">Bloqueos de {cancha.nombre}</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Horarios cerrados por mantenimiento, eventos privados u otros motivos.
