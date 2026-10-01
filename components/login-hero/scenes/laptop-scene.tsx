@@ -13,6 +13,7 @@ import {
   SLEEVE_LIGHT,
   SLEEVE_SHADE,
 } from './mouse-hand-paths'
+import { SportPicker } from './sports-montage'
 
 // Escena 1 (0–3 s): laptop en un escritorio. Una mano mueve el mouse, el
 // cursor hace clic en un horario del calendario y aparece un check.
@@ -34,8 +35,10 @@ export function LaptopScene() {
 
         {/* Calendario verde */}
         <rect x="117" y="71" width="166" height="16" className="fill-primary" />
-        <circle cx="127" cy="79" r="2.5" className="fill-primary-foreground/70" />
-        <circle cx="135" cy="79" r="2.5" className="fill-primary-foreground/70" />
+        <text x="124" y="82" fontSize="7" fontWeight="600" className="fill-primary-foreground">
+          Todos los complejos
+        </text>
+        <SportPicker x={226} y={79} selected={0} ringClass="stroke-primary-foreground" />
         <CalendarRow y={95} />
         <CalendarRow y={124} />
         <CalendarRow y={153} />

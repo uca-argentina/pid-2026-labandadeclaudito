@@ -2,29 +2,33 @@
  * Animación del panel del login (components/login-hero/).
  * FUERA DEL ALCANCE DEL PARCIAL.
  *
+ * Qué cuenta: el dolor (llamar a cada complejo y que todos digan que no) y la
+ * solución (todos los complejos en un solo lugar: reservás en segundos, para
+ * el deporte que quieras, y jugás con tus amigos).
+ *
  * Cómo funciona el loop:
- * - Cada elemento tiene UN @keyframes, todos con la misma duración (15 s),
+ * - Cada elemento tiene UN @keyframes, todos con la misma duración (14 s),
  *   la misma curva e `infinite`. Nunca se usa animation-delay: el momento en
- *   que pasa cada cosa sale de los porcentajes (1 s = 6,667 %).
- * - Todo @keyframes arranca con `0%, 100%` en el mismo selector (o deja el
- *   100 % igual al 0 %), así el último cuadro es idéntico al primero y no se
- *   nota el salto al reiniciar.
+ *   que pasa cada cosa sale de los porcentajes (1 s = 7,143 %).
+ * - Todo @keyframes deja el 100 % igual al 0 %, así el último cuadro es
+ *   idéntico al primero y no se nota el salto al reiniciar.
  * - Solo se animan transform y opacity.
  * - Los estilos base (fuera de los keyframes) son el cuadro estático que se ve
  *   con prefers-reduced-motion: el montaje de deportes con las dos reservas
- *   confirmadas.
+ *   confirmadas y la leyenda "Ahora".
  *
  * Línea de tiempo:
- *   0–3 s      laptop: mano mueve el mouse, clic, check, sube chip de fútbol
- *   3–6 s      celular: el pulgar toca, onda, check, sube chip de pádel
- *   6–7,5 s    logo gira, barrido de reloj, sol → luna
- *   7,5–13,75 s canchas: fútbol con pases y gol (2 s), pádel (1,25 s),
- *              triple de básquet (1,75 s), tenis (1,25 s)
- *   13,75–15 s fundido al escritorio vacío (= cuadro de 0 s)
+ *   0–2,4 s      dolor: tres complejos, cada uno contesta que no
+ *   2,4–5 s      laptop: todos los complejos juntos, clic, check, chip de fútbol
+ *   5–7,6 s      celular: el pulgar toca, onda, check, chip de pádel
+ *   7,6–8,8 s    logo con pulso, barrido de reloj, sol → luna
+ *   8,8–13 s     se juega lo reservado: fútbol con pases y gol, y pádel con
+ *                peloteo, con el grupo de amigos
+ *   13–14 s      fundido de vuelta a la escena del dolor (= cuadro de 0 s)
  */
 
 .hero-stage {
-  --hero-duration: 15s;
+  --hero-duration: 14s;
   --hero-easing: ease-in-out;
 }
 
@@ -40,13 +44,163 @@
 
 /* ---------- Cuadro estático (base) ---------- */
 
+.hero-pain,
+.hero-caption-before,
 .hero-laptop,
 .hero-phone,
 .hero-logo-scene,
-.hero-court-padel,
-.hero-court-basketball,
-.hero-court-tennis {
+.hero-court-padel {
   opacity: 0;
+}
+
+/* ---------- Escena 0: el dolor (0–2,4 s) ---------- */
+
+/* Se ve al arrancar el loop y también al final (el montaje funde a esta
+   escena), así que el cuadro de 14 s es igual al de 0 s. */
+.hero-pain {
+  animation: hero-pain var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pain {
+  0%,
+  13.571% {
+    opacity: 1;
+  }
+  17.857%,
+  92.857% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Cada complejo contesta que no, uno después del otro (0,6 / 1,1 / 1,6 s) */
+.hero-pain-busy-1 {
+  animation: hero-pain-busy-1 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pain-busy-1 {
+  0%,
+  3.571% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  5.2% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  6.4%,
+  17.857% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  18.5%,
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+.hero-pain-busy-2 {
+  animation: hero-pain-busy-2 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pain-busy-2 {
+  0%,
+  7.857% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  9.5% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  10.7%,
+  17.857% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  18.5%,
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+.hero-pain-busy-3 {
+  animation: hero-pain-busy-3 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pain-busy-3 {
+  0%,
+  11.429% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  13% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  14.2%,
+  17.857% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  18.5%,
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+/* El teléfono "suena" mientras llaman */
+.hero-pain-ring {
+  animation: hero-pain-ring var(--hero-duration) linear infinite;
+}
+@keyframes hero-pain-ring {
+  0%,
+  1.2%,
+  4.8%,
+  100% {
+    transform: rotate(0deg);
+  }
+  0.6% {
+    transform: rotate(-14deg);
+  }
+  1.8% {
+    transform: rotate(14deg);
+  }
+  2.4% {
+    transform: rotate(-14deg);
+  }
+  3% {
+    transform: rotate(14deg);
+  }
+  3.6% {
+    transform: rotate(-14deg);
+  }
+  4.2% {
+    transform: rotate(14deg);
+  }
+}
+
+/* Leyenda debajo del escenario: "Antes" mientras se ve el dolor y
+   "Ahora" durante la solución */
+.hero-caption-before {
+  animation: hero-pain var(--hero-duration) var(--hero-easing) infinite;
+}
+.hero-caption-after {
+  animation: hero-caption-after var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-caption-after {
+  0%,
+  13.571% {
+    opacity: 0;
+  }
+  17.857%,
+  92.857% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 /* ---------- Escena 1: laptop (0–3 s) ---------- */
@@ -56,15 +210,16 @@
 }
 @keyframes hero-laptop {
   0%,
-  18.666% {
-    opacity: 1;
-  }
-  21.334%,
-  93.75% {
+  13.571% {
     opacity: 0;
   }
-  100% {
+  17.857%,
+  34.476% {
     opacity: 1;
+  }
+  36.953%,
+  100% {
+    opacity: 0;
   }
 }
 
@@ -77,17 +232,18 @@
   animation: hero-laptop-hand var(--hero-duration) var(--hero-easing) infinite;
 }
 @keyframes hero-laptop-hand {
-  0% {
+  0%,
+  17.143% {
     transform: translate(-6.64px, 95.88px);
   }
-  4% {
+  20.857% {
     transform: translate(-6.64px, -4.12px);
   }
-  9.334%,
-  21.334% {
+  25.81%,
+  36.953% {
     transform: translate(0, 0);
   }
-  22.4%,
+  37.943%,
   100% {
     transform: translate(-6.64px, 95.88px);
   }
@@ -98,14 +254,15 @@
 }
 @keyframes hero-mouse {
   0%,
-  4% {
+  17.143%,
+  20.857% {
     transform: translate(-6.64px, -4.12px);
   }
-  9.334%,
-  21.334% {
+  25.81%,
+  36.953% {
     transform: translate(0, 0);
   }
-  22.4%,
+  37.943%,
   100% {
     transform: translate(-6.64px, -4.12px);
   }
@@ -120,14 +277,15 @@
 }
 @keyframes hero-index-finger {
   0%,
-  10% {
+  17.143%,
+  26.429% {
     transform: rotate(0deg);
   }
-  10.4%,
-  10.72% {
+  26.8%,
+  27.097% {
     transform: rotate(-7deg);
   }
-  11.2%,
+  27.543%,
   100% {
     transform: rotate(0deg);
   }
@@ -140,21 +298,22 @@
 }
 @keyframes hero-cursor {
   0%,
-  4% {
+  17.143%,
+  20.857% {
     transform: translate(0, 0) scale(1);
   }
-  9.334%,
-  10% {
+  25.81%,
+  26.429% {
     transform: translate(58px, 58px) scale(1);
   }
-  10.4% {
+  26.8% {
     transform: translate(58px, 58px) scale(0.8);
   }
-  10.8%,
-  21.334% {
+  27.171%,
+  36.953% {
     transform: translate(58px, 58px) scale(1);
   }
-  22.4%,
+  37.943%,
   100% {
     transform: translate(0, 0) scale(1);
   }
@@ -165,14 +324,15 @@
 }
 @keyframes hero-laptop-slot {
   0%,
-  10% {
+  17.143%,
+  26.429% {
     opacity: 0;
   }
-  11.2%,
-  21.334% {
+  27.543%,
+  36.953% {
     opacity: 1;
   }
-  22.4%,
+  37.943%,
   100% {
     opacity: 0;
   }
@@ -183,17 +343,18 @@
 }
 @keyframes hero-laptop-check {
   0%,
-  11.2% {
+  17.143%,
+  27.543% {
     transform: scale(0);
   }
-  12.8% {
+  29.029% {
     transform: scale(1.25);
   }
-  14%,
-  21.334% {
+  30.143%,
+  36.953% {
     transform: scale(1);
   }
-  22.4%,
+  37.943%,
   100% {
     transform: scale(0);
   }
@@ -206,14 +367,15 @@
 }
 @keyframes hero-phone {
   0%,
-  18.666% {
+  17.143%,
+  34.476% {
     opacity: 0;
   }
-  21.334%,
-  38.4% {
+  36.953%,
+  52.8% {
     opacity: 1;
   }
-  40.8%,
+  54.971%,
   100% {
     opacity: 0;
   }
@@ -225,14 +387,15 @@
 }
 @keyframes hero-phone-hand {
   0%,
-  20% {
+  17.143%,
+  35.714% {
     transform: translateY(50px);
   }
-  24%,
-  40.8% {
+  39.429%,
+  54.971% {
     transform: translateY(0);
   }
-  42.4%,
+  56.343%,
   100% {
     transform: translateY(50px);
   }
@@ -248,14 +411,15 @@
 }
 @keyframes hero-thumb {
   0%,
-  24.8% {
+  17.143%,
+  40.171% {
     transform: rotate(0deg);
   }
-  28.666%,
-  30% {
+  43.761%,
+  45% {
     transform: rotate(-8deg);
   }
-  33.2%,
+  47.971%,
   100% {
     transform: rotate(0deg);
   }
@@ -266,19 +430,20 @@
 }
 @keyframes hero-ripple {
   0%,
-  28.666% {
+  17.143%,
+  43.761% {
     opacity: 0;
     transform: scale(0.2);
   }
-  28.96% {
+  44.034% {
     opacity: 1;
     transform: scale(0.4);
   }
-  30.8% {
+  45.743% {
     opacity: 0.9;
     transform: scale(1.7);
   }
-  32.8% {
+  47.6% {
     opacity: 0;
     transform: scale(2.6);
   }
@@ -293,14 +458,15 @@
 }
 @keyframes hero-phone-slot {
   0%,
-  28.8% {
+  17.143%,
+  43.886% {
     opacity: 0;
   }
-  30%,
-  40.8% {
+  45%,
+  54.971% {
     opacity: 1;
   }
-  42.4%,
+  56.343%,
   100% {
     opacity: 0;
   }
@@ -311,17 +477,18 @@
 }
 @keyframes hero-phone-check {
   0%,
-  30% {
+  17.143%,
+  45% {
     transform: scale(0);
   }
-  31.666% {
+  46.547% {
     transform: scale(1.25);
   }
-  32.8%,
-  40.8% {
+  47.6%,
+  54.971% {
     transform: scale(1);
   }
-  42.4%,
+  56.343%,
   100% {
     transform: scale(0);
   }
@@ -334,31 +501,34 @@
 }
 @keyframes hero-logo-scene {
   0%,
-  38.4% {
+  17.143%,
+  52.8% {
     opacity: 0;
   }
-  40.8%,
-  48.334% {
+  54.971%,
+  61.429% {
     opacity: 1;
   }
-  51.067%,
+  63.625%,
   100% {
     opacity: 0;
   }
 }
 
-/* rotate(360deg) es la misma matriz que rotate(0): no hay salto */
+/* Pulso: el logo late una vez mientras pasa el barrido del reloj */
 .hero-logo {
   animation: hero-logo var(--hero-duration) var(--hero-easing) infinite;
 }
 @keyframes hero-logo {
   0%,
-  40% {
-    transform: rotate(0deg);
-  }
-  49.334%,
+  17.143%,
+  54.286%,
+  62.286%,
   100% {
-    transform: rotate(360deg);
+    transform: scale(1);
+  }
+  58% {
+    transform: scale(1.18);
   }
 }
 
@@ -369,10 +539,11 @@
 }
 @keyframes hero-sweep {
   0%,
-  40.8% {
+  17.143%,
+  54.971% {
     transform: rotate(0deg);
   }
-  48%,
+  61.143%,
   100% {
     transform: rotate(360deg);
   }
@@ -385,14 +556,15 @@
 }
 @keyframes hero-orbit {
   0%,
-  40% {
+  17.143%,
+  54.286% {
     transform: rotate(-70deg);
   }
-  49.334%,
-  51.067% {
+  62.286%,
+  63.625% {
     transform: rotate(70deg);
   }
-  53.733%,
+  65.545%,
   100% {
     transform: rotate(-70deg);
   }
@@ -405,16 +577,17 @@
 }
 @keyframes hero-sun {
   0%,
-  43.2% {
+  17.143%,
+  57.029% {
     opacity: 1;
     transform: scale(1);
   }
-  44.8%,
-  51.067% {
+  58.4%,
+  63.625% {
     opacity: 0;
     transform: scale(0.4);
   }
-  53.733%,
+  65.545%,
   100% {
     opacity: 1;
     transform: scale(1);
@@ -426,54 +599,57 @@
 }
 @keyframes hero-moon {
   0%,
-  44.8% {
+  17.143%,
+  58.4% {
     opacity: 0;
     transform: scale(0.4);
   }
-  46.8%,
-  51.067% {
+  60.114%,
+  63.625% {
     opacity: 1;
     transform: scale(1);
   }
-  53.733%,
+  65.545%,
   100% {
     opacity: 0;
     transform: scale(0.4);
   }
 }
 
-/* ---------- Escena 4: montaje de canchas (7,5–13,75 s) ---------- */
+/* ---------- Escena 4: partidos de lo reservado (9–13 s) ---------- */
 
 .hero-montage {
   animation: hero-montage var(--hero-duration) var(--hero-easing) infinite;
 }
 @keyframes hero-montage {
   0%,
-  48.8% {
+  17.143%,
+  61.829% {
     opacity: 0;
   }
-  51.6%,
-  91.667% {
+  64.009%,
+  92.857% {
     opacity: 1;
   }
-  95.833%,
+  96.428%,
   100% {
     opacity: 0;
   }
 }
 
-/* Fútbol 2 s (50 → 63,3 %), pádel 1,25 s (→ 71,7), básquet 1,75 s (→ 83,3),
-   tenis 1,25 s (→ 91,7). Cruce de ~2 % entre una y otra. */
+/* Solo se juega lo que se reservó: fútbol (2 s, hasta 77,4 %) y pádel (2 s).
+   El resto de los deportes se ve en el selector de las pantallas de reserva. */
 .hero-court-football {
   animation: hero-court-football var(--hero-duration) var(--hero-easing) infinite;
 }
 @keyframes hero-court-football {
   0%,
-  62.533% {
+  17.143%,
+  77.4% {
     opacity: 1;
   }
-  64.458%,
-  96% {
+  79.2%,
+  96.571% {
     opacity: 0;
   }
   100% {
@@ -486,86 +662,50 @@
 }
 @keyframes hero-court-padel {
   0%,
-  62.533% {
+  77.4% {
     opacity: 0;
   }
-  64.458%,
-  70.608% {
+  79.2%,
+  93.143% {
     opacity: 1;
   }
-  73.335%,
+  96.571%,
   100% {
     opacity: 0;
   }
 }
 
-.hero-court-basketball {
-  animation: hero-court-basketball var(--hero-duration) var(--hero-easing) infinite;
-}
-@keyframes hero-court-basketball {
-  0%,
-  70.608% {
-    opacity: 0;
-  }
-  73.335%,
-  81.735% {
-    opacity: 1;
-  }
-  84.442%,
-  100% {
-    opacity: 0;
-  }
-}
-
-.hero-court-tennis {
-  animation: hero-court-tennis var(--hero-duration) var(--hero-easing) infinite;
-}
-@keyframes hero-court-tennis {
-  0%,
-  81.735% {
-    opacity: 0;
-  }
-  84.442%,
-  92% {
-    opacity: 1;
-  }
-  96%,
-  100% {
-    opacity: 0;
-  }
-}
-
-/* La pelota cruza la cancha mientras se ve; vuelve al inicio cuando no.
-   Fútbol: pases entre los 4 jugadores (pausa corta en cada uno) y remate al
-   arco derecho. Básquet: triple desde (246, 124); el scale simula la altura
-   de la parábola y el 0,6 final es la pelota pasando por el aro. Los
-   translate de fútbol son los pies de cada jugador (+8, +2) menos el
-   centro (200, 150) del SVG, ver sports-montage.tsx. */
+/* Fútbol: pases entre los 4 jugadores (pausa corta en cada uno) y remate al
+   arco derecho. Los translate son los pies de cada jugador (+8, +2) menos el
+   centro (200, 150) del SVG, ver sports-montage.tsx. La pelota vuelve al
+   inicio recién cuando la cancha ya se fue (79,3 %).
+   Pádel: peloteo de ida y vuelta entre los dos lados de la red. */
 .hero-ball-football {
   animation: hero-ball-football var(--hero-duration) var(--hero-easing) infinite;
 }
 @keyframes hero-ball-football {
   0%,
-  51.067% {
+  17.143%,
+  63.625% {
     transform: translate(-62px, 42px);
   }
-  53.2%,
-  54.267% {
+  65.4%,
+  66.3% {
     transform: translate(-17px, -48px);
   }
-  56.4%,
-  57.467% {
+  68%,
+  68.9% {
     transform: translate(43px, 27px);
   }
-  59.067%,
-  59.92% {
+  70.4%,
+  71.2% {
     transform: translate(78px, -33px);
   }
-  61.52%,
-  64.833% {
+  72.6%,
+  79.2% {
     transform: translate(113px, -10px);
   }
-  66.333%,
+  79.3%,
   100% {
     transform: translate(-62px, 42px);
   }
@@ -576,50 +716,28 @@
 }
 @keyframes hero-ball-padel {
   0%,
-  64.083% {
-    transform: translate(70px, -40px);
+  17.143%,
+  79.2% {
+    transform: translate(-80px, -30px);
   }
-  71.433% {
-    transform: translate(-70px, 30px);
+  81.8% {
+    transform: translate(80px, 25px);
   }
-  100% {
-    transform: translate(70px, -40px);
+  84.4% {
+    transform: translate(-75px, 30px);
   }
-}
-
-.hero-ball-basketball {
-  animation: hero-ball-basketball var(--hero-duration) var(--hero-easing) infinite;
-}
-@keyframes hero-ball-basketball {
-  0%,
-  75.333% {
-    transform: translate(46px, -26px) scale(1);
+  87% {
+    transform: translate(75px, -25px);
   }
-  78.333% {
-    transform: translate(72px, -13px) scale(1.7);
+  89.6% {
+    transform: translate(-80px, -10px);
   }
-  80.667% {
-    transform: translate(98px, 0) scale(1);
-  }
-  82%,
-  100% {
-    transform: translate(98px, 0) scale(0.6);
-  }
-}
-
-.hero-ball-tennis {
-  animation: hero-ball-tennis var(--hero-duration) var(--hero-easing) infinite;
-}
-@keyframes hero-ball-tennis {
-  0%,
-  83.917% {
-    transform: translate(-80px, -40px);
-  }
-  92% {
-    transform: translate(80px, 40px);
+  92.2%,
+  96.571% {
+    transform: translate(80px, 15px);
   }
   100% {
-    transform: translate(-80px, -40px);
+    transform: translate(-80px, -30px);
   }
 }
 
@@ -631,20 +749,21 @@
 }
 @keyframes hero-chip-football {
   0%,
-  13.334% {
+  17.143%,
+  29.524% {
     opacity: 0;
     transform: translate(105px, 136px) scale(0.8);
   }
-  14.4% {
+  30.514% {
     opacity: 1;
     transform: translate(105px, 136px) scale(0.8);
   }
-  17.334%,
-  91.667% {
+  33.239%,
+  92.857% {
     opacity: 1;
     transform: translate(0, 0) scale(1);
   }
-  95.833% {
+  96.428% {
     opacity: 0;
     transform: translate(0, 0) scale(1);
   }
@@ -659,20 +778,21 @@
 }
 @keyframes hero-chip-padel {
   0%,
-  33.334% {
+  17.143%,
+  48.096% {
     opacity: 0;
     transform: translate(-67.3px, 128.3px) scale(0.8);
   }
-  34.4% {
+  49.086% {
     opacity: 1;
     transform: translate(-67.3px, 128.3px) scale(0.8);
   }
-  37.334%,
-  91.667% {
+  51.81%,
+  92.857% {
     opacity: 1;
     transform: translate(0, 0) scale(1);
   }
-  95.833% {
+  96.428% {
     opacity: 0;
     transform: translate(0, 0) scale(1);
   }
@@ -682,11 +802,39 @@
   }
 }
 
+/* ---------- Pausa y atención al formulario ---------- */
+
+/* El botón "Pausar animación" es un checkbox (#hero-pause) con su label:
+   funciona sin JavaScript y con teclado. */
+body:has(#hero-pause:checked) .hero-stage * {
+  animation-play-state: paused;
+}
+
+/* Mientras se escribe en un campo la animación se frena y se atenúa para no
+   competir con el formulario. */
+.hero-frame {
+  transition: opacity 0.3s;
+}
+body:has(input:not(#hero-pause):focus) .hero-stage * {
+  animation-play-state: paused;
+}
+body:has(input:not(#hero-pause):focus) .hero-frame {
+  opacity: 0.45;
+}
+
+#hero-pause:checked ~ label .hero-pause-on,
+#hero-pause:not(:checked) ~ label .hero-pause-off {
+  display: none;
+}
+
 /* ---------- Movimiento reducido: cuadro estático ---------- */
 
 @media (prefers-reduced-motion: reduce) {
   .hero-stage,
   .hero-stage * {
     animation: none;
+  }
+  .hero-pause-control {
+    display: none;
   }
 }

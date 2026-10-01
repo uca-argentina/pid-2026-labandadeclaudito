@@ -1,4 +1,5 @@
 import { HAND_NAILS, HAND_SILHOUETTE, HAND_SKIN, SLEEVE } from './phone-hand-paths'
+import { SportPicker } from './sports-montage'
 
 // Escena 2 (3–6 s): celular. La mano derecha lo sostiene y el pulgar toca el
 // horario de pádel de las 19:30: onda circular, check y sube el chip.
@@ -54,6 +55,7 @@ export function PhoneScene() {
             >
               Pádel · hoy
             </text>
+            <SportPicker x={172} y={104} selected={1} ringClass="stroke-primary" />
             {SLOT_ROWS.map((row) =>
               SLOT_COLUMNS.map((x, i) => (
                 <g key={row.times[i]}>
