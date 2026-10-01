@@ -120,8 +120,17 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
                     <MapPin className="size-3.5 shrink-0" />
                     {complejo.direccion} · {complejo.zona}
                   </span>
+                  {/* Misma forma que la dirección (ícono + texto): los íconos
+                      quedan en columna y la cantidad no flota entre los chips
+                      de deporte cuando saltan de línea. */}
+                  <span className="text-muted-foreground mt-1 flex items-center gap-1.5 text-sm">
+                    <Shapes className="size-3.5 shrink-0" />
+                    {complejo.canchas.length === 1
+                      ? '1 cancha'
+                      : `${complejo.canchas.length} canchas`}
+                  </span>
 
-                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs">
+                  <div className="mt-3 mb-4 flex flex-wrap items-center gap-1.5 text-xs">
                     {deportes.map((deporteDeCancha) => (
                       <span
                         key={deporteDeCancha}
@@ -130,12 +139,6 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
                         {deporteLabels[deporteDeCancha]}
                       </span>
                     ))}
-                    <span className="text-muted-foreground ml-auto flex items-center gap-1">
-                      <Shapes className="size-3.5 shrink-0" />
-                      {complejo.canchas.length === 1
-                        ? '1 cancha'
-                        : `${complejo.canchas.length} canchas`}
-                    </span>
                   </div>
 
                   <div className="border-border mt-auto flex items-center gap-1.5 border-t pt-3">

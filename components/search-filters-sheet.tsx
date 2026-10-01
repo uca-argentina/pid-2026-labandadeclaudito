@@ -1,5 +1,8 @@
-import Link from 'next/link'
-import { Calendar, MapPinned, Search, SlidersHorizontal, Wallet } from 'lucide-react'
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Calendar, Search, SlidersHorizontal, Wallet } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,6 +32,18 @@ export function SearchFiltersSheet({
   filtros: SearchCourtsFilters
   cantidadDeFiltros: number
 }) {
+  const router = useRouter()
+  // Los filtros guardan su valor en useState/defaultValue, que solo se leen al
+  // montarse: cambiar la key fuerza a montarlos de nuevo. Cambia cuando llegan
+  // filtros nuevos por URL y cada vez que se toca "Limpiar filtros" (aunque la
+  // URL ya estuviera limpia y no haya navegación).
+  const [vecesLimpiado, setVecesLimpiado] = useState(0)
+
+  function limpiarFiltros() {
+    setVecesLimpiado(vecesLimpiado + 1)
+    router.push('/jugador/canchas')
+  }
+
   return (
     <Sheet>
       <SheetTrigger render={<Button variant="outline" />}>
@@ -38,7 +53,11 @@ export function SearchFiltersSheet({
       </SheetTrigger>
 
       <SheetContent className="w-full sm:max-w-md">
-        <form method="get" className="flex min-h-0 flex-1 flex-col">
+        <form
+          key={`${JSON.stringify(filtros)}-${vecesLimpiado}`}
+          method="get"
+          className="flex min-h-0 flex-1 flex-col"
+        >
           <SheetHeader>
             <SheetTitle>Filtros</SheetTitle>
             <SheetDescription>Combiná los que quieras para encontrar tu cancha.</SheetDescription>
@@ -46,10 +65,7 @@ export function SearchFiltersSheet({
 
           <div className="flex-1 space-y-8 overflow-y-auto px-4 pb-6">
             <section className="space-y-4">
-              <h3 className="flex items-center gap-1.5 text-sm font-semibold">
-                <MapPinned className="size-4" />
-                Cancha
-              </h3>
+              <h3 className="text-sm font-semibold">Cancha</h3>
 
               <ZonaFilter zonaInicial={filtros.zona} />
 
@@ -130,7 +146,7 @@ export function SearchFiltersSheet({
           </div>
 
           <SheetFooter className="border-border flex-row justify-end border-t">
-            <Button variant="ghost" render={<Link href="/jugador/canchas" />}>
+            <Button type="button" variant="ghost" onClick={limpiarFiltros}>
               Limpiar filtros
             </Button>
             <Button type="submit">
