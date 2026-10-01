@@ -1,12 +1,10 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { ArrowLeft, BadgeCheck, Clock, MapPin, Phone, Wallet } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, MapPin, Phone } from 'lucide-react'
 import { getComplexDetail, filtersToQueryString } from '@/lib/court-search'
 import { searchCourtsSchema } from '@/lib/validations/court-search'
-import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
-import { clasesGrillaAdaptable } from '@/lib/grid-columns'
-import { CourtBookingSheet } from '@/components/court-booking-sheet'
+import { CourtCard } from '@/components/court-card'
 import { ComplexGallery } from '@/components/complex-gallery'
 
 export default async function ComplejoDetallePage({
@@ -23,7 +21,7 @@ export default async function ComplejoDetallePage({
   if (!complejo) notFound()
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
+    <main className="mx-auto w-full max-w-5xl px-6 py-12">
       <Link
         href={`/jugador/canchas${filtersToQueryString(filtros)}`}
         className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
@@ -61,53 +59,14 @@ export default async function ComplejoDetallePage({
           Este complejo todavía no cargó canchas.
         </p>
       ) : (
-        <div
-          className={`mx-auto mt-6 grid gap-5 ${clasesGrillaAdaptable(complejo.canchas.length)}`}
-        >
+        <div className="mt-6 grid gap-5 lg:grid-cols-2">
           {complejo.canchas.map((cancha) => (
-            <div
+            <CourtCard
               key={cancha.id}
-              className="border-border bg-card flex flex-col gap-3 rounded-2xl border p-5"
-            >
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-lg font-bold">{cancha.nombre}</span>
-                  <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
-                    {deporteLabels[cancha.deporte]}
-                  </span>
-                  <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
-                    {superficieLabels[cancha.tipoSuperficie]}
-                  </span>
-                </div>
-                <span className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
-                  <Clock className="size-3.5 shrink-0" />
-                  Horario regular: {cancha.horaApertura} a {cancha.horaCierre} hs
-                </span>
-              </div>
-
-              {/* Precio arriba y botón abajo a todo el ancho (en vez de lado a
-                  lado): con 4 tarjetas por fila no entran cómodos juntos. */}
-              <div className="mt-auto flex flex-col gap-2.5">
-                <div>
-                  <div className="text-primary flex items-center gap-1.5 text-xl font-bold">
-                    <Wallet className="size-4" />
-                    {formatPrecio(cancha.precioBase.toString())}
-                  </div>
-                  <div className="text-muted-foreground text-xs">
-                    Precio base, por turno de {cancha.duracionTurnoMin} min
-                  </div>
-                </div>
-                <CourtBookingSheet
-                  courtId={cancha.id}
-                  courtName={cancha.nombre}
-                  courtSportLabel={deporteLabels[cancha.deporte]}
-                  precioBase={cancha.precioBase.toString()}
-                  duracionTurnoMin={cancha.duracionTurnoMin}
-                  fechaInicial={filtros.fecha}
-                  className="w-full"
-                />
-              </div>
-            </div>
+              cancha={cancha}
+              fotoUrl={complejo.imagenes[0]?.url}
+              fechaInicial={filtros.fecha}
+            />
           ))}
         </div>
       )}
