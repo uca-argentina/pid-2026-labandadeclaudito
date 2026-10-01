@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { ImageIcon, MapPin, Phone, Plus, Shapes } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { clasesGrillaAdaptable } from '@/lib/grid-columns'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -49,13 +50,15 @@ export default async function MisComplejosPage() {
       )}
 
       {complejosDelDuenio.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className={`mx-auto grid gap-5 ${clasesGrillaAdaptable(complejosDelDuenio.length)}`}>
           {complejosDelDuenio.map((complejo) => (
-            <Card key={complejo.id} className="gap-0 pt-0">
-              {/* Foto y datos abren el detalle; "Ver canchas" queda afuera para no anidar links */}
+            <Card key={complejo.id} className="h-full gap-0 pt-0">
+              {/* Foto y datos abren el detalle; "Ver canchas" queda afuera para no anidar
+                  links. flex-1 en el Link: así "Ver canchas" queda a la misma altura en
+                  toda la fila, aunque el nombre ocupe distinta cantidad de líneas. */}
               <Link
                 href={`/dueno/complejos/${complejo.id}`}
-                className="hover:bg-accent flex flex-col gap-4 pb-4 transition-colors"
+                className="hover:bg-accent flex flex-1 flex-col gap-4 pb-4 transition-colors"
               >
                 {complejo.imagenes.length > 0 ? (
                   <div className="relative aspect-video">

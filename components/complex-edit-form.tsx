@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { MinAdvanceInput } from '@/components/min-advance-input'
+import { ZonaSelect } from '@/components/zona-select'
 import { createComplexSchema } from '@/lib/validations/complex'
 import { timeTextToMinutes } from '@/lib/time'
 
@@ -115,12 +116,10 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
           <ErrorDeCampo mensaje={fieldErrors.direccion} />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="zona">Zona</Label>
-          <Input
+        <div className="space-y-2 sm:col-span-2">
+          <ZonaSelect
             id="zona"
             name="zona"
-            placeholder="Ej: Villa Devoto, CABA"
             defaultValue={complejo.zona}
             aria-invalid={!!fieldErrors.zona}
             className={fieldErrors.zona ? claseInputConError : undefined}

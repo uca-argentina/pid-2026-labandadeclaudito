@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowRight, Building2, CalendarClock, LayoutGrid, Plus } from 'lucide-react'
+import { ArrowRight, Building2, CalendarClock, Clock, LayoutGrid, Plus, User } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { deporteLabels } from '@/lib/labels'
@@ -110,13 +110,15 @@ export default async function DuenoHomePage() {
                     {deporteLabels[reserva.cancha.deporte]}
                   </span>
                 </div>
-                <p className="text-muted-foreground mt-1.5 text-sm">
+                <p className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-sm">
+                  <User className="size-3.5 shrink-0" />
                   {reserva.cancha.complejo.nombre} · Reservó {reserva.jugador.nombre}
                 </p>
               </div>
               <div className="text-right">
                 <p className="font-medium">{formatearDia(diaDeReserva(reserva.fecha))}</p>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground flex items-center justify-end gap-1.5 text-sm">
+                  <Clock className="size-3.5 shrink-0" />
                   {reserva.horaInicio} a {reserva.horaFin} hs
                 </p>
               </div>

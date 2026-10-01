@@ -48,8 +48,8 @@ export function CancelBookingButton({ bookingId }: { bookingId: string }) {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Cancelar esta reserva?</AlertDialogTitle>
             <AlertDialogDescription>
-              El turno vuelve a quedar libre para otros jugadores. No se puede deshacer: si lo
-              querés de nuevo, tenés que reservarlo otra vez.
+              El turno vuelve a quedar disponible para otros jugadores y esta acción no se puede
+              deshacer. Si más adelante lo querés de nuevo, vas a tener que reservarlo otra vez.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

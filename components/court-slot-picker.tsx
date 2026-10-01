@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react'
 import { format, parse } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Calendar, Check, CheckCircle2, Loader2, Wallet } from 'lucide-react'
+import { Calendar, Check, CheckCircle2, Clock, Loader2, Wallet } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatPrecio } from '@/lib/labels'
-import { diaDeHoy, formatAdvanceTime, sumarMinutos } from '@/lib/time'
+import { diaDeHoy, formatAdvanceTime } from '@/lib/time'
 
-type Slot = { horaInicio: string; disponible: boolean; precio: string }
+type Slot = { horaInicio: string; horaFin: string; disponible: boolean; precio: string }
 // reservando -> pendiente (reserva creada, falta la seña) -> pagando -> exito
 type EstadoConfirmacion = 'idle' | 'reservando' | 'pendiente' | 'pagando' | 'exito' | 'error'
 
@@ -22,13 +22,11 @@ export function CourtSlotPicker({
   courtId,
   courtName,
   precioBase,
-  duracionTurnoMin,
   fechaInicial,
 }: {
   courtId: string
   courtName: string
   precioBase: string
-  duracionTurnoMin: number
   fechaInicial?: string
 }) {
   // fechaInicial viene como YYYY-MM-DD de la búsqueda. Se arma con parse (fecha
@@ -216,7 +214,7 @@ export function CourtSlotPicker({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-sm font-medium">
               {capitalizar(format(fecha, 'EEEE dd/MM', { locale: es }))} · {horaSeleccionada} a{' '}
-              {sumarMinutos(horaSeleccionada, duracionTurnoMin)} hs
+              {slotSeleccionado.horaFin} hs
             </div>
             <div className="flex items-center gap-1.5 text-sm">
               <span className="text-muted-foreground">Precio del turno:</span>
@@ -258,12 +256,17 @@ export function CourtSlotPicker({
       )}
 
       {reservaHecha && estado !== 'exito' && (
-        <div className="bg-secondary border-border flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3">
-          <p className="text-sm">
-            Reservaste {courtName} a las {reservaHecha.hora} hs. <strong>Pendiente de seña:</strong>{' '}
-            pagala para confirmar el turno.
-          </p>
-          <Button onClick={pagarSena} disabled={estado === 'pagando'}>
+        <div className="bg-secondary border-border flex flex-col gap-3 rounded-lg border px-4 py-3">
+          <div className="flex items-start gap-2.5">
+            <Clock className="text-muted-foreground mt-0.5 size-4 shrink-0" />
+            <div>
+              <p className="text-sm font-medium">
+                Reservaste {courtName} a las {reservaHecha.hora} hs
+              </p>
+              <p className="text-muted-foreground text-xs">Pagá la seña para confirmar el turno.</p>
+            </div>
+          </div>
+          <Button onClick={pagarSena} disabled={estado === 'pagando'} className="self-end">
             {estado === 'pagando' ? (
               <Loader2 className="size-3.5 animate-spin" />
             ) : (
@@ -277,12 +280,15 @@ export function CourtSlotPicker({
       )}
 
       {estado === 'exito' && reservaHecha && (
-        <div className="border-primary/30 bg-primary/10 flex items-center gap-2.5 rounded-lg border px-4 py-3">
-          <CheckCircle2 className="text-primary size-5 shrink-0" />
-          <p className="text-sm">
-            Reserva confirmada: {courtName} a las {reservaHecha.hora} hs — seña de{' '}
-            <strong>{formatPrecio(reservaHecha.montoSena)}</strong> pagada (simulado).
-          </p>
+        <div className="border-primary/30 bg-primary/10 flex items-start gap-2.5 rounded-lg border px-4 py-3">
+          <CheckCircle2 className="text-primary mt-0.5 size-5 shrink-0" />
+          <div>
+            <p className="text-sm font-medium">Reserva confirmada</p>
+            <p className="text-muted-foreground text-xs">
+              {courtName} a las {reservaHecha.hora} hs — seña de{' '}
+              {formatPrecio(reservaHecha.montoSena)} pagada (simulado).
+            </p>
+          </div>
         </div>
       )}
 

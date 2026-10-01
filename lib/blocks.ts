@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { diaDeReserva, sumarMinutos } from '@/lib/time'
+import { diaDeReserva } from '@/lib/time'
 
 export type BlockRange = {
   startDate: string
@@ -36,13 +36,13 @@ export function blockOverlapsBooking(
 // ya cae en el día consultado (el filtro por fecha lo hace quien llama).
 export function isSlotBlocked(
   horaInicio: string,
-  duracionTurnoMin: number,
+  horaFin: string,
   blocks: { startTime: string; endTime: string }[],
 ): boolean {
-  const horaFin = finDeDia(sumarMinutos(horaInicio, duracionTurnoMin))
+  const horaFinComparable = finDeDia(horaFin)
 
   for (const block of blocks) {
-    if (block.startTime < horaFin && horaInicio < block.endTime) {
+    if (block.startTime < horaFinComparable && horaInicio < block.endTime) {
       return true
     }
   }

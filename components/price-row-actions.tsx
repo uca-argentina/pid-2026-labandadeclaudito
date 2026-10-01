@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { DeletePriceDialog } from '@/components/delete-price-dialog'
 
 export function PriceRowActions({
@@ -18,19 +19,26 @@ export function PriceRowActions({
   const router = useRouter()
 
   return (
-    <div className="flex justify-end gap-2">
-      <Button
-        variant="outline"
-        size="sm"
-        render={
-          <Link
-            href={`/dueno/complejos/${complejoId}/canchas/${courtId}/precios/${priceId}/editar`}
-          />
-        }
-      >
-        <Pencil className="size-3.5" />
-        Editar
-      </Button>
+    <div className="flex justify-end gap-1.5">
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="outline"
+              size="icon-sm"
+              aria-label="Editar precio"
+              render={
+                <Link
+                  href={`/dueno/complejos/${complejoId}/canchas/${courtId}/precios/${priceId}/editar`}
+                />
+              }
+            />
+          }
+        >
+          <Pencil />
+        </TooltipTrigger>
+        <TooltipContent>Editar</TooltipContent>
+      </Tooltip>
       <DeletePriceDialog priceId={priceId} onDeleted={() => router.refresh()} />
     </div>
   )

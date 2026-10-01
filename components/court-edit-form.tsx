@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select'
 import { DeleteCourtDialog } from '@/components/delete-court-dialog'
 import { MinAdvanceInput } from '@/components/min-advance-input'
+import { TimeSelect } from '@/components/time-select'
 import { timeTextToMinutes } from '@/lib/time'
 import { updateCourtSchema } from '@/lib/validations/court'
 import { deporteLabels, superficieLabels, superficiesPorDeporte } from '@/lib/labels'
@@ -32,6 +33,8 @@ export function CourtEditForm({
   const router = useRouter()
   const [deporte, setDeporte] = useState(cancha.deporte)
   const [tipoSuperficie, setTipoSuperficie] = useState(cancha.tipoSuperficie)
+  const [horaApertura, setHoraApertura] = useState(cancha.horaApertura)
+  const [horaCierre, setHoraCierre] = useState(cancha.horaCierre)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cargando, setCargando] = useState(false)
@@ -48,8 +51,8 @@ export function CourtEditForm({
       deporte,
       tipoSuperficie,
       precioBase: form.get('precioBase'),
-      horaApertura: form.get('horaApertura'),
-      horaCierre: form.get('horaCierre'),
+      horaApertura,
+      horaCierre,
       duracionTurnoMin: form.get('duracionTurnoMin'),
       // Campo vacío = usar el % de seña por defecto del complejo, no uno propio
       porcentajeSena: porcentajeSenaTexto === '' ? null : Number(porcentajeSenaTexto),
@@ -180,18 +183,13 @@ export function CourtEditForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="horaApertura">Apertura</Label>
-            <Input
-              id="horaApertura"
-              name="horaApertura"
-              type="time"
-              defaultValue={cancha.horaApertura}
-            />
+            <Label>Apertura</Label>
+            <TimeSelect value={horaApertura} onChange={setHoraApertura} />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="horaCierre">Cierre</Label>
-            <Input id="horaCierre" name="horaCierre" type="time" defaultValue={cancha.horaCierre} />
+            <Label>Cierre</Label>
+            <TimeSelect value={horaCierre} onChange={setHoraCierre} />
           </div>
 
           <div className="space-y-2">
@@ -240,6 +238,7 @@ export function CourtEditForm({
             defaultMinutes={cancha.minAdvanceMinutes}
             help="Vacío = usa la anticipación mínima por defecto del complejo."
             error={fieldErrors.minAdvanceMinutes}
+            allowEmpty
           />
         </div>
 

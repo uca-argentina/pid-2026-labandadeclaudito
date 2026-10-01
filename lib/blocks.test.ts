@@ -144,27 +144,27 @@ describe('isSlotBlocked', () => {
   const bloqueoDeTarde = [{ startTime: '14:00', endTime: '18:00' }]
 
   it('un turno dentro del horario del bloqueo está bloqueado', () => {
-    expect(isSlotBlocked('15:00', 60, bloqueoDeTarde)).toBe(true)
+    expect(isSlotBlocked('15:00', '16:00', bloqueoDeTarde)).toBe(true)
   })
 
   it('un turno que empieza antes y termina dentro del bloqueo está bloqueado', () => {
-    expect(isSlotBlocked('13:30', 60, bloqueoDeTarde)).toBe(true)
+    expect(isSlotBlocked('13:30', '14:30', bloqueoDeTarde)).toBe(true)
   })
 
   it('un turno que termina justo cuando empieza el bloqueo no está bloqueado', () => {
-    expect(isSlotBlocked('13:00', 60, bloqueoDeTarde)).toBe(false)
+    expect(isSlotBlocked('13:00', '14:00', bloqueoDeTarde)).toBe(false)
   })
 
   it('un turno que empieza justo cuando termina el bloqueo no está bloqueado', () => {
-    expect(isSlotBlocked('18:00', 60, bloqueoDeTarde)).toBe(false)
+    expect(isSlotBlocked('18:00', '19:00', bloqueoDeTarde)).toBe(false)
   })
 
   it('sin bloqueos ningún turno está bloqueado', () => {
-    expect(isSlotBlocked('15:00', 60, [])).toBe(false)
+    expect(isSlotBlocked('15:00', '16:00', [])).toBe(false)
   })
 
   it('el turno de las 23:00 (termina a medianoche) se bloquea si el bloqueo llega hasta las 23:59', () => {
     const bloqueoDeNoche = [{ startTime: '22:00', endTime: '23:59' }]
-    expect(isSlotBlocked('23:00', 60, bloqueoDeNoche)).toBe(true)
+    expect(isSlotBlocked('23:00', '00:00', bloqueoDeNoche)).toBe(true)
   })
 })
