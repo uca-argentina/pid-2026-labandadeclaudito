@@ -7,6 +7,7 @@ export const deporteLabels: Record<Deporte, string> = {
   FUTBOL_11: 'Fútbol 11',
   TENIS: 'Tenis',
   PADEL: 'Pádel',
+  BASQUET: 'Básquet',
 }
 
 export const superficieLabels: Record<TipoSuperficie, string> = {
@@ -18,13 +19,15 @@ export const superficieLabels: Record<TipoSuperficie, string> = {
 }
 
 // Combinaciones deporte/superficie que tienen sentido en la realidad
-// (ej: fútbol nunca se juega en polvo de ladrillo, eso es de tenis).
+// (ej: fútbol nunca se juega en polvo de ladrillo, eso es de tenis; parquet
+// es solo de básquet, ni tenis ni pádel se juegan ahí).
 export const superficiesPorDeporte: Record<Deporte, TipoSuperficie[]> = {
   FUTBOL_5: ['CESPED_SINTETICO', 'CESPED_NATURAL', 'CEMENTO'],
   FUTBOL_7: ['CESPED_SINTETICO', 'CESPED_NATURAL', 'CEMENTO'],
   FUTBOL_11: ['CESPED_SINTETICO', 'CESPED_NATURAL', 'CEMENTO'],
-  TENIS: ['POLVO_DE_LADRILLO', 'CESPED_NATURAL', 'CEMENTO', 'PARQUET'],
-  PADEL: ['CESPED_SINTETICO', 'CEMENTO', 'PARQUET'],
+  TENIS: ['POLVO_DE_LADRILLO', 'CESPED_NATURAL', 'CEMENTO'],
+  PADEL: ['CESPED_SINTETICO', 'CEMENTO'],
+  BASQUET: ['PARQUET', 'CEMENTO'],
 }
 
 export const estadoVisibleLabels: Record<EstadoVisible, string> = {
