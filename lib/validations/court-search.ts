@@ -16,7 +16,7 @@ export const searchCourtsSchema = z
   .object({
     zona: z.string().min(1).optional().catch(undefined),
     deporte: z
-      .enum(['FUTBOL_5', 'FUTBOL_7', 'FUTBOL_11', 'TENIS', 'PADEL'])
+      .enum(['FUTBOL_5', 'FUTBOL_7', 'FUTBOL_11', 'TENIS', 'PADEL', 'BASQUET'])
       .optional()
       .catch(undefined),
     tipoSuperficie: z

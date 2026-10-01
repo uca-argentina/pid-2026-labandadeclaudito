@@ -19,6 +19,7 @@ enum Deporte {
   FUTBOL_11
   TENIS
   PADEL
+  BASQUET
 }
 
 enum TipoSuperficie {

@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { ArrowLeft, BadgeCheck } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, Clock, MapPin, Phone, Wallet } from 'lucide-react'
 import { getComplexDetail, filtersToQueryString } from '@/lib/court-search'
 import { searchCourtsSchema } from '@/lib/validations/court-search'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
+import { clasesGrillaAdaptable } from '@/lib/grid-columns'
 import { CourtBookingSheet } from '@/components/court-booking-sheet'
 import { ComplexGallery } from '@/components/complex-gallery'
 
@@ -22,7 +23,7 @@ export default async function ComplejoDetallePage({
   if (!complejo) notFound()
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
+    <main className="mx-auto max-w-5xl px-6 py-12">
       <Link
         href={`/jugador/canchas${filtersToQueryString(filtros)}`}
         className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
@@ -31,7 +32,7 @@ export default async function ComplejoDetallePage({
         Volver a búsqueda de complejos
       </Link>
 
-      <div className="mb-7">
+      <div className="mb-5">
         <div className="flex items-center gap-2">
           <h1 className="text-3xl font-semibold">{complejo.nombre}</h1>
           <span className="bg-primary/15 text-primary inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium">
@@ -39,8 +40,15 @@ export default async function ComplejoDetallePage({
             Verificado
           </span>
         </div>
-        <p className="text-muted-foreground mt-1 text-sm">
-          {complejo.direccion} · {complejo.zona} · Contacto: {complejo.contacto}
+        <p className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <span className="flex items-center gap-1.5">
+            <MapPin className="size-3.5 shrink-0" />
+            {complejo.direccion} · {complejo.zona}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Phone className="size-3.5 shrink-0" />
+            {complejo.contacto}
+          </span>
         </p>
       </div>
 
@@ -53,7 +61,9 @@ export default async function ComplejoDetallePage({
           Este complejo todavía no cargó canchas.
         </p>
       ) : (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div
+          className={`mx-auto mt-6 grid gap-5 ${clasesGrillaAdaptable(complejo.canchas.length)}`}
+        >
           {complejo.canchas.map((cancha) => (
             <div
               key={cancha.id}
@@ -69,14 +79,18 @@ export default async function ComplejoDetallePage({
                     {superficieLabels[cancha.tipoSuperficie]}
                   </span>
                 </div>
-                <span className="text-muted-foreground text-xs">
+                <span className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
+                  <Clock className="size-3.5 shrink-0" />
                   Horario regular: {cancha.horaApertura} a {cancha.horaCierre} hs
                 </span>
               </div>
 
-              <div className="mt-auto flex items-end justify-between gap-3">
+              {/* Precio arriba y botón abajo a todo el ancho (en vez de lado a
+                  lado): con 4 tarjetas por fila no entran cómodos juntos. */}
+              <div className="mt-auto flex flex-col gap-2.5">
                 <div>
-                  <div className="text-primary text-xl font-bold">
+                  <div className="text-primary flex items-center gap-1.5 text-xl font-bold">
+                    <Wallet className="size-4" />
                     {formatPrecio(cancha.precioBase.toString())}
                   </div>
                   <div className="text-muted-foreground text-xs">
@@ -90,6 +104,7 @@ export default async function ComplejoDetallePage({
                   precioBase={cancha.precioBase.toString()}
                   duracionTurnoMin={cancha.duracionTurnoMin}
                   fechaInicial={filtros.fecha}
+                  className="w-full"
                 />
               </div>
             </div>

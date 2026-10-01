@@ -24,7 +24,7 @@ export const createCourtSchema = z
   .object({
     nombrePrefijo: z.string().min(1, 'Ingresá un nombre o prefijo').max(60),
     cantidad: z.coerce.number().int().min(1).max(20),
-    deporte: z.enum(['FUTBOL_5', 'FUTBOL_7', 'FUTBOL_11', 'TENIS', 'PADEL']),
+    deporte: z.enum(['FUTBOL_5', 'FUTBOL_7', 'FUTBOL_11', 'TENIS', 'PADEL', 'BASQUET']),
     tipoSuperficie: z.enum([
       'CESPED_SINTETICO',
       'CESPED_NATURAL',
@@ -46,7 +46,7 @@ export type CreateCourtInput = z.infer<typeof createCourtSchema>
 export const updateCourtSchema = z
   .object({
     nombre: z.string().min(1, 'Ingresá un nombre').max(60),
-    deporte: z.enum(['FUTBOL_5', 'FUTBOL_7', 'FUTBOL_11', 'TENIS', 'PADEL']),
+    deporte: z.enum(['FUTBOL_5', 'FUTBOL_7', 'FUTBOL_11', 'TENIS', 'PADEL', 'BASQUET']),
     tipoSuperficie: z.enum([
       'CESPED_SINTETICO',
       'CESPED_NATURAL',

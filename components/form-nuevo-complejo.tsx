@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { MinAdvanceInput } from '@/components/min-advance-input'
+import { ZonaSelect } from '@/components/zona-select'
 import { timeTextToMinutes } from '@/lib/time'
 import {
   complexImageSchema,
@@ -49,7 +50,7 @@ export function FormNuevoComplejo() {
     resolver: zodResolver(createComplexSchema),
     // porcentajeSenaDefault no se pide acá (queda en 30), se ajusta después
     // desde "Editar complejo". minAdvanceMinutesDefault se carga con un
-    // input type="time" que no maneja react-hook-form: se pasa a minutos en
+    // TimeSelect que no maneja react-hook-form: se pasa a minutos en
     // onSubmit.
     defaultValues: {
       nombre: '',
@@ -241,15 +242,13 @@ export function FormNuevoComplejo() {
             <MensajeError mensaje={errores.direccion?.message} />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="zona">Zona *</Label>
-            <Input
+          <div className="space-y-2 sm:col-span-2">
+            <ZonaSelect
               id="zona"
-              placeholder="Ej: Villa Devoto, CABA"
+              defaultValue=""
               aria-invalid={errores.zona ? true : undefined}
               {...register('zona')}
             />
-            <p className="text-muted-foreground text-sm">Barrio o localidad.</p>
             <MensajeError mensaje={errores.zona?.message} />
           </div>
 

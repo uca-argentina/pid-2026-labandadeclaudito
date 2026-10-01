@@ -47,4 +47,31 @@ describe('updateCourtSchema — combinación deporte/superficie', () => {
     })
     expect(parsed.success).toBe(false)
   })
+
+  test('acepta básquet con parquet', () => {
+    const parsed = updateCourtSchema.safeParse({
+      ...base,
+      deporte: 'BASQUET',
+      tipoSuperficie: 'PARQUET',
+    })
+    expect(parsed.success).toBe(true)
+  })
+
+  test('rechaza tenis con parquet (parquet es solo de básquet)', () => {
+    const parsed = updateCourtSchema.safeParse({
+      ...base,
+      deporte: 'TENIS',
+      tipoSuperficie: 'PARQUET',
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  test('rechaza pádel con parquet (parquet es solo de básquet)', () => {
+    const parsed = updateCourtSchema.safeParse({
+      ...base,
+      deporte: 'PADEL',
+      tipoSuperficie: 'PARQUET',
+    })
+    expect(parsed.success).toBe(false)
+  })
 })

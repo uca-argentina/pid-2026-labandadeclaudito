@@ -44,7 +44,7 @@ describe('searchCourtsSchema', () => {
   })
 
   test('un deporte o superficie que no existe se ignora en vez de romper', () => {
-    const parsed = searchCourtsSchema.parse({ deporte: 'BASQUET', tipoSuperficie: 'LAVA' })
+    const parsed = searchCourtsSchema.parse({ deporte: 'HOCKEY', tipoSuperficie: 'LAVA' })
     expect(parsed.deporte).toBeUndefined()
     expect(parsed.tipoSuperficie).toBeUndefined()
   })

@@ -2,16 +2,12 @@ import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import Link from 'next/link'
-import { ImageIcon, SearchX, X } from 'lucide-react'
+import { ImageIcon, MapPin, SearchX, Shapes, Wallet, X } from 'lucide-react'
 import { deporteLabels, formatPrecio } from '@/lib/labels'
-import {
-  activeFilterChips,
-  filtersToQueryString,
-  getSearchableZones,
-  searchComplexes,
-} from '@/lib/court-search'
+import { activeFilterChips, filtersToQueryString, searchComplexes } from '@/lib/court-search'
 import type { CourtWithPrice } from '@/lib/court-search'
 import { searchCourtsSchema } from '@/lib/validations/court-search'
+import { clasesGrillaAdaptable } from '@/lib/grid-columns'
 import { Button } from '@/components/ui/button'
 import { SearchFiltersSheet } from '@/components/search-filters-sheet'
 import type { Cancha, Deporte } from '@/lib/generated/prisma/client'
@@ -42,8 +38,6 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
 
   const filtros = searchCourtsSchema.parse(await searchParams)
 
-  const zonas = await getSearchableZones()
-
   const complejos = await searchComplexes(filtros, session.user.id)
 
   const filtrosAplicados = activeFilterChips(filtros)
@@ -58,11 +52,7 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <SearchFiltersSheet
-          zonas={zonas}
-          filtros={filtros}
-          cantidadDeFiltros={filtrosAplicados.length}
-        />
+        <SearchFiltersSheet filtros={filtros} cantidadDeFiltros={filtrosAplicados.length} />
 
         {filtrosAplicados.map((filtro) => (
           <Link
@@ -90,7 +80,7 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
           <p className="text-muted-foreground text-sm">Probá aflojando algún filtro.</p>
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div className={`mx-auto mt-8 grid gap-5 ${clasesGrillaAdaptable(complejos.length)}`}>
           {complejos.map((complejo) => {
             const deportes = deportesDistintos(complejo.canchas)
             const precioMinimo = precioMasBajo(complejo.canchas)
@@ -99,31 +89,39 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
               <Link
                 key={complejo.id}
                 href={`/jugador/complejos/${complejo.id}${filtersToQueryString(filtros)}`}
-                className="border-border bg-card hover:bg-accent block overflow-hidden rounded-2xl border transition-colors"
+                className="border-border bg-card hover:bg-accent flex h-full flex-col overflow-hidden rounded-2xl border transition-colors"
               >
                 {complejo.imagenes.length > 0 ? (
-                  <div className="relative aspect-video">
+                  <div className="relative aspect-video shrink-0">
                     <Image
                       src={complejo.imagenes[0].url}
                       alt={`Foto de ${complejo.nombre}`}
                       fill
-                      sizes="(min-width: 640px) 50vw, 100vw"
+                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                       className="object-cover"
                     />
                   </div>
                 ) : (
-                  <div className="bg-muted text-muted-foreground flex aspect-video flex-col items-center justify-center gap-1 text-sm">
+                  <div className="bg-muted text-muted-foreground flex aspect-video shrink-0 flex-col items-center justify-center gap-1 text-sm">
                     <ImageIcon className="size-5" />
                     Sin fotos
                   </div>
                 )}
 
-                <div className="p-6">
+                {/* flex-col + mt-auto en el footer de precio: así queda a la
+                    misma altura en toda la fila, aunque el título o la
+                    dirección ocupen distinta cantidad de líneas entre
+                    tarjetas. El borde de arriba hace que ese espacio se vea
+                    a propósito (un "pie" de tarjeta) y no como un hueco
+                    vacío cuando el resto del contenido es corto. */}
+                <div className="flex flex-1 flex-col p-5">
                   <span className="block font-semibold">{complejo.nombre}</span>
-                  <span className="text-muted-foreground block text-sm">
+                  <span className="text-muted-foreground mt-1 flex items-center gap-1.5 text-sm">
+                    <MapPin className="size-3.5 shrink-0" />
                     {complejo.direccion} · {complejo.zona}
                   </span>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
+
+                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs">
                     {deportes.map((deporteDeCancha) => (
                       <span
                         key={deporteDeCancha}
@@ -132,15 +130,19 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
                         {deporteLabels[deporteDeCancha]}
                       </span>
                     ))}
-                  </div>
-                  <div className="mt-3 flex items-baseline justify-between gap-3">
-                    <span className="text-primary text-lg font-bold">
-                      desde {formatPrecio(precioMinimo)}
-                    </span>
-                    <span className="text-muted-foreground text-sm">
+                    <span className="text-muted-foreground ml-auto flex items-center gap-1">
+                      <Shapes className="size-3.5 shrink-0" />
                       {complejo.canchas.length === 1
                         ? '1 cancha'
                         : `${complejo.canchas.length} canchas`}
+                    </span>
+                  </div>
+
+                  <div className="border-border mt-auto flex items-center gap-1.5 border-t pt-3">
+                    <Wallet className="text-primary size-4 shrink-0" />
+                    <span className="text-muted-foreground text-xs">desde</span>
+                    <span className="text-primary text-lg font-bold">
+                      {formatPrecio(precioMinimo)}
                     </span>
                   </div>
                 </div>

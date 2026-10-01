@@ -84,7 +84,7 @@ export function turnoYaPaso(fecha: string, horaInicio: string): boolean {
 }
 
 // La anticipación se guarda en minutos, pero en los formularios se carga con
-// un input type="time" ("HH:MM"). Input vacío = sin valor propio (null).
+// un TimeSelect ("HH:MM"). Texto vacío = sin valor propio (null).
 export function timeTextToMinutes(texto: string): number | null {
   if (texto === '') {
     return null
@@ -93,7 +93,7 @@ export function timeTextToMinutes(texto: string): number | null {
   return horas * 60 + minutos
 }
 
-// 90 → "01:30", para precargar el input type="time"
+// 90 → "01:30", para precargar el TimeSelect
 export function minutesToTimeText(totalMinutos: number): string {
   const horas = String(Math.floor(totalMinutos / 60)).padStart(2, '0')
   const minutos = String(totalMinutos % 60).padStart(2, '0')
@@ -128,4 +128,63 @@ export function isTooSoonToBook(
   if (fecha < limite.dia) return true
   if (fecha > limite.dia) return false
   return horaInicio < limite.hora
+}
+
+function horaTexto(totalMinutos: number): string {
+  const minutosEnDia = totalMinutos % (24 * 60)
+  const horas = String(Math.floor(minutosEnDia / 60)).padStart(2, '0')
+  const minutos = String(minutosEnDia % 60).padStart(2, '0')
+  return `${horas}:${minutos}`
+}
+
+function agregarSlots(
+  slots: { horaInicio: string; horaFin: string }[],
+  minutoInicio: number,
+  minutoFin: number,
+  duracionTurnoMin: number,
+): void {
+  let minuto = minutoInicio
+  while (minuto + duracionTurnoMin <= minutoFin) {
+    slots.push({ horaInicio: horaTexto(minuto), horaFin: horaTexto(minuto + duracionTurnoMin) })
+    minuto += duracionTurnoMin
+  }
+  // Si sobra tiempo pero no alcanza para un turno completo, se arma uno más
+  // corto con lo que queda en vez de perderlo (ej: 8 a 12 con turnos de 90
+  // min da 2 turnos completos y un tercero de 60 min con el resto).
+  if (minuto < minutoFin) {
+    slots.push({ horaInicio: horaTexto(minuto), horaFin: horaTexto(minutoFin) })
+  }
+}
+
+// Los turnos de una cancha entre apertura y cierre. Vive acá (no en
+// lib/availability.ts, que importa Prisma) porque también lo usa el
+// formulario de alta de canchas en el cliente para mostrar la cantidad de
+// turnos en vivo, y un componente cliente no puede importar nada que
+// arrastre el cliente de Prisma.
+export function generateSlots(
+  horaApertura: string,
+  horaCierre: string,
+  duracionTurnoMin: number,
+): { horaInicio: string; horaFin: string }[] {
+  const [horaAperturaH, horaAperturaM] = horaApertura.split(':').map(Number)
+  const [horaCierreH, horaCierreM] = horaCierre.split(':').map(Number)
+
+  const minutoInicio = horaAperturaH * 60 + horaAperturaM
+  const minutoCierre = horaCierreH * 60 + horaCierreM
+
+  const slots: { horaInicio: string; horaFin: string }[] = []
+
+  // Si el cierre es a una hora "menor o igual" que la apertura, en realidad
+  // cierra al día siguiente (ej: abre 20:00, cierra 03:00, o 08:00 a 00:00
+  // que es "hasta medianoche"). Generamos primero los turnos de la
+  // madrugada (00:00 al cierre) y después los de la noche (apertura a
+  // medianoche), para que la lista quede ordenada de 00:00 a 23:xx.
+  if (minutoCierre <= minutoInicio) {
+    agregarSlots(slots, 0, minutoCierre, duracionTurnoMin)
+    agregarSlots(slots, minutoInicio, 24 * 60, duracionTurnoMin)
+  } else {
+    agregarSlots(slots, minutoInicio, minutoCierre, duracionTurnoMin)
+  }
+
+  return slots
 }

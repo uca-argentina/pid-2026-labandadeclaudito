@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { complexImageSchema, MAX_IMAGE_BYTES } from './complex'
+import { complexImageSchema, createComplexSchema, MAX_IMAGE_BYTES } from './complex'
 
 describe('complexImageSchema', () => {
   test('acepta una foto PNG chica', () => {
@@ -20,5 +20,27 @@ describe('complexImageSchema', () => {
 
   test('rechaza cuando no se manda archivo', () => {
     expect(complexImageSchema.safeParse({ imagen: null }).success).toBe(false)
+  })
+})
+
+describe('createComplexSchema — zona', () => {
+  const base = {
+    nombre: 'El Ombú',
+    direccion: 'Av. San Martín 4520',
+    contacto: '11 4589-2231',
+    porcentajeSenaDefault: 30,
+    minAdvanceMinutesDefault: 180,
+  }
+
+  test('acepta un barrio de la lista fija', () => {
+    expect(createComplexSchema.safeParse({ ...base, zona: 'Palermo' }).success).toBe(true)
+  })
+
+  test('acepta una localidad de la provincia de Buenos Aires', () => {
+    expect(createComplexSchema.safeParse({ ...base, zona: 'Tigre' }).success).toBe(true)
+  })
+
+  test('rechaza una zona que no está en la lista', () => {
+    expect(createComplexSchema.safeParse({ ...base, zona: 'Marte' }).success).toBe(false)
   })
 })

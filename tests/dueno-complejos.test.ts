@@ -82,13 +82,16 @@ describe('Edición de complejo (PATCH /api/complexes/[id])', () => {
   test('el dueño edita sus datos', async () => {
     loginComo(duenio)
     const res = await editarComplejo(
-      jsonRequest('PATCH', { ...datosDeComplejo, zona: 'Zona editada' }),
+      // 'Tigre' tiene que ser una zona distinta de la original ('Palermo') y
+      // válida (de la lista fija de lib/zonas.ts), para probar que el cambio
+      // se guarda de verdad.
+      jsonRequest('PATCH', { ...datosDeComplejo, zona: 'Tigre' }),
       conParams({ id: complejoId }),
     )
     expect(res.status).toBe(200)
 
     const complejo = await db.complejo.findUnique({ where: { id: complejoId } })
-    expect(complejo?.zona).toBe('Zona editada')
+    expect(complejo?.zona).toBe('Tigre')
   })
 
   test('otro dueño no puede editarlo (404)', async () => {

@@ -6,6 +6,7 @@ import { AlertCircle, Loader2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { TimeSelect } from '@/components/time-select'
 import { createBlockSchema } from '@/lib/validations/block'
 
 type BloqueoExistente = {
@@ -30,6 +31,8 @@ export function BlockForm({
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cargando, setCargando] = useState(false)
+  const [horaDesde, setHoraDesde] = useState(block?.startTime ?? '08:00')
+  const [horaHasta, setHoraHasta] = useState(block?.endTime ?? '23:00')
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -41,8 +44,8 @@ export function BlockForm({
     const datos = {
       startDate: form.get('startDate'),
       endDate: form.get('endDate'),
-      startTime: form.get('startTime'),
-      endTime: form.get('endTime'),
+      startTime: horaDesde,
+      endTime: horaHasta,
       reason: motivo === '' ? undefined : motivo,
     }
 
@@ -118,17 +121,8 @@ export function BlockForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="startTime">Horario desde</Label>
-          <Input
-            id="startTime"
-            name="startTime"
-            type="time"
-            defaultValue={block?.startTime}
-            aria-invalid={!!fieldErrors.startTime}
-            className={
-              fieldErrors.startTime ? 'border-destructive ring-destructive/20 ring-3' : undefined
-            }
-          />
+          <Label>Horario desde</Label>
+          <TimeSelect value={horaDesde} onChange={setHoraDesde} invalid={!!fieldErrors.startTime} />
           {fieldErrors.startTime && (
             <p className="text-destructive flex items-center gap-1 text-xs font-medium">
               <AlertCircle className="size-3.5" />
@@ -138,17 +132,8 @@ export function BlockForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="endTime">Horario hasta</Label>
-          <Input
-            id="endTime"
-            name="endTime"
-            type="time"
-            defaultValue={block?.endTime}
-            aria-invalid={!!fieldErrors.endTime}
-            className={
-              fieldErrors.endTime ? 'border-destructive ring-destructive/20 ring-3' : undefined
-            }
-          />
+          <Label>Horario hasta</Label>
+          <TimeSelect value={horaHasta} onChange={setHoraHasta} invalid={!!fieldErrors.endTime} />
           {fieldErrors.endTime && (
             <p className="text-destructive flex items-center gap-1 text-xs font-medium">
               <AlertCircle className="size-3.5" />

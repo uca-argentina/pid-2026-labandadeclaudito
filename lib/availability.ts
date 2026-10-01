@@ -4,8 +4,8 @@ import { Prisma } from '@/lib/generated/prisma/client'
 import {
   diaDeReserva,
   diaSemanaDeReserva,
+  generateSlots,
   horariosSeSuperponen,
-  sumarMinutos,
   isTooSoonToBook,
 } from '@/lib/time'
 
@@ -14,50 +14,6 @@ type PrecioEspecialVigente = {
   horaInicio: string | null
   horaFin: string | null
   precio: Prisma.Decimal
-}
-
-function agregarSlots(
-  slots: string[],
-  minutoInicio: number,
-  minutoFin: number,
-  duracionTurnoMin: number,
-): void {
-  for (
-    let minuto = minutoInicio;
-    minuto + duracionTurnoMin <= minutoFin;
-    minuto += duracionTurnoMin
-  ) {
-    const horas = String(Math.floor(minuto / 60)).padStart(2, '0')
-    const minutos = String(minuto % 60).padStart(2, '0')
-    slots.push(`${horas}:${minutos}`)
-  }
-}
-
-export function generateSlots(
-  horaApertura: string,
-  horaCierre: string,
-  duracionTurnoMin: number,
-): string[] {
-  const [horaAperturaH, horaAperturaM] = horaApertura.split(':').map(Number)
-  const [horaCierreH, horaCierreM] = horaCierre.split(':').map(Number)
-
-  const minutoInicio = horaAperturaH * 60 + horaAperturaM
-  const minutoCierre = horaCierreH * 60 + horaCierreM
-
-  const slots: string[] = []
-
-  // Si el cierre es a una hora "menor o igual" que la apertura, en realidad
-  // cierra al día siguiente (ej: abre 20:00, cierra 03:00). Generamos primero
-  // los turnos de la madrugada (00:00 al cierre) y después los de la noche
-  // (apertura a medianoche), para que la lista quede ordenada de 00:00 a 23:xx.
-  if (minutoCierre <= minutoInicio) {
-    agregarSlots(slots, 0, minutoCierre, duracionTurnoMin)
-    agregarSlots(slots, minutoInicio, 24 * 60, duracionTurnoMin)
-  } else {
-    agregarSlots(slots, minutoInicio, minutoCierre, duracionTurnoMin)
-  }
-
-  return slots
 }
 
 // Elige, entre los PrecioEspecial que matchean el día/hora de un turno, el
@@ -90,12 +46,37 @@ export function precioDelTurno(
   return masEspecifico.precio
 }
 
+// El último turno del día puede ser más corto que duracionTurnoMin (ver
+// agregarSlots en lib/time.ts). Ese turno cobra la parte proporcional:
+// 30 min de un turno de 90 = 1/3 del precio.
+export function precioProporcional(
+  precio: Prisma.Decimal,
+  horaInicio: string,
+  horaFin: string,
+  duracionTurnoMin: number,
+): Prisma.Decimal {
+  const [inicioH, inicioM] = horaInicio.split(':').map(Number)
+  const [finH, finM] = horaFin.split(':').map(Number)
+
+  let minutosDelTurno = finH * 60 + finM - (inicioH * 60 + inicioM)
+  // Un turno que termina a las 00:00 da negativo: termina al día siguiente
+  if (minutosDelTurno <= 0) {
+    minutosDelTurno += 24 * 60
+  }
+
+  if (minutosDelTurno >= duracionTurnoMin) {
+    return precio
+  }
+
+  return precio.mul(minutosDelTurno).div(duracionTurnoMin).toDecimalPlaces(2)
+}
+
 export async function getAvailableSlots(
   canchaId: string,
   fecha: Date,
   jugadorId?: string,
 ): Promise<{
-  slots: { horaInicio: string; disponible: boolean; precio: Prisma.Decimal }[]
+  slots: { horaInicio: string; horaFin: string; disponible: boolean; precio: Prisma.Decimal }[]
   porcentajeSena: number
   minAdvanceMinutes: number
 } | null> {
@@ -110,11 +91,7 @@ export async function getAvailableSlots(
     return null
   }
 
-  const horasDeTurnos = generateSlots(
-    cancha.horaApertura,
-    cancha.horaCierre,
-    cancha.duracionTurnoMin,
-  )
+  const turnos = generateSlots(cancha.horaApertura, cancha.horaCierre, cancha.duracionTurnoMin)
 
   const reservas = await db.reserva.findMany({
     where: {
@@ -142,20 +119,25 @@ export async function getAvailableSlots(
     })
   }
 
-  const slots = horasDeTurnos.map((horaInicio) => {
-    const horaFin = sumarMinutos(horaInicio, cancha.duracionTurnoMin)
+  const slots = turnos.map(({ horaInicio, horaFin }) => {
     const seCruzaConReservaDelJugador = reservasDelJugador.some((reserva) =>
       horariosSeSuperponen(horaInicio, horaFin, reserva.horaInicio, reserva.horaFin),
     )
 
     return {
       horaInicio,
+      horaFin,
       disponible:
         !horasOcupadas.has(horaInicio) &&
         !isTooSoonToBook(dia, horaInicio, minAdvanceMinutes) &&
-        !isSlotBlocked(horaInicio, cancha.duracionTurnoMin, bloqueosDelDia) &&
+        !isSlotBlocked(horaInicio, horaFin, bloqueosDelDia) &&
         !seCruzaConReservaDelJugador,
-      precio: precioDelTurno(cancha.precioBase, cancha.preciosEspeciales, diaSemana, horaInicio),
+      precio: precioProporcional(
+        precioDelTurno(cancha.precioBase, cancha.preciosEspeciales, diaSemana, horaInicio),
+        horaInicio,
+        horaFin,
+        cancha.duracionTurnoMin,
+      ),
     }
   })
 
