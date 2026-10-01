@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { TODAS_LAS_ZONAS } from '@/lib/zonas'
 
 function contarDigitos(texto: string) {
   let cantidad = 0
@@ -13,7 +14,9 @@ function contarDigitos(texto: string) {
 export const createComplexSchema = z.object({
   nombre: z.string().trim().min(3, 'Ingresá el nombre del complejo.'),
   direccion: z.string().trim().min(4, 'Ingresá la dirección.'),
-  zona: z.string().trim().min(3, 'Ingresá la zona.'),
+  zona: z
+    .string()
+    .refine((zona) => TODAS_LAS_ZONAS.includes(zona), { message: 'Elegí una zona de la lista.' }),
   contacto: z
     .string()
     .trim()

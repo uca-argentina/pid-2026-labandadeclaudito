@@ -84,7 +84,9 @@ export function diaDeAyer() {
 export const datosDeComplejo = {
   nombre: '[TEST] Complejo de prueba',
   direccion: 'Calle Falsa 123',
-  zona: 'Zona de test',
+  // Tiene que ser una zona de la lista fija (lib/zonas.ts): createComplexSchema
+  // ya no acepta texto libre.
+  zona: 'Palermo',
   contacto: '11 4589-2231',
   porcentajeSenaDefault: 30,
   minAdvanceMinutesDefault: 0,
