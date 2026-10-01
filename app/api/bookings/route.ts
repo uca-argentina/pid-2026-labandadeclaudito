@@ -110,42 +110,18 @@ export async function POST(request: Request) {
     cancha.duracionTurnoMin,
   )
 
-  const reservaExistente = await db.reserva.findUnique({
+  // Las canceladas no ocupan el turno: reservar uno cancelado crea una fila
+  // nueva y la cancelada queda en el historial de su jugador, con su pago.
+  const reservaActiva = await db.reserva.findFirst({
     where: {
-      canchaId_fecha_horaInicio: {
-        canchaId: cancha.id,
-        fecha,
-        horaInicio: parsed.data.horaInicio,
-      },
+      canchaId: cancha.id,
+      fecha,
+      horaInicio: parsed.data.horaInicio,
+      estado: { not: 'CANCELADA' },
     },
   })
-
-  if (reservaExistente && reservaExistente.estado !== 'CANCELADA') {
+  if (reservaActiva) {
     return NextResponse.json({ error: 'Ese horario ya fue reservado' }, { status: 409 })
-  }
-
-  // Si la reserva anterior se canceló el turno está libre, pero el índice único
-  // no deja crear otra fila para la misma cancha/fecha/hora: se reusa esa.
-  if (reservaExistente) {
-    const reserva = await db.$transaction(async (tx) => {
-      const reserva = await tx.reserva.update({
-        where: { id: reservaExistente.id },
-        // createdAt se renueva: es una reserva nueva y el plazo de 15
-        // minutos para pagar la seña se cuenta desde ahora.
-        data: {
-          jugadorId: session.user.id,
-          horaFin,
-          estado: 'PENDIENTE',
-          precioTurno,
-          createdAt: new Date(),
-        },
-      })
-      // La fila se reusa, así que el Pago de la reserva cancelada anterior
-      // quedaría colgado: se borra, la nueva reserva todavía no pagó seña.
-      await tx.pago.deleteMany({ where: { reservaId: reserva.id } })
-      return reserva
-    })
-    return NextResponse.json({ reserva }, { status: 201 })
   }
 
   // La reserva nace PENDIENTE (de seña): pasa a CONFIRMADA recién cuando el

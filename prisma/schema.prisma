@@ -1,7 +1,9 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
-  runtime  = "nodejs"
+  provider        = "prisma-client"
+  output          = "../lib/generated/prisma"
+  runtime         = "nodejs"
+  // Índices con WHERE (ver Reserva): todavía en preview en Prisma 7
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -175,9 +177,11 @@ model Reserva {
   jugador Usuario @relation("JugadorReservas", fields: [jugadorId], references: [id])
   pago    Pago?
 
-  // Última defensa contra doble reserva: no puede haber dos reservas
-  // en la misma cancha, fecha y hora de inicio.
-  @@unique([canchaId, fecha, horaInicio])
+  // Última defensa contra doble reserva: no puede haber dos reservas activas
+  // en la misma cancha, fecha y hora de inicio. Las canceladas no cuentan:
+  // así un turno cancelado se vuelve a reservar con una fila nueva y la
+  // cancelada queda en el historial de su jugador, con su pago.
+  @@unique([canchaId, fecha, horaInicio], map: "Reserva_activa_unica", where: raw("estado <> 'CANCELADA'"))
   @@index([jugadorId])
   @@index([canchaId, fecha])
 }

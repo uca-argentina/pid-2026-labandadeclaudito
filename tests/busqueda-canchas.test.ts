@@ -236,9 +236,9 @@ describe('fecha y horario', () => {
     expect(complejo).toBeUndefined()
   })
 
-  test('sin fecha el precio sigue siendo el precio base de la cancha', async () => {
+  test('sin fecha también cuenta el precio especial: algún día hay un turno a $5.000', async () => {
     const complejo = await buscar({ precioMax: 6000 })
-    expect(complejo).toBeUndefined()
+    expect(nombresDeCanchas(complejo)).toEqual(['Cancha 1'])
   })
 
   test('el "desde" de cada cancha es su turno más barato que cumple los filtros', async () => {
@@ -246,7 +246,7 @@ describe('fecha y horario', () => {
     expect(conFecha?.canchas.map((cancha) => cancha.priceFrom)).toEqual([5000, 15000])
 
     const sinFecha = await buscar({})
-    expect(sinFecha?.canchas.map((cancha) => cancha.priceFrom)).toEqual([10000, 15000])
+    expect(sinFecha?.canchas.map((cancha) => cancha.priceFrom)).toEqual([5000, 15000])
   })
 
   test('un día que ya pasó no tiene turnos libres', async () => {

@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { finDeFranjaPorDefecto, franjaDentroDelHorario, mensajeFueraDelHorario } from '@/lib/time'
 import { createPriceSchema } from '@/lib/validations/price'
 
 const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
@@ -31,10 +32,14 @@ type PrecioExistente = {
 export function PriceForm({
   complejoId,
   courtId,
+  horaApertura,
+  horaCierre,
   precioEspecial,
 }: {
   complejoId: string
   courtId: string
+  horaApertura: string
+  horaCierre: string
   precioEspecial?: PrecioExistente
 }) {
   const router = useRouter()
@@ -44,8 +49,10 @@ export function PriceForm({
       : String(precioEspecial.diaSemana),
   )
   const [conFranjaHoraria, setConFranjaHoraria] = useState(precioEspecial?.horaInicio != null)
-  const [horaInicio, setHoraInicio] = useState(precioEspecial?.horaInicio ?? '08:00')
-  const [horaFin, setHoraFin] = useState(precioEspecial?.horaFin ?? '23:00')
+  const [horaInicio, setHoraInicio] = useState(precioEspecial?.horaInicio ?? horaApertura)
+  const [horaFin, setHoraFin] = useState(
+    precioEspecial?.horaFin ?? finDeFranjaPorDefecto(horaApertura, horaCierre),
+  )
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cargando, setCargando] = useState(false)
@@ -74,6 +81,16 @@ export function PriceForm({
       return
     }
 
+    // La API hace el mismo chequeo; acá es para avisar sin ir al servidor
+    const franja = parsed.data
+    if (
+      franja.horaInicio !== null &&
+      !franjaDentroDelHorario(franja.horaInicio, franja.horaFin!, horaApertura, horaCierre)
+    ) {
+      setFieldErrors({ horaFin: mensajeFueraDelHorario(horaApertura, horaCierre) })
+      return
+    }
+
     setCargando(true)
     const url = precioEspecial
       ? `/api/prices/${precioEspecial.id}`
@@ -95,6 +112,10 @@ export function PriceForm({
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
+      <p className="text-muted-foreground text-sm">
+        Esta cancha abre de {horaApertura} a {horaCierre}.
+      </p>
+
       <div className="space-y-2">
         <Label>Día</Label>
         <Select value={diaSemana} onValueChange={(v) => v && setDiaSemana(v)}>

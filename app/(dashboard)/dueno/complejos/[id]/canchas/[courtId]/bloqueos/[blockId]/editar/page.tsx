@@ -15,7 +15,10 @@ export default async function EditarBloqueoPage({
   const complejo = await getComplexByOwner(id, session.user.id)
   if (!complejo) redirect('/dueno')
 
-  const bloqueo = await db.block.findFirst({ where: { id: blockId, courtId } })
+  const bloqueo = await db.block.findFirst({
+    where: { id: blockId, courtId },
+    include: { court: true },
+  })
   if (!bloqueo) redirect(`/dueno/complejos/${id}/canchas/${courtId}/bloqueos`)
 
   return (
@@ -25,6 +28,8 @@ export default async function EditarBloqueoPage({
         <BlockForm
           complejoId={id}
           courtId={courtId}
+          horaApertura={bloqueo.court.horaApertura}
+          horaCierre={bloqueo.court.horaCierre}
           block={{
             id: bloqueo.id,
             startDate: diaDeReserva(bloqueo.startDate),

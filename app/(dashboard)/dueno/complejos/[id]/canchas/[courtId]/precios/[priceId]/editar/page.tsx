@@ -16,6 +16,7 @@ export default async function EditarPrecioPage({
 
   const precioEspecial = await db.precioEspecial.findFirst({
     where: { id: priceId, canchaId: courtId, activo: true },
+    include: { cancha: true },
   })
   if (!precioEspecial) redirect(`/dueno/complejos/${id}/canchas/${courtId}/precios`)
 
@@ -26,6 +27,8 @@ export default async function EditarPrecioPage({
         <PriceForm
           complejoId={id}
           courtId={courtId}
+          horaApertura={precioEspecial.cancha.horaApertura}
+          horaCierre={precioEspecial.cancha.horaCierre}
           precioEspecial={{
             id: precioEspecial.id,
             diaSemana: precioEspecial.diaSemana,

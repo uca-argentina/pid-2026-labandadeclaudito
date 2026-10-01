@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
   esDiaReal,
+  franjaDentroDelHorario,
   formatAdvanceTime,
   generateSlots,
   horariosSeSuperponen,
@@ -235,5 +236,29 @@ describe('esDiaReal', () => {
     expect(esDiaReal('2026-11-31')).toBe(false)
     expect(esDiaReal('2026-02-29')).toBe(false)
     expect(esDiaReal('2026-1-05')).toBe(false)
+  })
+})
+
+describe('franjaDentroDelHorario', () => {
+  test('cancha de 08 a 23: adentro sí, afuera o pisando el borde no', () => {
+    expect(franjaDentroDelHorario('08:00', '23:00', '08:00', '23:00')).toBe(true)
+    expect(franjaDentroDelHorario('19:00', '22:00', '08:00', '23:00')).toBe(true)
+    expect(franjaDentroDelHorario('05:00', '07:00', '08:00', '23:00')).toBe(false)
+    expect(franjaDentroDelHorario('07:00', '09:00', '08:00', '23:00')).toBe(false)
+    expect(franjaDentroDelHorario('22:00', '23:30', '08:00', '23:00')).toBe(false)
+  })
+
+  test('cancha que cierra a medianoche (08 a 00): vale hasta 23:59', () => {
+    expect(franjaDentroDelHorario('22:00', '23:59', '08:00', '00:00')).toBe(true)
+    expect(franjaDentroDelHorario('06:00', '09:00', '08:00', '00:00')).toBe(false)
+  })
+
+  test('cancha que cruza medianoche (20 a 03): cualquiera de los dos tramos', () => {
+    expect(franjaDentroDelHorario('21:00', '23:00', '20:00', '03:00')).toBe(true)
+    expect(franjaDentroDelHorario('00:00', '03:00', '20:00', '03:00')).toBe(true)
+    expect(franjaDentroDelHorario('02:00', '04:00', '20:00', '03:00')).toBe(false)
+    expect(franjaDentroDelHorario('10:00', '12:00', '20:00', '03:00')).toBe(false)
+    // Pisa los dos tramos y el hueco del medio, en que la cancha está cerrada
+    expect(franjaDentroDelHorario('01:00', '21:00', '20:00', '03:00')).toBe(false)
   })
 })

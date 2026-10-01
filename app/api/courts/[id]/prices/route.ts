@@ -3,6 +3,7 @@ import { createPriceSchema } from '@/lib/validations/price'
 import { requireRole } from '@/lib/auth-helpers'
 import { getCourtWithComplex } from '@/lib/ownership'
 import { preciosChocan } from '@/lib/availability'
+import { franjaDentroDelHorario, mensajeFueraDelHorario } from '@/lib/time'
 import { db } from '@/lib/db'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -19,6 +20,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const parsed = createPriceSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
+  }
+
+  const { horaInicio, horaFin } = parsed.data
+  if (
+    horaInicio !== null &&
+    !franjaDentroDelHorario(horaInicio, horaFin!, cancha.horaApertura, cancha.horaCierre)
+  ) {
+    return NextResponse.json(
+      { error: mensajeFueraDelHorario(cancha.horaApertura, cancha.horaCierre) },
+      { status: 400 },
+    )
   }
 
   const otrosPrecios = await db.precioEspecial.findMany({

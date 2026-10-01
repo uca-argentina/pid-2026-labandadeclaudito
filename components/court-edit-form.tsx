@@ -38,6 +38,7 @@ export function CourtEditForm({
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cargando, setCargando] = useState(false)
+  const [aviso, setAviso] = useState('')
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -77,12 +78,35 @@ export function CourtEditForm({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(parsed.data),
     })
-    if (res.ok) {
+    const json = await res.json()
+    if (!res.ok) {
+      setError(json.error)
+      setCargando(false)
+      return
+    }
+
+    // Si el horario nuevo dejó afuera precios o bloqueos, la API los eliminó:
+    // se avisa antes de volver al listado.
+    const partes: string[] = []
+    if (json.preciosEliminados > 0) {
+      partes.push(
+        json.preciosEliminados === 1
+          ? '1 precio especial'
+          : `${json.preciosEliminados} precios especiales`,
+      )
+    }
+    if (json.bloqueosEliminados > 0) {
+      partes.push(
+        json.bloqueosEliminados === 1 ? '1 bloqueo' : `${json.bloqueosEliminados} bloqueos`,
+      )
+    }
+    if (partes.length === 0) {
       router.push(`/dueno/complejos/${complejoId}/canchas`)
       return
     }
-    const json = await res.json()
-    setError(json.error)
+    setAviso(
+      `Cambios guardados. Con el horario nuevo se eliminaron ${partes.join(' y ')} que quedaban fuera del horario.`,
+    )
     setCargando(false)
   }
 
@@ -257,6 +281,18 @@ export function CourtEditForm({
         </div>
 
         {error && <p className="text-destructive text-sm">{error}</p>}
+        {aviso && (
+          <div role="status" className="border-border space-y-3 rounded-lg border p-4 text-sm">
+            <p>{aviso}</p>
+            <Button
+              type="button"
+              size="sm"
+              render={<a href={`/dueno/complejos/${complejoId}/canchas`} />}
+            >
+              Volver a canchas
+            </Button>
+          </div>
+        )}
       </form>
 
       <div className="border-destructive/40 flex items-center justify-between gap-4 rounded-2xl border border-dashed p-5">

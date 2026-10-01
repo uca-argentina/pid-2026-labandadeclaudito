@@ -3,6 +3,7 @@ import { createBlockSchema } from '@/lib/validations/block'
 import { requireRole } from '@/lib/auth-helpers'
 import { getCourtWithComplex } from '@/lib/ownership'
 import { findOverlappingBlock, findOverlappingBookingIds } from '@/lib/blocks'
+import { franjaDentroDelHorario, mensajeFueraDelHorario } from '@/lib/time'
 import { db } from '@/lib/db'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -19,6 +20,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const parsed = createBlockSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
+  }
+
+  const { startTime, endTime } = parsed.data
+  if (!franjaDentroDelHorario(startTime, endTime, cancha.horaApertura, cancha.horaCierre)) {
+    return NextResponse.json(
+      { error: mensajeFueraDelHorario(cancha.horaApertura, cancha.horaCierre) },
+      { status: 400 },
+    )
   }
 
   const bloqueSolapado = await findOverlappingBlock(courtId, parsed.data)

@@ -215,3 +215,32 @@ export function generateSlots(
 
   return slots
 }
+
+// La franja de un bloqueo o de un precio especial tiene que caer dentro del
+// horario de la cancha. Igual que en generateSlots: si la cancha cierra a una
+// hora "menor o igual" que la de apertura (20:00 a 03:00, o 08:00 a 00:00),
+// los turnos del día van de 00:00 al cierre y de la apertura a medianoche, y
+// la franja tiene que caer entera en uno de los dos tramos.
+// La franja nunca cruza medianoche: los schemas exigen inicio < fin.
+export function franjaDentroDelHorario(
+  inicio: string,
+  fin: string,
+  horaApertura: string,
+  horaCierre: string,
+): boolean {
+  if (horaCierre <= horaApertura) {
+    return fin <= horaCierre || inicio >= horaApertura
+  }
+  return inicio >= horaApertura && fin <= horaCierre
+}
+
+export function mensajeFueraDelHorario(horaApertura: string, horaCierre: string): string {
+  return `La cancha abre de ${horaApertura} a ${horaCierre}: la franja tiene que quedar dentro de ese horario.`
+}
+
+// Para precargar la franja de los formularios: todo el horario de la cancha.
+// Si cierra a medianoche o después, llega hasta 23:59 (la franja no puede
+// cruzar la medianoche).
+export function finDeFranjaPorDefecto(horaApertura: string, horaCierre: string): string {
+  return horaCierre > horaApertura ? horaCierre : '23:59'
+}

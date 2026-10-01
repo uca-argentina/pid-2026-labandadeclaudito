@@ -228,21 +228,57 @@ describe('Cancelar reserva (PATCH /api/bookings/[id])', () => {
     expect(res.status).toBe(409)
   })
 
-  test('el turno cancelado se puede volver a reservar', async () => {
+  test('el turno cancelado se puede volver a reservar y la cancelada queda intacta', async () => {
     loginComo(otroJugador)
     const res = await reservar(
       jsonRequest('POST', { canchaId, fecha: diaDeManiana(), horaInicio: '10:00' }),
     )
     expect(res.status).toBe(201)
+    const nueva = (await res.json()).reserva
+    expect(nueva.id).not.toBe(reservaId)
+    expect(nueva.jugadorId).toBe(otroJugador.id)
+    expect(nueva.estado).toBe('PENDIENTE')
 
-    // Se reusa la fila de la cancelada: vuelve a pendiente y sin el pago viejo.
-    const reserva = await db.reserva.findUnique({
+    // La cancelada sigue siendo del primer jugador, con su pago
+    const cancelada = await db.reserva.findUnique({
       where: { id: reservaId },
       include: { pago: true },
     })
-    expect(reserva?.jugadorId).toBe(otroJugador.id)
-    expect(reserva?.estado).toBe('PENDIENTE')
-    expect(reserva?.pago).toBeNull()
+    expect(cancelada?.jugadorId).toBe(jugador.id)
+    expect(cancelada?.estado).toBe('CANCELADA')
+    expect(cancelada?.pago?.monto.toString()).toBe('3000')
+  })
+
+  test('con el turno reservado de nuevo, un tercero no puede reservarlo (409)', async () => {
+    loginComo(jugador)
+    const res = await reservar(
+      jsonRequest('POST', { canchaId, fecha: diaDeManiana(), horaInicio: '10:00' }),
+    )
+    expect(res.status).toBe(409)
+  })
+
+  test('la DB no deja dos reservas activas en el mismo turno', async () => {
+    const activa = await db.reserva.findFirst({
+      where: {
+        canchaId,
+        fecha: new Date(diaDeManiana()),
+        horaInicio: '10:00',
+        estado: 'PENDIENTE',
+      },
+    })
+    await expect(
+      db.reserva.create({
+        data: {
+          canchaId,
+          jugadorId: jugador.id,
+          fecha: activa!.fecha,
+          horaInicio: '10:00',
+          horaFin: '11:00',
+          estado: 'CONFIRMADA',
+          precioTurno: 10000,
+        },
+      }),
+    ).rejects.toMatchObject({ code: 'P2002' })
   })
 })
 
@@ -374,16 +410,16 @@ describe('Plazo de 15 minutos para pagar la seña', () => {
     expect(vencida).toBeNull()
   })
 
-  test('al reusar una reserva cancelada, el plazo arranca de nuevo', async () => {
+  test('reservar un turno cancelado hace mucho no nace vencido', async () => {
     const canceladaId = await reservarComo(jugador, '09:00')
     loginComo(jugador)
     await cancelarReserva(jsonRequest('PATCH'), conParams({ id: canceladaId }))
     await db.reserva.update({ where: { id: canceladaId }, data: { createdAt: hace16Minutos() } })
 
-    // Se reusa la misma fila: si createdAt quedara viejo, nacería vencida.
-    const reusadaId = await reservarComo(otroJugador, '09:00')
-    expect(reusadaId).toBe(canceladaId)
-    const pago = await pagarSena(jsonRequest('POST'), conParams({ id: reusadaId }))
+    // Fila nueva con su propio createdAt: el plazo de 15 minutos arranca ahora
+    const nuevaId = await reservarComo(otroJugador, '09:00')
+    expect(nuevaId).not.toBe(canceladaId)
+    const pago = await pagarSena(jsonRequest('POST'), conParams({ id: nuevaId }))
     expect(pago.status).toBe(200)
   })
 })

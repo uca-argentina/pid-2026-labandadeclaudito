@@ -85,6 +85,21 @@ describe('POST /api/courts/[id]/blocks', () => {
     expect(res.status).toBe(400)
   })
 
+  test('una franja fuera del horario de la cancha (08 a 12) es rechazada (400)', async () => {
+    loginComo(duenio)
+    const res = await crearBloqueo(
+      jsonRequest('POST', {
+        startDate: diaEnNDias(1),
+        endDate: diaEnNDias(1),
+        startTime: '11:00',
+        endTime: '13:00',
+      }),
+      conParams({ id: canchaId }),
+    )
+    expect(res.status).toBe(400)
+    expect((await res.json()).error).toContain('08:00 a 12:00')
+  })
+
   test('el dueño crea un bloqueo simple (201)', async () => {
     loginComo(duenio)
     const res = await crearBloqueo(
@@ -122,13 +137,22 @@ describe('POST /api/courts/[id]/blocks', () => {
     const reservaLibreId = await reservarEnFecha(canchaId, diaEnNDias(3), '11:00')
 
     loginComo(duenio)
+    const rango = {
+      startDate: diaEnNDias(3),
+      endDate: diaEnNDias(4),
+      startTime: '09:00',
+      endTime: '10:00',
+    }
+
+    // Sin confirmar no se guarda nada: avisa cuántas reservas cancelaría
+    const sinConfirmar = await crearBloqueo(jsonRequest('POST', rango), conParams({ id: canchaId }))
+    expect(sinConfirmar.status).toBe(409)
+    expect((await sinConfirmar.json()).reservasAfectadas).toBe(1)
+    const intacta = await db.reserva.findUnique({ where: { id: reservaSolapadaId } })
+    expect(intacta?.estado).toBe('PENDIENTE')
+
     const res = await crearBloqueo(
-      jsonRequest('POST', {
-        startDate: diaEnNDias(3),
-        endDate: diaEnNDias(4),
-        startTime: '09:00',
-        endTime: '10:00',
-      }),
+      jsonRequest('POST', { ...rango, confirmar: true }),
       conParams({ id: canchaId }),
     )
     expect(res.status).toBe(201)
@@ -157,6 +181,7 @@ describe('POST /api/courts/[id]/blocks', () => {
         endDate: diaEnNDias(5),
         startTime: '09:00',
         endTime: '10:00',
+        confirmar: true,
       }),
       conParams({ id: canchaId }),
     )
@@ -234,6 +259,7 @@ describe('PATCH /api/blocks/[id]', () => {
         endDate: diaEnNDias(1),
         startTime: '08:00',
         endTime: '11:00',
+        confirmar: true,
       }),
       conParams({ id: blockId }),
     )

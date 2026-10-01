@@ -3,6 +3,7 @@ import { updateCourtSchema } from '@/lib/validations/court'
 import { requireRole } from '@/lib/auth-helpers'
 import { getCourtWithComplex } from '@/lib/ownership'
 import { getUpcomingBookingIds } from '@/lib/bookings'
+import { franjaDentroDelHorario } from '@/lib/time'
 import { db } from '@/lib/db'
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -41,12 +42,44 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
   }
 
-  const actualizada = await db.cancha.update({
-    where: { id },
-    data: parsed.data,
-  })
+  // Si cambia el horario, los bloqueos y precios especiales que quedan afuera
+  // (aunque sea en parte) se eliminan enteros. Los precios sin franja valen
+  // todo el día, así que nunca quedan afuera.
+  const { horaApertura, horaCierre } = parsed.data
+  let idsDePrecios: string[] = []
+  let idsDeBloqueos: string[] = []
+  if (horaApertura !== cancha.horaApertura || horaCierre !== cancha.horaCierre) {
+    const precios = await db.precioEspecial.findMany({
+      where: { canchaId: id, activo: true, horaInicio: { not: null } },
+    })
+    idsDePrecios = precios
+      .filter((p) => !franjaDentroDelHorario(p.horaInicio!, p.horaFin!, horaApertura, horaCierre))
+      .map((p) => p.id)
 
-  return NextResponse.json({ cancha: actualizada }, { status: 200 })
+    const bloqueos = await db.block.findMany({ where: { courtId: id } })
+    idsDeBloqueos = bloqueos
+      .filter((b) => !franjaDentroDelHorario(b.startTime, b.endTime, horaApertura, horaCierre))
+      .map((b) => b.id)
+  }
+
+  // Precios: baja lógica, como en el resto de la app. Bloqueos: se borran.
+  const [actualizada] = await db.$transaction([
+    db.cancha.update({ where: { id }, data: parsed.data }),
+    db.precioEspecial.updateMany({
+      where: { id: { in: idsDePrecios } },
+      data: { activo: false },
+    }),
+    db.block.deleteMany({ where: { id: { in: idsDeBloqueos } } }),
+  ])
+
+  return NextResponse.json(
+    {
+      cancha: actualizada,
+      preciosEliminados: idsDePrecios.length,
+      bloqueosEliminados: idsDeBloqueos.length,
+    },
+    { status: 200 },
+  )
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {

@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { TimeSelect } from '@/components/time-select'
+import { finDeFranjaPorDefecto, franjaDentroDelHorario, mensajeFueraDelHorario } from '@/lib/time'
 import { createBlockSchema, type CreateBlockInput } from '@/lib/validations/block'
 
 type BloqueoExistente = {
@@ -31,18 +32,24 @@ type BloqueoExistente = {
 export function BlockForm({
   complejoId,
   courtId,
+  horaApertura,
+  horaCierre,
   block,
 }: {
   complejoId: string
   courtId: string
+  horaApertura: string
+  horaCierre: string
   block?: BloqueoExistente
 }) {
   const router = useRouter()
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cargando, setCargando] = useState(false)
-  const [horaDesde, setHoraDesde] = useState(block?.startTime ?? '08:00')
-  const [horaHasta, setHoraHasta] = useState(block?.endTime ?? '23:00')
+  const [horaDesde, setHoraDesde] = useState(block?.startTime ?? horaApertura)
+  const [horaHasta, setHoraHasta] = useState(
+    block?.endTime ?? finDeFranjaPorDefecto(horaApertura, horaCierre),
+  )
   // Si el bloqueo pisa reservas, la API no lo guarda hasta que el dueño confirma
   const [aConfirmar, setAConfirmar] = useState<{
     datos: CreateBlockInput
@@ -97,11 +104,22 @@ export function BlockForm({
       return
     }
 
+    // La API hace el mismo chequeo; acá es para avisar sin ir al servidor
+    const { startTime, endTime } = parsed.data
+    if (!franjaDentroDelHorario(startTime, endTime, horaApertura, horaCierre)) {
+      setFieldErrors({ endTime: mensajeFueraDelHorario(horaApertura, horaCierre) })
+      return
+    }
+
     await guardar(parsed.data, false)
   }
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
+      <p className="text-muted-foreground text-sm">
+        Esta cancha abre de {horaApertura} a {horaCierre}.
+      </p>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="startDate">Desde</Label>

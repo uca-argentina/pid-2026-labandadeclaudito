@@ -54,8 +54,12 @@ export function imagenRequest(archivo: File) {
   return new Request('http://localhost/test', { method: 'POST', body: formData })
 }
 
+// Arranca con la firma de un PNG: el endpoint mira los primeros bytes
+// (esImagenReal), no alcanza con el type.
+const FIRMA_PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+
 export function archivoImagen(tipo = 'image/png') {
-  return new File(['contenido de prueba'], 'foto.png', { type: tipo })
+  return new File([FIRMA_PNG, 'contenido de prueba'], 'foto.png', { type: tipo })
 }
 
 // En Next 16 los params de un endpoint llegan como promesa

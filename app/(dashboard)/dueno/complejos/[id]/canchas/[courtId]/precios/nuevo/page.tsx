@@ -24,7 +24,12 @@ export default async function NuevoPrecioPage({
       <h1 className="text-3xl font-semibold">Nuevo precio especial</h1>
       <p className="text-muted-foreground mt-1 text-sm">{cancha.nombre}</p>
       <div className="mt-6">
-        <PriceForm complejoId={id} courtId={courtId} />
+        <PriceForm
+          complejoId={id}
+          courtId={courtId}
+          horaApertura={cancha.horaApertura}
+          horaCierre={cancha.horaCierre}
+        />
       </div>
     </main>
   )
