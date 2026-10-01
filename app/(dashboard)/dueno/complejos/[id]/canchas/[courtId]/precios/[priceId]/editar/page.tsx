@@ -20,7 +20,7 @@ export default async function EditarPrecioPage({
   if (!precioEspecial) redirect(`/dueno/complejos/${id}/canchas/${courtId}/precios`)
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
+    <main className="mx-auto max-w-2xl px-6 pt-6 pb-12 md:pt-4">
       <h1 className="text-3xl font-semibold">Editar precio especial</h1>
       <div className="mt-6">
         <PriceForm

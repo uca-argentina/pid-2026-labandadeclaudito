@@ -22,10 +22,10 @@ export default async function EditarCanchaPage({
   if (!cancha) redirect(`/dueno/complejos/${id}/canchas`)
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
+    <main className="mx-auto max-w-2xl px-6 pt-6 pb-12 md:pt-4">
       <Link
         href={`/dueno/complejos/${id}/canchas`}
-        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
+        className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"
       >
         <ArrowLeft className="size-3.5" />
         Volver a canchas

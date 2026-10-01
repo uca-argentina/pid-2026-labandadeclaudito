@@ -40,10 +40,10 @@ export default async function DetalleComplejoDuenoPage({
   })
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
+    <main className="mx-auto max-w-4xl px-6 pt-6 pb-12 md:pt-4">
       <Link
         href="/dueno/complejos"
-        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
+        className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"
       >
         <ArrowLeft className="size-3.5" />
         Volver a mis complejos

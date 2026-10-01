@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { AppSidebar } from '@/components/app-sidebar'
+import { AppSidebar, MobileMenuButton } from '@/components/app-sidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
@@ -19,7 +19,13 @@ export default async function DashboardLayout({ children }: LayoutProps<'/'>) {
           nombre={session.user.name ?? ''}
           email={session.user.email ?? ''}
         />
-        <SidebarInset>{children}</SidebarInset>
+        <SidebarInset>
+          {/* En mobile el sidebar se esconde: esta barra tiene el botón para abrirlo */}
+          <header className="border-border flex h-14 items-center border-b px-4 md:hidden">
+            <MobileMenuButton />
+          </header>
+          {children}
+        </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>
   )

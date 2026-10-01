@@ -45,7 +45,7 @@ export default async function DuenoHomePage() {
   })
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12">
+    <div className="mx-auto max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Hola, {session.user.name}</h1>
@@ -80,11 +80,11 @@ export default async function DuenoHomePage() {
         />
       </div>
 
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-5 flex items-center justify-between gap-4">
         <h2 className="text-xl font-semibold">Próximos turnos en tus canchas</h2>
         <Link
           href="/dueno/complejos"
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm font-medium"
+          className="text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-1.5 text-sm font-medium"
         >
           Mis complejos
           <ArrowRight className="size-3.5" />

@@ -8,7 +8,7 @@ import { CourtBookingSheet } from '@/components/court-booking-sheet'
 // derecha, los datos y el botón.
 export function CourtCard({ cancha, fechaInicial }: { cancha: Cancha; fechaInicial?: string }) {
   return (
-    <div className="border-border bg-card relative h-39 overflow-hidden rounded-2xl border">
+    <div className="border-border bg-card relative min-h-39 overflow-hidden rounded-2xl border">
       <div className="absolute inset-y-0 left-0 w-25 opacity-75 [clip-path:polygon(0_0,58%_0,100%_100%,0_100%)] [mask-image:linear-gradient(90deg,black_40%,rgb(0_0_0/0.3)_100%)]">
         <CourtIllustration deporte={cancha.deporte} />
       </div>
@@ -30,8 +30,11 @@ export function CourtCard({ cancha, fechaInicial }: { cancha: Cancha; fechaInici
         />
       </svg>
 
-      <div className="absolute top-4 right-5 bottom-4 left-28 flex flex-col justify-between">
-        <div>
+      {/* Sin alto fijo: si el botón no entra al lado del precio (pantallas
+          chicas), baja a otra línea y la card crece. min-h-31 = h-39 menos
+          los márgenes de arriba y abajo. */}
+      <div className="relative my-4 mr-5 ml-28 flex min-h-31 flex-col justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-primary truncate text-[11px] font-semibold tracking-wide uppercase">
             {deporteLabels[cancha.deporte]} · {superficieLabels[cancha.tipoSuperficie]}
           </p>
@@ -42,7 +45,7 @@ export function CourtCard({ cancha, fechaInicial }: { cancha: Cancha; fechaInici
           </p>
         </div>
 
-        <div className="flex items-end justify-between gap-3">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-primary text-xl font-bold">
               {formatPrecio(cancha.precioBase.toString())}
@@ -51,14 +54,17 @@ export function CourtCard({ cancha, fechaInicial }: { cancha: Cancha; fechaInici
               por turno de {cancha.duracionTurnoMin} min
             </p>
           </div>
-          <CourtBookingSheet
-            courtId={cancha.id}
-            courtName={cancha.nombre}
-            courtSportLabel={deporteLabels[cancha.deporte]}
-            precioBase={cancha.precioBase.toString()}
-            duracionTurnoMin={cancha.duracionTurnoMin}
-            fechaInicial={fechaInicial}
-          />
+          {/* ml-auto: si el botón baja de línea, queda a la derecha igual */}
+          <div className="ml-auto">
+            <CourtBookingSheet
+              courtId={cancha.id}
+              courtName={cancha.nombre}
+              courtSportLabel={deporteLabels[cancha.deporte]}
+              precioBase={cancha.precioBase.toString()}
+              duracionTurnoMin={cancha.duracionTurnoMin}
+              fechaInicial={fechaInicial}
+            />
+          </div>
         </div>
       </div>
     </div>

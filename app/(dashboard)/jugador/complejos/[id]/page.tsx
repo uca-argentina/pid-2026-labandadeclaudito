@@ -21,17 +21,17 @@ export default async function ComplejoDetallePage({
   if (!complejo) notFound()
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 py-12">
+    <main className="mx-auto w-full max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <Link
         href={`/jugador/canchas${filtersToQueryString(filtros)}`}
-        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
+        className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"
       >
         <ArrowLeft className="size-3.5" />
         Volver a búsqueda de complejos
       </Link>
 
       <div className="mb-5">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-3xl font-semibold">{complejo.nombre}</h1>
           <span className="bg-primary/15 text-primary inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium">
             <BadgeCheck className="size-3.5" />

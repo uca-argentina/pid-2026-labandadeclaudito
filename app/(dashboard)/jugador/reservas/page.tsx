@@ -56,7 +56,7 @@ export default async function MisReservasPage() {
   const canceladas = reservas.filter((r) => r.estado === 'CANCELADA')
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
+    <main className="mx-auto max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <div className="mb-6">
         <h1 className="text-3xl font-semibold">Mis reservas</h1>
         <p className="text-muted-foreground mt-1 text-sm">
@@ -175,7 +175,7 @@ function TarjetaReserva({
         />
       </div>
 
-      <div className="text-muted-foreground mt-2 space-y-1.5 text-sm">
+      <div className="text-muted-foreground mt-2 mb-4 space-y-1.5 text-sm">
         <p className="flex items-center gap-1.5">
           <MapPin className="size-3.5 shrink-0" />
           {reserva.cancha.complejo.nombre} · {reserva.cancha.complejo.direccion}
@@ -213,7 +213,7 @@ function TarjetaReserva({
             )}
           </div>
           {(muestraPagar || muestraCancelar) && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {muestraPagar && <PayDepositButton bookingId={reserva.id} montoSena={montoSena} />}
               {muestraCancelar && (
                 <CancelBookingButton bookingId={reserva.id} avisoSena={avisoSena} />

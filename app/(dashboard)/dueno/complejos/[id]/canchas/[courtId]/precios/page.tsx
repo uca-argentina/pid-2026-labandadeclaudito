@@ -39,15 +39,15 @@ export default async function ListadoPreciosPage({
   })
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
+    <main className="mx-auto w-full max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <Link
         href={`/dueno/complejos/${id}/canchas`}
-        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
+        className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"
       >
         <ArrowLeft className="size-3.5" />
         Volver a canchas
       </Link>
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-muted-foreground text-sm">{complejo.nombre}</p>
           <h1 className="text-3xl font-semibold">Precios especiales de {cancha.nombre}</h1>
@@ -77,44 +77,71 @@ export default async function ListadoPreciosPage({
           </Button>
         </div>
       ) : (
-        <div className="border-border bg-card mt-8 overflow-hidden rounded-2xl border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Día</TableHead>
-                <TableHead>Horario</TableHead>
-                <TableHead>Precio</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {preciosEspeciales.map((precioEspecial) => (
-                <TableRow key={precioEspecial.id}>
-                  <TableCell>
+        <>
+          {/* Mobile y tablet: una tarjeta por precio, porque la tabla no entra */}
+          <div className="border-border bg-card divide-border mt-8 divide-y rounded-2xl border lg:hidden">
+            {preciosEspeciales.map((precioEspecial) => (
+              <div key={precioEspecial.id} className="flex items-center justify-between gap-3 p-4">
+                <div>
+                  <p className="font-medium">
                     {precioEspecial.diaSemana === null
                       ? 'Todos los días'
                       : diasSemana[precioEspecial.diaSemana]}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  </p>
+                  <p className="text-muted-foreground text-sm">
                     {precioEspecial.horaInicio
                       ? `${precioEspecial.horaInicio} – ${precioEspecial.horaFin}`
                       : 'Todo el día'}
-                  </TableCell>
-                  <TableCell className="font-medium">
+                  </p>
+                  <p className="mt-1 font-semibold">
                     {formatPrecio(precioEspecial.precio.toString())}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <PriceRowActions
-                      complejoId={id}
-                      courtId={courtId}
-                      priceId={precioEspecial.id}
-                    />
-                  </TableCell>
+                  </p>
+                </div>
+                <PriceRowActions complejoId={id} courtId={courtId} priceId={precioEspecial.id} />
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: tabla */}
+          <div className="border-border bg-card mt-8 hidden overflow-hidden rounded-2xl border lg:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Día</TableHead>
+                  <TableHead>Horario</TableHead>
+                  <TableHead>Precio</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {preciosEspeciales.map((precioEspecial) => (
+                  <TableRow key={precioEspecial.id}>
+                    <TableCell>
+                      {precioEspecial.diaSemana === null
+                        ? 'Todos los días'
+                        : diasSemana[precioEspecial.diaSemana]}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {precioEspecial.horaInicio
+                        ? `${precioEspecial.horaInicio} – ${precioEspecial.horaFin}`
+                        : 'Todo el día'}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {formatPrecio(precioEspecial.precio.toString())}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <PriceRowActions
+                        complejoId={id}
+                        courtId={courtId}
+                        priceId={precioEspecial.id}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
     </main>
   )
