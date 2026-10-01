@@ -9,6 +9,7 @@ import { estadoDeReserva } from '@/lib/estado-reserva'
 import { diaDeReserva, formatearDia, momentoActual, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { CancelBookingButton } from '@/components/cancel-booking-button'
+import { CollapsibleSection } from '@/components/collapsible-section'
 import { PayDepositButton } from '@/components/pay-deposit-button'
 
 async function getReservas(jugadorId: string) {
@@ -35,8 +36,9 @@ export default async function MisReservasPage() {
   const ahora = momentoActual()
 
   // Próximas: las que todavía se van a jugar (la que está en curso también),
-  // de la más cercana a la más lejana. Historial: finalizadas y canceladas, de
-  // la más reciente a la más vieja.
+  // de la más cercana a la más lejana. Historial: las que ya pasaron.
+  // Canceladas: aparte, con o sin seña devuelta. Estas dos, de la más
+  // reciente a la más vieja.
   const esProxima = (r: Reserva) => {
     const dia = diaDeReserva(r.fecha)
     const visible = estadoDeReserva(
@@ -48,7 +50,8 @@ export default async function MisReservasPage() {
     return visible === 'PENDIENTE' && !turnoYaPaso(dia, r.horaInicio)
   }
   const proximas = reservas.filter(esProxima).reverse()
-  const historial = reservas.filter((r) => !esProxima(r))
+  const historial = reservas.filter((r) => !esProxima(r) && r.estado !== 'CANCELADA')
+  const canceladas = reservas.filter((r) => r.estado === 'CANCELADA')
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
@@ -83,14 +86,18 @@ export default async function MisReservasPage() {
             </section>
           )}
           {historial.length > 0 && (
-            <section className="space-y-4">
-              <h2 className="text-muted-foreground text-sm font-medium">Historial</h2>
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {historial.map((reserva) => (
-                  <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
-                ))}
-              </div>
-            </section>
+            <CollapsibleSection title="Historial" /* count={historial.length} */>
+              {historial.map((reserva) => (
+                <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
+              ))}
+            </CollapsibleSection>
+          )}
+          {canceladas.length > 0 && (
+            <CollapsibleSection title="Canceladas" /* count={canceladas.length} */>
+              {canceladas.map((reserva) => (
+                <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
+              ))}
+            </CollapsibleSection>
           )}
         </div>
       )}
