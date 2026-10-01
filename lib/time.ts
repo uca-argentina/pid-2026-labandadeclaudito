@@ -84,7 +84,7 @@ export function turnoYaPaso(fecha: string, horaInicio: string): boolean {
 }
 
 // La anticipación se guarda en minutos, pero en los formularios se carga con
-// un input type="time" ("HH:MM"). Input vacío = sin valor propio (null).
+// un TimeSelect ("HH:MM"). Texto vacío = sin valor propio (null).
 export function timeTextToMinutes(texto: string): number | null {
   if (texto === '') {
     return null
@@ -93,7 +93,7 @@ export function timeTextToMinutes(texto: string): number | null {
   return horas * 60 + minutos
 }
 
-// 90 → "01:30", para precargar el input type="time"
+// 90 → "01:30", para precargar el TimeSelect
 export function minutesToTimeText(totalMinutos: number): string {
   const horas = String(Math.floor(totalMinutos / 60)).padStart(2, '0')
   const minutos = String(totalMinutos % 60).padStart(2, '0')

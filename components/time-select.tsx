@@ -15,22 +15,30 @@ export function TimeSelect({
   value,
   onChange,
   disabled,
+  invalid,
 }: {
   name?: string
   value: string
   onChange: (value: string) => void
   disabled?: boolean
+  invalid?: boolean
 }) {
   const [hora, minuto] = value.split(':')
+
+  let className = selectClassName
+  if (invalid) {
+    className = selectClassName + ' border-destructive ring-destructive/20 ring-3'
+  }
 
   return (
     <div className="flex items-center gap-1.5">
       <select
         aria-label="Hora"
+        aria-invalid={invalid}
         value={hora}
         disabled={disabled}
         onChange={(e) => onChange(`${e.target.value}:${minuto}`)}
-        className={selectClassName}
+        className={className}
       >
         {HORAS.map((h) => (
           <option key={h} value={h}>
@@ -41,10 +49,11 @@ export function TimeSelect({
       <span className="text-muted-foreground">:</span>
       <select
         aria-label="Minuto"
+        aria-invalid={invalid}
         value={minuto}
         disabled={disabled}
         onChange={(e) => onChange(`${hora}:${e.target.value}`)}
-        className={selectClassName}
+        className={className}
       >
         {MINUTOS.map((m) => (
           <option key={m} value={m}>

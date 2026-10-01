@@ -6,6 +6,7 @@ import { AlertCircle, Loader2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { TimeSelect } from '@/components/time-select'
 import {
   Select,
   SelectContent,
@@ -43,6 +44,8 @@ export function PriceForm({
       : String(precioEspecial.diaSemana),
   )
   const [conFranjaHoraria, setConFranjaHoraria] = useState(precioEspecial?.horaInicio != null)
+  const [horaInicio, setHoraInicio] = useState(precioEspecial?.horaInicio ?? '08:00')
+  const [horaFin, setHoraFin] = useState(precioEspecial?.horaFin ?? '23:00')
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cargando, setCargando] = useState(false)
@@ -55,8 +58,8 @@ export function PriceForm({
     const form = new FormData(e.currentTarget)
     const datos = {
       diaSemana: diaSemana === TODOS_LOS_DIAS ? null : Number(diaSemana),
-      horaInicio: conFranjaHoraria ? (form.get('horaInicio') as string) : null,
-      horaFin: conFranjaHoraria ? (form.get('horaFin') as string) : null,
+      horaInicio: conFranjaHoraria ? horaInicio : null,
+      horaFin: conFranjaHoraria ? horaFin : null,
       precio: form.get('precio'),
     }
 
@@ -126,16 +129,11 @@ export function PriceForm({
       {conFranjaHoraria && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="horaInicio">Desde</Label>
-            <Input
-              id="horaInicio"
-              name="horaInicio"
-              type="time"
-              defaultValue={precioEspecial?.horaInicio ?? undefined}
-              aria-invalid={!!fieldErrors.horaInicio}
-              className={
-                fieldErrors.horaInicio ? 'border-destructive ring-destructive/20 ring-3' : undefined
-              }
+            <Label>Desde</Label>
+            <TimeSelect
+              value={horaInicio}
+              onChange={setHoraInicio}
+              invalid={!!fieldErrors.horaInicio}
             />
             {fieldErrors.horaInicio && (
               <p className="text-destructive flex items-center gap-1 text-xs font-medium">
@@ -146,17 +144,8 @@ export function PriceForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="horaFin">Hasta</Label>
-            <Input
-              id="horaFin"
-              name="horaFin"
-              type="time"
-              defaultValue={precioEspecial?.horaFin ?? undefined}
-              aria-invalid={!!fieldErrors.horaFin}
-              className={
-                fieldErrors.horaFin ? 'border-destructive ring-destructive/20 ring-3' : undefined
-              }
-            />
+            <Label>Hasta</Label>
+            <TimeSelect value={horaFin} onChange={setHoraFin} invalid={!!fieldErrors.horaFin} />
             {fieldErrors.horaFin && (
               <p className="text-destructive flex items-center gap-1 text-xs font-medium">
                 <AlertCircle className="size-3.5" />

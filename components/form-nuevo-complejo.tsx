@@ -50,7 +50,7 @@ export function FormNuevoComplejo() {
     resolver: zodResolver(createComplexSchema),
     // porcentajeSenaDefault no se pide acá (queda en 30), se ajusta después
     // desde "Editar complejo". minAdvanceMinutesDefault se carga con un
-    // input type="time" que no maneja react-hook-form: se pasa a minutos en
+    // TimeSelect que no maneja react-hook-form: se pasa a minutos en
     // onSubmit.
     defaultValues: {
       nombre: '',
