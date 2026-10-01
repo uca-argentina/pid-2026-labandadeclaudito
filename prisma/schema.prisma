@@ -67,6 +67,9 @@ model Complejo {
   // cada Cancha puede pisarlo con el propio. 0 = hasta que empieza el turno.
   // Default 180 = 3 horas (mismo valor que arranca el form de alta)
   minAdvanceMinutesDefault Int      @default(180)
+  // Horas antes del turno hasta las que se puede cancelar con devolución de
+  // la seña. Aplica a todas sus canchas (no hay override por cancha).
+  cancellationHours        Int      @default(24)
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 
@@ -180,15 +183,18 @@ model Reserva {
 }
 
 model Pago {
-  id         String   @id @default(cuid())
-  reservaId  String   @unique
+  id                String   @id @default(cuid())
+  reservaId         String   @unique
   // monto y porcentaje quedan congelados: si después cambia el % de seña
   // de la cancha/complejo, esta reserva ya pagada no se ve afectada
-  monto      Decimal  @db.Decimal(10, 2)
-  porcentaje Int
-  // false hasta que se decide la devolución al cancelar (política de 24hs)
-  devuelto   Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  monto             Decimal  @db.Decimal(10, 2)
+  porcentaje        Int
+  // Política de cancelación del complejo al momento de pagar, congelada igual
+  // que porcentaje. Al cancelar vale la más corta entre esta y la actual.
+  cancellationHours Int      @default(24)
+  // false hasta que se decide la devolución al cancelar
+  devuelto          Boolean  @default(false)
+  createdAt         DateTime @default(now())
 
   reserva Reserva @relation(fields: [reservaId], references: [id], onDelete: Cascade)
 }

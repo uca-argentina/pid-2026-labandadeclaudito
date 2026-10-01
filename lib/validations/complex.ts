@@ -39,6 +39,13 @@ export const createComplexSchema = z.object({
     .int('Tiene que ser un número entero')
     .min(0, 'No puede ser negativo')
     .max(1439, 'No puede ser más de 23:59 horas'),
+  // Horas antes del turno hasta las que el jugador cancela con devolución de
+  // la seña. Mínimo 4 horas, máximo una semana.
+  cancellationHours: z
+    .number('Ingresá una cantidad de horas')
+    .int('Tiene que ser un número entero')
+    .min(4, 'Tiene que ser de al menos 4 horas')
+    .max(168, 'No puede ser más de 168 horas (una semana)'),
 })
 
 export type CreateComplexInput = z.infer<typeof createComplexSchema>

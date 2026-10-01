@@ -16,7 +16,15 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 
-export function CancelBookingButton({ bookingId }: { bookingId: string }) {
+// avisoSena: qué pasa con la seña si cancela ahora (lo calcula el server).
+// null cuando la reserva no tiene seña pagada.
+export function CancelBookingButton({
+  bookingId,
+  avisoSena,
+}: {
+  bookingId: string
+  avisoSena: string | null
+}) {
   const router = useRouter()
   const [cancelando, setCancelando] = useState(false)
   const [error, setError] = useState('')
@@ -51,6 +59,7 @@ export function CancelBookingButton({ bookingId }: { bookingId: string }) {
               El turno vuelve a quedar disponible para otros jugadores y esta acción no se puede
               deshacer. Si más adelante lo querés de nuevo, vas a tener que reservarlo otra vez.
             </AlertDialogDescription>
+            {avisoSena && <p className="text-sm font-medium">{avisoSena}</p>}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Volver</AlertDialogCancel>

@@ -3,10 +3,10 @@ import { redirect } from 'next/navigation'
 import { CalendarCheck, Clock, MapPin, Wallet } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { deporteLabels } from '@/lib/labels'
+import { deporteLabels, formatPrecio } from '@/lib/labels'
 import { montoDelHistorial } from '@/lib/historial'
 import { estadoDeReserva } from '@/lib/estado-reserva'
-import { diaDeReserva, formatearDia, momentoActual, turnoYaPaso } from '@/lib/time'
+import { diaDeReserva, formatearDia, momentoActual, refundsDeposit, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { CancelBookingButton } from '@/components/cancel-booking-button'
 import { CollapsibleSection } from '@/components/collapsible-section'
@@ -133,6 +133,20 @@ function TarjetaReserva({
 
   const muestraPagar = reserva.estado === 'PENDIENTE' && !yaPaso
   const muestraCancelar = !cancelada && !yaPaso
+
+  // Aviso para el diálogo de cancelar: mismo cálculo que hace el endpoint.
+  let avisoSena: string | null = null
+  if (reserva.pago && muestraCancelar) {
+    const horasAlPagar = reserva.pago.cancellationHours
+    const horasActuales = reserva.cancha.complejo.cancellationHours
+    const montoPagado = formatPrecio(reserva.pago.monto.toString())
+    if (refundsDeposit(dia, reserva.horaInicio, horasAlPagar, horasActuales)) {
+      avisoSena = `Se te devuelve la seña de ${montoPagado}.`
+    } else {
+      const horas = Math.min(horasAlPagar, horasActuales)
+      avisoSena = `Faltan menos de ${horas} hs para el turno: la seña de ${montoPagado} no se devuelve.`
+    }
+  }
   const mostrarFooter = monto !== null || muestraPagar || muestraCancelar
 
   return (
@@ -191,7 +205,9 @@ function TarjetaReserva({
           {(muestraPagar || muestraCancelar) && (
             <div className="flex items-center gap-2">
               {muestraPagar && <PayDepositButton bookingId={reserva.id} montoSena={montoSena} />}
-              {muestraCancelar && <CancelBookingButton bookingId={reserva.id} />}
+              {muestraCancelar && (
+                <CancelBookingButton bookingId={reserva.id} avisoSena={avisoSena} />
+              )}
             </div>
           )}
         </div>

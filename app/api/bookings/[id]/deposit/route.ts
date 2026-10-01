@@ -30,13 +30,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   // El % de seña es el de la cancha o, si no tiene uno propio, el del
   // complejo. Se calcula sobre el precio congelado de la reserva y queda
-  // congelado en el Pago.
+  // congelado en el Pago, junto con la política de cancelación actual.
   const porcentajeSena =
     reserva.cancha.porcentajeSena ?? reserva.cancha.complejo.porcentajeSenaDefault
   const montoSena = reserva.precioTurno.mul(porcentajeSena).div(100)
 
   await db.$transaction([
-    db.pago.create({ data: { reservaId: id, monto: montoSena, porcentaje: porcentajeSena } }),
+    db.pago.create({
+      data: {
+        reservaId: id,
+        monto: montoSena,
+        porcentaje: porcentajeSena,
+        cancellationHours: reserva.cancha.complejo.cancellationHours,
+      },
+    }),
     db.reserva.update({ where: { id }, data: { estado: 'CONFIRMADA' } }),
   ])
 

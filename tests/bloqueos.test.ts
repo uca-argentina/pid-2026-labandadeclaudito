@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { POST as crearBloqueo } from '@/app/api/courts/[id]/blocks/route'
 import { PATCH as editarBloqueo, DELETE as borrarBloqueo } from '@/app/api/blocks/[id]/route'
 import { POST as reservar } from '@/app/api/bookings/route'
+import { POST as pagarSena } from '@/app/api/bookings/[id]/deposit/route'
 import { db } from '@/lib/db'
 import { diaDeHoy } from '@/lib/time'
 import {
@@ -48,10 +49,12 @@ async function reservarEnFecha(canchaId: string, fecha: string, horaInicio: stri
 
 describe('POST /api/courts/[id]/blocks', () => {
   let canchaId: string
+  let complejoId: string
 
   beforeAll(async () => {
-    const { cancha1 } = await crearComplejoConCanchas(duenio.id)
+    const { complejo, cancha1 } = await crearComplejoConCanchas(duenio.id)
     canchaId = cancha1.id
+    complejoId = complejo.id
   })
 
   test('otro dueño no puede crear un bloqueo (404)', async () => {
@@ -137,6 +140,34 @@ describe('POST /api/courts/[id]/blocks', () => {
 
     const reservaLibre = await db.reserva.findUnique({ where: { id: reservaLibreId } })
     expect(reservaLibre?.estado).toBe('PENDIENTE')
+  })
+
+  test('si la reserva cancelada por el bloqueo tenía seña, se devuelve aunque falten pocas horas', async () => {
+    // Política de una semana: si la cancelara el jugador, no se le devolvería.
+    await db.complejo.update({ where: { id: complejoId }, data: { cancellationHours: 168 } })
+    const reservaId = await reservarEnFecha(canchaId, diaEnNDias(5), '09:00')
+    loginComo(jugador)
+    const pago = await pagarSena(jsonRequest('POST'), conParams({ id: reservaId }))
+    expect(pago.status).toBe(200)
+
+    loginComo(duenio)
+    const res = await crearBloqueo(
+      jsonRequest('POST', {
+        startDate: diaEnNDias(5),
+        endDate: diaEnNDias(5),
+        startTime: '09:00',
+        endTime: '10:00',
+      }),
+      conParams({ id: canchaId }),
+    )
+    expect(res.status).toBe(201)
+
+    const reserva = await db.reserva.findUnique({
+      where: { id: reservaId },
+      include: { pago: true },
+    })
+    expect(reserva?.estado).toBe('CANCELADA')
+    expect(reserva?.pago?.devuelto).toBe(true)
   })
 })
 

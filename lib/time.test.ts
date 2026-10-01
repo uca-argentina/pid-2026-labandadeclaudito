@@ -5,6 +5,7 @@ import {
   horariosSeSuperponen,
   isTooSoonToBook,
   minutesToTimeText,
+  refundsDeposit,
   sumarMinutos,
   timeTextToMinutes,
   turnoYaPaso,
@@ -189,5 +190,36 @@ describe('isTooSoonToBook', () => {
     expect(isTooSoonToBook('2026-09-16', '23:30', 120, deNoche)).toBe(true)
     expect(isTooSoonToBook('2026-09-17', '00:30', 120, deNoche)).toBe(true)
     expect(isTooSoonToBook('2026-09-17', '01:30', 120, deNoche)).toBe(false)
+  })
+})
+
+describe('refundsDeposit', () => {
+  // 16:00 UTC = 13:00 en Argentina del 16.
+  const alMediodia = new Date('2026-09-16T16:00:00Z')
+
+  test('con 24 hs: devuelve si faltan 24 hs o más', () => {
+    expect(refundsDeposit('2026-09-17', '13:00', 24, 24, alMediodia)).toBe(true)
+    expect(refundsDeposit('2026-09-17', '14:00', 24, 24, alMediodia)).toBe(true)
+    expect(refundsDeposit('2026-09-17', '12:00', 24, 24, alMediodia)).toBe(false)
+    expect(refundsDeposit('2026-09-16', '20:00', 24, 24, alMediodia)).toBe(false)
+  })
+
+  test('si el complejo subió a 48 hs, vale la de 24 con la que pagó', () => {
+    // Faltan 30 hs: con 48 no se devolvería, con 24 sí.
+    expect(refundsDeposit('2026-09-17', '19:00', 24, 48, alMediodia)).toBe(true)
+  })
+
+  test('si el complejo bajó a 12 hs, el jugador aprovecha la nueva', () => {
+    // Faltan 15 hs: con 24 no se devolvería, con 12 sí.
+    expect(refundsDeposit('2026-09-17', '04:00', 24, 12, alMediodia)).toBe(true)
+    // Faltan 10 hs: no alcanza ni con 12.
+    expect(refundsDeposit('2026-09-16', '23:00', 24, 12, alMediodia)).toBe(false)
+  })
+
+  test('el límite puede caer al día siguiente', () => {
+    // 02:00 UTC del 17 = 23:00 del 16 en Argentina. Con 4 hs, límite: 03:00 del 17.
+    const deNoche = new Date('2026-09-17T02:00:00Z')
+    expect(refundsDeposit('2026-09-17', '02:00', 4, 4, deNoche)).toBe(false)
+    expect(refundsDeposit('2026-09-17', '03:00', 4, 4, deNoche)).toBe(true)
   })
 })

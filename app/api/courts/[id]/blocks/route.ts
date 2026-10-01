@@ -28,6 +28,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const idsDeReservas = await findOverlappingBookingIds(courtId, parsed.data)
 
+  // Estas cancelaciones las provoca el dueño, no el jugador: la seña se
+  // devuelve siempre, sin mirar la política de horas.
   const [block] = await db.$transaction([
     db.block.create({
       data: {
@@ -40,6 +42,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     db.reserva.updateMany({
       where: { id: { in: idsDeReservas } },
       data: { estado: 'CANCELADA' },
+    }),
+    db.pago.updateMany({
+      where: { reservaId: { in: idsDeReservas } },
+      data: { devuelto: true },
     }),
   ])
 

@@ -30,6 +30,7 @@ describe('createComplexSchema — zona', () => {
     contacto: '11 4589-2231',
     porcentajeSenaDefault: 30,
     minAdvanceMinutesDefault: 180,
+    cancellationHours: 24,
   }
 
   test('acepta un barrio de la lista fija', () => {
@@ -42,5 +43,33 @@ describe('createComplexSchema — zona', () => {
 
   test('rechaza una zona que no está en la lista', () => {
     expect(createComplexSchema.safeParse({ ...base, zona: 'Marte' }).success).toBe(false)
+  })
+})
+
+describe('createComplexSchema — política de cancelación', () => {
+  const base = {
+    nombre: 'El Ombú',
+    direccion: 'Av. San Martín 4520',
+    zona: 'Palermo',
+    contacto: '11 4589-2231',
+    porcentajeSenaDefault: 30,
+    minAdvanceMinutesDefault: 180,
+  }
+
+  test('acepta entre 4 y 168 horas', () => {
+    expect(createComplexSchema.safeParse({ ...base, cancellationHours: 4 }).success).toBe(true)
+    expect(createComplexSchema.safeParse({ ...base, cancellationHours: 168 }).success).toBe(true)
+  })
+
+  test('rechaza menos de 4 horas', () => {
+    expect(createComplexSchema.safeParse({ ...base, cancellationHours: 3 }).success).toBe(false)
+  })
+
+  test('rechaza más de una semana', () => {
+    expect(createComplexSchema.safeParse({ ...base, cancellationHours: 169 }).success).toBe(false)
+  })
+
+  test('rechaza el campo vacío', () => {
+    expect(createComplexSchema.safeParse({ ...base, cancellationHours: NaN }).success).toBe(false)
   })
 })

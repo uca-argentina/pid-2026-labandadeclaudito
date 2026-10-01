@@ -245,6 +245,73 @@ describe('Cancelar reserva (PATCH /api/bookings/[id])', () => {
   })
 })
 
+// Turnos dentro de 5 o 6 días: siempre faltan entre 96 y 168 horas, sin
+// importar a qué hora se corre el test. Con 24 hs de política se devuelve;
+// con 168 hs (una semana) no.
+describe('Política de cancelación (devolución de la seña)', () => {
+  const unaSemana = 168
+
+  async function reservarYPagar(fecha: string, horaInicio: string) {
+    loginComo(jugador)
+    const res = await reservar(jsonRequest('POST', { canchaId, fecha, horaInicio }))
+    expect(res.status).toBe(201)
+    const json = await res.json()
+    const id = json.reserva.id as string
+    const pago = await pagarSena(jsonRequest('POST'), conParams({ id }))
+    expect(pago.status).toBe(200)
+    return id
+  }
+
+  async function cancelarYVerSiSeDevolvio(id: string) {
+    loginComo(jugador)
+    const res = await cancelarReserva(jsonRequest('PATCH'), conParams({ id }))
+    expect(res.status).toBe(200)
+    const pago = await db.pago.findUnique({ where: { reservaId: id } })
+    return pago?.devuelto
+  }
+
+  async function cambiarPolitica(horas: number) {
+    await db.complejo.update({ where: { id: complejoId }, data: { cancellationHours: horas } })
+  }
+
+  afterAll(async () => {
+    await cambiarPolitica(24)
+  })
+
+  test('el pago congela la política del complejo', async () => {
+    await cambiarPolitica(24)
+    const id = await reservarYPagar(diaEnNDias(5), '08:00')
+    const pago = await db.pago.findUnique({ where: { reservaId: id } })
+    expect(pago?.cancellationHours).toBe(24)
+  })
+
+  test('cancelando con más anticipación que la política, se devuelve la seña', async () => {
+    await cambiarPolitica(24)
+    const id = await reservarYPagar(diaEnNDias(5), '09:00')
+    expect(await cancelarYVerSiSeDevolvio(id)).toBe(true)
+  })
+
+  test('cancelando con menos anticipación que la política, no se devuelve', async () => {
+    await cambiarPolitica(unaSemana)
+    const id = await reservarYPagar(diaEnNDias(5), '10:00')
+    expect(await cancelarYVerSiSeDevolvio(id)).toBe(false)
+  })
+
+  test('si el complejo endurece la política después de pagar, vale la de cuando pagó', async () => {
+    await cambiarPolitica(24)
+    const id = await reservarYPagar(diaEnNDias(5), '11:00')
+    await cambiarPolitica(unaSemana)
+    expect(await cancelarYVerSiSeDevolvio(id)).toBe(true)
+  })
+
+  test('si el complejo afloja la política después de pagar, el jugador aprovecha la nueva', async () => {
+    await cambiarPolitica(unaSemana)
+    const id = await reservarYPagar(diaEnNDias(6), '08:00')
+    await cambiarPolitica(24)
+    expect(await cancelarYVerSiSeDevolvio(id)).toBe(true)
+  })
+})
+
 // Se usan anticipaciones de días (no de horas) para que el resultado no
 // dependa de a qué hora se corre el test: 3 días de anticipación siempre
 // deja afuera todos los turnos de mañana y nunca los de dentro de 5 días.

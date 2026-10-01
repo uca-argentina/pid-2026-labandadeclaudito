@@ -62,10 +62,16 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   // Baja lógica: se conserva la cancha para el historial de reservas
   const idsDeReservas = await getUpcomingBookingIds([id])
 
+  // Estas cancelaciones las provoca el dueño, no el jugador: la seña se
+  // devuelve siempre, sin mirar la política de horas.
   await db.$transaction([
     db.reserva.updateMany({
       where: { id: { in: idsDeReservas } },
       data: { estado: 'CANCELADA' },
+    }),
+    db.pago.updateMany({
+      where: { reservaId: { in: idsDeReservas } },
+      data: { devuelto: true },
     }),
     db.cancha.update({ where: { id }, data: { activo: false } }),
   ])

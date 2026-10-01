@@ -20,6 +20,7 @@ type ComplejoAEditar = {
   contacto: string
   porcentajeSenaDefault: number
   minAdvanceMinutesDefault: number
+  cancellationHours: number
 }
 
 const claseInputConError = 'border-destructive ring-destructive/20 ring-3'
@@ -56,6 +57,7 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
       porcentajeSenaDefault: Number(form.get('porcentajeSenaDefault')),
       // Campo vacío en el complejo = sin anticipación (0)
       minAdvanceMinutesDefault: timeTextToMinutes(form.get('minAdvance') as string) ?? 0,
+      cancellationHours: Number(form.get('cancellationHours')),
     }
 
     const parsed = createComplexSchema.safeParse(datos)
@@ -167,6 +169,25 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
           help="Cuánto antes del turno se puede reservar como mínimo. 0 = hasta que empieza. Una cancha puede tener la suya (se configura al editarla)."
           error={fieldErrors.minAdvanceMinutesDefault}
         />
+
+        <div className="space-y-2">
+          <Label htmlFor="cancellationHours">Cancelación con devolución (horas antes)</Label>
+          <Input
+            id="cancellationHours"
+            name="cancellationHours"
+            type="number"
+            min={4}
+            max={168}
+            defaultValue={complejo.cancellationHours}
+            aria-invalid={!!fieldErrors.cancellationHours}
+            className={fieldErrors.cancellationHours ? claseInputConError : undefined}
+          />
+          <p className="text-muted-foreground text-xs">
+            Si el jugador cancela con al menos estas horas de anticipación, se le devuelve la seña.
+            Aplica a todas tus canchas.
+          </p>
+          <ErrorDeCampo mensaje={fieldErrors.cancellationHours} />
+        </div>
       </div>
 
       <div className="flex justify-end gap-3">
