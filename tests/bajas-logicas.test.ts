@@ -6,6 +6,7 @@ import { POST as crearCanchas } from '@/app/api/complexes/[id]/courts/route'
 import { PATCH as editarCancha, DELETE as bajaCancha } from '@/app/api/courts/[id]/route'
 import { GET as verDisponibilidad } from '@/app/api/courts/[id]/availability/route'
 import { POST as reservar } from '@/app/api/bookings/route'
+import { POST as pagarSena } from '@/app/api/bookings/[id]/deposit/route'
 import { db } from '@/lib/db'
 import {
   archivoImagen,
@@ -82,6 +83,16 @@ describe('Baja lógica de una cancha (DELETE /api/courts/[id])', () => {
     otraCanchaId = cancha2.id
     reservaFuturaId = await reservarManiana(canchaId, '09:00')
     reservaPasadaId = await crearReservaPasada(canchaId)
+
+    // La reservada para mañana paga la seña, con una política de una semana:
+    // si cancelara el jugador no se le devolvería.
+    await db.complejo.update({
+      where: { id: cancha1.complejoId },
+      data: { cancellationHours: 168 },
+    })
+    loginComo(jugador)
+    const pago = await pagarSena(jsonRequest('POST'), conParams({ id: reservaFuturaId }))
+    expect(pago.status).toBe(200)
   })
 
   test('otro dueño no puede darla de baja (404)', async () => {
@@ -102,8 +113,13 @@ describe('Baja lógica de una cancha (DELETE /api/courts/[id])', () => {
     expect(cancha).not.toBeNull()
     expect(cancha?.activo).toBe(false)
 
-    const reservaFutura = await db.reserva.findUnique({ where: { id: reservaFuturaId } })
+    const reservaFutura = await db.reserva.findUnique({
+      where: { id: reservaFuturaId },
+      include: { pago: true },
+    })
     expect(reservaFutura?.estado).toBe('CANCELADA')
+    // La canceló el dueño: la seña se devuelve sin mirar la política.
+    expect(reservaFutura?.pago?.devuelto).toBe(true)
 
     const reservaPasada = await db.reserva.findUnique({ where: { id: reservaPasadaId } })
     expect(reservaPasada?.estado).toBe('CONFIRMADA')

@@ -59,6 +59,7 @@ export function FormNuevoComplejo() {
       contacto: '',
       porcentajeSenaDefault: 30,
       minAdvanceMinutesDefault: 180,
+      cancellationHours: 24,
     },
   })
   const errores = formState.errors
@@ -275,6 +276,23 @@ export function FormNuevoComplejo() {
               help="Cuánto antes del turno se puede reservar como mínimo. 0 = hasta que empieza. Después cada cancha puede tener la suya."
               error={errorAnticipacion}
             />
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="cancellationHours">Cancelación con devolución (horas antes)</Label>
+            <Input
+              id="cancellationHours"
+              type="number"
+              min={4}
+              max={168}
+              aria-invalid={errores.cancellationHours ? true : undefined}
+              {...register('cancellationHours', { valueAsNumber: true })}
+            />
+            <p className="text-muted-foreground text-sm">
+              Si el jugador cancela con al menos estas horas de anticipación, se le devuelve la
+              seña. Aplica a todas tus canchas.
+            </p>
+            <MensajeError mensaje={errores.cancellationHours?.message} />
           </div>
         </CardContent>
       </Card>

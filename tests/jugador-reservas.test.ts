@@ -4,6 +4,7 @@ import { POST as reservar } from '@/app/api/bookings/route'
 import { PATCH as cancelarReserva } from '@/app/api/bookings/[id]/route'
 import { POST as pagarSena } from '@/app/api/bookings/[id]/deposit/route'
 import { db } from '@/lib/db'
+import { pendientesVencidas } from '@/lib/bookings'
 import {
   conParams,
   crearComplejoConCanchas,
@@ -242,6 +243,148 @@ describe('Cancelar reserva (PATCH /api/bookings/[id])', () => {
     expect(reserva?.jugadorId).toBe(otroJugador.id)
     expect(reserva?.estado).toBe('PENDIENTE')
     expect(reserva?.pago).toBeNull()
+  })
+})
+
+// Turnos dentro de 5 o 6 días: siempre faltan entre 96 y 168 horas, sin
+// importar a qué hora se corre el test. Con 24 hs de política se devuelve;
+// con 168 hs (una semana) no.
+describe('Política de cancelación (devolución de la seña)', () => {
+  const unaSemana = 168
+
+  async function reservarYPagar(fecha: string, horaInicio: string) {
+    loginComo(jugador)
+    const res = await reservar(jsonRequest('POST', { canchaId, fecha, horaInicio }))
+    expect(res.status).toBe(201)
+    const json = await res.json()
+    const id = json.reserva.id as string
+    const pago = await pagarSena(jsonRequest('POST'), conParams({ id }))
+    expect(pago.status).toBe(200)
+    return id
+  }
+
+  async function cancelarYVerSiSeDevolvio(id: string) {
+    loginComo(jugador)
+    const res = await cancelarReserva(jsonRequest('PATCH'), conParams({ id }))
+    expect(res.status).toBe(200)
+    const pago = await db.pago.findUnique({ where: { reservaId: id } })
+    return pago?.devuelto
+  }
+
+  async function cambiarPolitica(horas: number) {
+    await db.complejo.update({ where: { id: complejoId }, data: { cancellationHours: horas } })
+  }
+
+  afterAll(async () => {
+    await cambiarPolitica(24)
+  })
+
+  test('el pago congela la política del complejo', async () => {
+    await cambiarPolitica(24)
+    const id = await reservarYPagar(diaEnNDias(5), '08:00')
+    const pago = await db.pago.findUnique({ where: { reservaId: id } })
+    expect(pago?.cancellationHours).toBe(24)
+  })
+
+  test('cancelando con más anticipación que la política, se devuelve la seña', async () => {
+    await cambiarPolitica(24)
+    const id = await reservarYPagar(diaEnNDias(5), '09:00')
+    expect(await cancelarYVerSiSeDevolvio(id)).toBe(true)
+  })
+
+  test('cancelando con menos anticipación que la política, no se devuelve', async () => {
+    await cambiarPolitica(unaSemana)
+    const id = await reservarYPagar(diaEnNDias(5), '10:00')
+    expect(await cancelarYVerSiSeDevolvio(id)).toBe(false)
+  })
+
+  test('si el complejo endurece la política después de pagar, vale la de cuando pagó', async () => {
+    await cambiarPolitica(24)
+    const id = await reservarYPagar(diaEnNDias(5), '11:00')
+    await cambiarPolitica(unaSemana)
+    expect(await cancelarYVerSiSeDevolvio(id)).toBe(true)
+  })
+
+  test('si el complejo afloja la política después de pagar, el jugador aprovecha la nueva', async () => {
+    await cambiarPolitica(unaSemana)
+    const id = await reservarYPagar(diaEnNDias(6), '08:00')
+    await cambiarPolitica(24)
+    expect(await cancelarYVerSiSeDevolvio(id)).toBe(true)
+  })
+})
+
+// Para simular que pasó el tiempo se le resta a createdAt directo en la DB.
+describe('Plazo de 15 minutos para pagar la seña', () => {
+  const dia = diaEnNDias(7)
+  const hace16Minutos = () => new Date(Date.now() - 16 * 60 * 1000)
+
+  async function turnoDisponible(horaInicio: string) {
+    loginComo(otroJugador)
+    const res = await verDisponibilidad(disponibilidadRequest(dia), conParams({ id: canchaId }))
+    const json = await res.json()
+    for (const slot of json.slots as Slot[]) {
+      if (slot.horaInicio === horaInicio) return slot.disponible
+    }
+    return null
+  }
+
+  async function reservarComo(usuario: Usuario, horaInicio: string) {
+    loginComo(usuario)
+    const res = await reservar(jsonRequest('POST', { canchaId, fecha: dia, horaInicio }))
+    expect(res.status).toBe(201)
+    const json = await res.json()
+    return json.reserva.id as string
+  }
+
+  let vencidaId: string
+
+  test('una pendiente recién pedida ocupa el turno', async () => {
+    vencidaId = await reservarComo(jugador, '08:00')
+    expect(await turnoDisponible('08:00')).toBe(false)
+  })
+
+  test('pasados los 15 minutos sin pagar, el turno se libera', async () => {
+    await db.reserva.update({ where: { id: vencidaId }, data: { createdAt: hace16Minutos() } })
+    expect(await turnoDisponible('08:00')).toBe(true)
+  })
+
+  test('una vencida ya no se puede pagar ni cancelar (409)', async () => {
+    loginComo(jugador)
+    const pago = await pagarSena(jsonRequest('POST'), conParams({ id: vencidaId }))
+    expect(pago.status).toBe(409)
+    const cancelacion = await cancelarReserva(jsonRequest('PATCH'), conParams({ id: vencidaId }))
+    expect(cancelacion.status).toBe(409)
+  })
+
+  test('una vencida no aparece en las reservas del jugador', async () => {
+    const reservas = await db.reserva.findMany({
+      where: { jugadorId: jugador.id, NOT: pendientesVencidas() },
+    })
+    const ids: string[] = []
+    for (const reserva of reservas) {
+      ids.push(reserva.id)
+    }
+    expect(ids).not.toContain(vencidaId)
+  })
+
+  test('otro jugador reserva el turno liberado y la vencida se borra de la DB', async () => {
+    const nuevaId = await reservarComo(otroJugador, '08:00')
+    expect(nuevaId).not.toBe(vencidaId)
+    const vencida = await db.reserva.findUnique({ where: { id: vencidaId } })
+    expect(vencida).toBeNull()
+  })
+
+  test('al reusar una reserva cancelada, el plazo arranca de nuevo', async () => {
+    const canceladaId = await reservarComo(jugador, '09:00')
+    loginComo(jugador)
+    await cancelarReserva(jsonRequest('PATCH'), conParams({ id: canceladaId }))
+    await db.reserva.update({ where: { id: canceladaId }, data: { createdAt: hace16Minutos() } })
+
+    // Se reusa la misma fila: si createdAt quedara viejo, nacería vencida.
+    const reusadaId = await reservarComo(otroJugador, '09:00')
+    expect(reusadaId).toBe(canceladaId)
+    const pago = await pagarSena(jsonRequest('POST'), conParams({ id: reusadaId }))
+    expect(pago.status).toBe(200)
   })
 })
 

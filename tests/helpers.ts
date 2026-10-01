@@ -90,6 +90,7 @@ export const datosDeComplejo = {
   contacto: '11 4589-2231',
   porcentajeSenaDefault: 30,
   minAdvanceMinutesDefault: 0,
+  cancellationHours: 24,
 }
 
 export const datosDeCanchas = {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth-helpers'
+import { MENSAJE_SENA_VENCIDA, senaVencida } from '@/lib/estado-reserva'
 import { diaDeReserva, turnoYaPaso } from '@/lib/time'
 import { db } from '@/lib/db'
 
@@ -24,19 +25,29 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (reserva.estado !== 'PENDIENTE') {
     return NextResponse.json({ error: 'La reserva no está pendiente de seña' }, { status: 409 })
   }
+  if (senaVencida(reserva.createdAt)) {
+    return NextResponse.json({ error: MENSAJE_SENA_VENCIDA }, { status: 409 })
+  }
   if (turnoYaPaso(diaDeReserva(reserva.fecha), reserva.horaInicio)) {
     return NextResponse.json({ error: 'El turno ya empezó' }, { status: 400 })
   }
 
   // El % de seña es el de la cancha o, si no tiene uno propio, el del
   // complejo. Se calcula sobre el precio congelado de la reserva y queda
-  // congelado en el Pago.
+  // congelado en el Pago, junto con la política de cancelación actual.
   const porcentajeSena =
     reserva.cancha.porcentajeSena ?? reserva.cancha.complejo.porcentajeSenaDefault
   const montoSena = reserva.precioTurno.mul(porcentajeSena).div(100)
 
   await db.$transaction([
-    db.pago.create({ data: { reservaId: id, monto: montoSena, porcentaje: porcentajeSena } }),
+    db.pago.create({
+      data: {
+        reservaId: id,
+        monto: montoSena,
+        porcentaje: porcentajeSena,
+        cancellationHours: reserva.cancha.complejo.cancellationHours,
+      },
+    }),
     db.reserva.update({ where: { id }, data: { estado: 'CONFIRMADA' } }),
   ])
 

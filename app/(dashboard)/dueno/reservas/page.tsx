@@ -2,17 +2,19 @@ import { redirect } from 'next/navigation'
 import { CalendarClock, Clock, MapPin, User, Wallet } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { pendientesVencidas } from '@/lib/bookings'
 import { deporteLabels } from '@/lib/labels'
 import { montoDelHistorial } from '@/lib/historial'
-import { estadoDeReserva } from '@/lib/estado-reserva'
+import { estadoDeReserva, venceLaSena } from '@/lib/estado-reserva'
 import { diaDeReserva, formatearDia, momentoActual, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { AttendanceButtons } from '@/components/attendance-buttons'
 import { CollapsibleSection } from '@/components/collapsible-section'
+import { RefreshWhenDepositExpires } from '@/components/refresh-when-deposit-expires'
 
 async function getReservas(duenioId: string) {
   return db.reserva.findMany({
-    where: { cancha: { complejo: { duenioId } } },
+    where: { cancha: { complejo: { duenioId } }, NOT: pendientesVencidas() },
     include: { cancha: { include: { complejo: true } }, jugador: true, pago: true },
     orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
   })
@@ -174,6 +176,9 @@ function TarjetaReserva({
           {reserva.jugador.telefono ? ` · ${reserva.jugador.telefono}` : ''}
         </p>
       </div>
+      {reserva.estado === 'PENDIENTE' && (
+        <RefreshWhenDepositExpires venceEn={venceLaSena(reserva.createdAt).toISOString()} />
+      )}
 
       {/* Footer con borde arriba, separado del cuerpo: precio a la izquierda,
           acciones a la derecha. Evita que el precio quede flotando en un

@@ -130,6 +130,25 @@ export function isTooSoonToBook(
   return horaInicio < limite.hora
 }
 
+// Política de cancelación: se devuelve la seña si se cancela con al menos N
+// horas de anticipación. Si el complejo cambió la política después de que el
+// jugador pagó, vale la más favorable para el jugador (la de menos horas).
+export function refundsDeposit(
+  fecha: string,
+  horaInicio: string,
+  horasAlPagar: number,
+  horasActuales: number,
+  ahora: Date = new Date(),
+): boolean {
+  const horas = Math.min(horasAlPagar, horasActuales)
+  const momentoLimite = new Date(ahora.getTime() + horas * 60 * 60 * 1000)
+  const limite = momentoActual(momentoLimite)
+
+  if (fecha < limite.dia) return false
+  if (fecha > limite.dia) return true
+  return horaInicio >= limite.hora
+}
+
 function horaTexto(totalMinutos: number): string {
   const minutosEnDia = totalMinutos % (24 * 60)
   const horas = String(Math.floor(minutosEnDia / 60)).padStart(2, '0')

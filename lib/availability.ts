@@ -1,5 +1,6 @@
 import { db } from '@/lib/db'
 import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
+import { pendientesVencidas } from '@/lib/bookings'
 import { Prisma } from '@/lib/generated/prisma/client'
 import {
   diaDeReserva,
@@ -98,6 +99,7 @@ export async function getAvailableSlots(
       canchaId,
       fecha,
       estado: { not: 'CANCELADA' },
+      NOT: pendientesVencidas(),
     },
     select: { horaInicio: true },
   })
@@ -114,7 +116,7 @@ export async function getAvailableSlots(
   let reservasDelJugador: { horaInicio: string; horaFin: string }[] = []
   if (jugadorId) {
     reservasDelJugador = await db.reserva.findMany({
-      where: { jugadorId, fecha, estado: { not: 'CANCELADA' } },
+      where: { jugadorId, fecha, estado: { not: 'CANCELADA' }, NOT: pendientesVencidas() },
       select: { horaInicio: true, horaFin: true },
     })
   }

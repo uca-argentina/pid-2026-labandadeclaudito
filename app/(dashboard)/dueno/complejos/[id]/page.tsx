@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft, CalendarClock, MapPin, Pencil, Phone, Plus, Shapes } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { pendientesVencidas } from '@/lib/bookings'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { diaDeHoy, diaDeReserva, formatearDia } from '@/lib/time'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -30,6 +31,7 @@ export default async function DetalleComplejoDuenoPage({
     where: {
       cancha: { complejoId: id },
       estado: { not: 'CANCELADA' },
+      NOT: pendientesVencidas(),
       fecha: { gte: new Date(diaDeHoy()) },
     },
     include: { cancha: true, jugador: true },
