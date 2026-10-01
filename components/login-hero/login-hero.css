@@ -1,0 +1,692 @@
+/*
+ * Animación del panel del login (components/login-hero/).
+ * FUERA DEL ALCANCE DEL PARCIAL.
+ *
+ * Cómo funciona el loop:
+ * - Cada elemento tiene UN @keyframes, todos con la misma duración (15 s),
+ *   la misma curva e `infinite`. Nunca se usa animation-delay: el momento en
+ *   que pasa cada cosa sale de los porcentajes (1 s = 6,667 %).
+ * - Todo @keyframes arranca con `0%, 100%` en el mismo selector (o deja el
+ *   100 % igual al 0 %), así el último cuadro es idéntico al primero y no se
+ *   nota el salto al reiniciar.
+ * - Solo se animan transform y opacity.
+ * - Los estilos base (fuera de los keyframes) son el cuadro estático que se ve
+ *   con prefers-reduced-motion: el montaje de deportes con las dos reservas
+ *   confirmadas.
+ *
+ * Línea de tiempo:
+ *   0–3 s      laptop: mano mueve el mouse, clic, check, sube chip de fútbol
+ *   3–6 s      celular: el pulgar toca, onda, check, sube chip de pádel
+ *   6–7,5 s    logo gira, barrido de reloj, sol → luna
+ *   7,5–13,75 s canchas: fútbol con pases y gol (2 s), pádel (1,25 s),
+ *              triple de básquet (1,75 s), tenis (1,25 s)
+ *   13,75–15 s fundido al escritorio vacío (= cuadro de 0 s)
+ */
+
+.hero-stage {
+  --hero-duration: 15s;
+  --hero-easing: ease-in-out;
+}
+
+/* Por defecto los elementos animados escalan/rotan sobre su propio centro.
+   Solo los animados (clases que empiezan con hero-, no fill-hero-skin-*): si
+   se aplica a todos, pisa el centro de los transform="rotate(...)" fijos del
+   SVG. Va dentro de :where() para tener especificidad 0 y que las reglas de
+   cada elemento (pulgar, cursor, órbita...) puedan cambiar el pivote. */
+:where(.hero-stage [class^='hero-'], .hero-stage [class*=' hero-']) {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* ---------- Cuadro estático (base) ---------- */
+
+.hero-laptop,
+.hero-phone,
+.hero-logo-scene,
+.hero-court-padel,
+.hero-court-basketball,
+.hero-court-tennis {
+  opacity: 0;
+}
+
+/* ---------- Escena 1: laptop (0–3 s) ---------- */
+
+.hero-laptop {
+  animation: hero-laptop var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-laptop {
+  0%,
+  18.666% {
+    opacity: 1;
+  }
+  21.334%,
+  93.75% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* La mano entra sola desde abajo hasta el mouse, lo mueve para llevar el
+   cursor al horario y vuelve a salir por abajo (a 0 s y 15 s el escritorio
+   queda con el mouse solo). El dibujo está en la posición de llegada (0, 0);
+   el mouse arranca corrido hacia atrás, en la dirección en que viaja el
+   cursor, y la mano llega ahí antes de moverlo */
+.hero-laptop-hand {
+  animation: hero-laptop-hand var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-laptop-hand {
+  0% {
+    transform: translate(-6.64px, 95.88px);
+  }
+  4% {
+    transform: translate(-6.64px, -4.12px);
+  }
+  9.334%,
+  21.334% {
+    transform: translate(0, 0);
+  }
+  22.4%,
+  100% {
+    transform: translate(-6.64px, 95.88px);
+  }
+}
+
+.hero-mouse {
+  animation: hero-mouse var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-mouse {
+  0%,
+  4% {
+    transform: translate(-6.64px, -4.12px);
+  }
+  9.334%,
+  21.334% {
+    transform: translate(0, 0);
+  }
+  22.4%,
+  100% {
+    transform: translate(-6.64px, -4.12px);
+  }
+}
+
+/* Clic: la punta del índice gira unos grados sobre su articulación del
+   medio (el SVG la deja en (0, 0)) y baja hacia el botón */
+.hero-index-finger {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: hero-index-finger var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-index-finger {
+  0%,
+  10% {
+    transform: rotate(0deg);
+  }
+  10.4%,
+  10.72% {
+    transform: rotate(-7deg);
+  }
+  11.2%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* El cursor escala desde su punta para simular el clic */
+.hero-cursor {
+  transform-origin: 0 0;
+  animation: hero-cursor var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-cursor {
+  0%,
+  4% {
+    transform: translate(0, 0) scale(1);
+  }
+  9.334%,
+  10% {
+    transform: translate(58px, 58px) scale(1);
+  }
+  10.4% {
+    transform: translate(58px, 58px) scale(0.8);
+  }
+  10.8%,
+  21.334% {
+    transform: translate(58px, 58px) scale(1);
+  }
+  22.4%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+.hero-laptop-slot {
+  animation: hero-laptop-slot var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-laptop-slot {
+  0%,
+  10% {
+    opacity: 0;
+  }
+  11.2%,
+  21.334% {
+    opacity: 1;
+  }
+  22.4%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-laptop-check {
+  animation: hero-laptop-check var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-laptop-check {
+  0%,
+  11.2% {
+    transform: scale(0);
+  }
+  12.8% {
+    transform: scale(1.25);
+  }
+  14%,
+  21.334% {
+    transform: scale(1);
+  }
+  22.4%,
+  100% {
+    transform: scale(0);
+  }
+}
+
+/* ---------- Escena 2: celular (3–6 s) ---------- */
+
+.hero-phone {
+  animation: hero-phone var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-phone {
+  0%,
+  18.666% {
+    opacity: 0;
+  }
+  21.334%,
+  38.4% {
+    opacity: 1;
+  }
+  40.8%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Mano y celular suben juntos desde abajo */
+.hero-phone-hand {
+  animation: hero-phone-hand var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-phone-hand {
+  0%,
+  20% {
+    transform: translateY(50px);
+  }
+  24%,
+  40.8% {
+    transform: translateY(0);
+  }
+  42.4%,
+  100% {
+    transform: translateY(50px);
+  }
+}
+
+/* Touch: la punta del pulgar gira hacia abajo sobre el centro del nudillo
+   (ver el corte en phone-scene.tsx) como una articulación, aprieta el horario,
+   se queda un instante (sale la onda) y vuelve a su lugar */
+.hero-thumb {
+  transform-box: view-box;
+  transform-origin: 250.5px 199px;
+  animation: hero-thumb var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-thumb {
+  0%,
+  24.8% {
+    transform: rotate(0deg);
+  }
+  28.666%,
+  30% {
+    transform: rotate(-8deg);
+  }
+  33.2%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.hero-ripple {
+  animation: hero-ripple var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-ripple {
+  0%,
+  28.666% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  28.96% {
+    opacity: 1;
+    transform: scale(0.4);
+  }
+  30.8% {
+    opacity: 0.9;
+    transform: scale(1.7);
+  }
+  32.8% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+.hero-phone-slot {
+  animation: hero-phone-slot var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-phone-slot {
+  0%,
+  28.8% {
+    opacity: 0;
+  }
+  30%,
+  40.8% {
+    opacity: 1;
+  }
+  42.4%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-phone-check {
+  animation: hero-phone-check var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-phone-check {
+  0%,
+  30% {
+    transform: scale(0);
+  }
+  31.666% {
+    transform: scale(1.25);
+  }
+  32.8%,
+  40.8% {
+    transform: scale(1);
+  }
+  42.4%,
+  100% {
+    transform: scale(0);
+  }
+}
+
+/* ---------- Escena 3: logo + reloj (6–7,5 s) ---------- */
+
+.hero-logo-scene {
+  animation: hero-logo-scene var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-logo-scene {
+  0%,
+  38.4% {
+    opacity: 0;
+  }
+  40.8%,
+  48.334% {
+    opacity: 1;
+  }
+  51.067%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* rotate(360deg) es la misma matriz que rotate(0): no hay salto */
+.hero-logo {
+  animation: hero-logo var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-logo {
+  0%,
+  40% {
+    transform: rotate(0deg);
+  }
+  49.334%,
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.hero-sweep {
+  transform-box: view-box;
+  transform-origin: 200px 150px;
+  animation: hero-sweep var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-sweep {
+  0%,
+  40.8% {
+    transform: rotate(0deg);
+  }
+  48%,
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.hero-orbit {
+  transform-box: view-box;
+  transform-origin: 200px 150px;
+  animation: hero-orbit var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-orbit {
+  0%,
+  40% {
+    transform: rotate(-70deg);
+  }
+  49.334%,
+  51.067% {
+    transform: rotate(70deg);
+  }
+  53.733%,
+  100% {
+    transform: rotate(-70deg);
+  }
+}
+
+/* Sol y luna no se cruzan: el sol se achica y desaparece, recién ahí crece
+   la luna. Si se funden a la vez, por un momento parece un eclipse. */
+.hero-sun {
+  animation: hero-sun var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-sun {
+  0%,
+  43.2% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  44.8%,
+  51.067% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  53.733%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.hero-moon {
+  animation: hero-moon var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-moon {
+  0%,
+  44.8% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  46.8%,
+  51.067% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  53.733%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+/* ---------- Escena 4: montaje de canchas (7,5–13,75 s) ---------- */
+
+.hero-montage {
+  animation: hero-montage var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-montage {
+  0%,
+  48.8% {
+    opacity: 0;
+  }
+  51.6%,
+  91.667% {
+    opacity: 1;
+  }
+  95.833%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Fútbol 2 s (50 → 63,3 %), pádel 1,25 s (→ 71,7), básquet 1,75 s (→ 83,3),
+   tenis 1,25 s (→ 91,7). Cruce de ~2 % entre una y otra. */
+.hero-court-football {
+  animation: hero-court-football var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-court-football {
+  0%,
+  62.533% {
+    opacity: 1;
+  }
+  64.458%,
+  96% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.hero-court-padel {
+  animation: hero-court-padel var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-court-padel {
+  0%,
+  62.533% {
+    opacity: 0;
+  }
+  64.458%,
+  70.608% {
+    opacity: 1;
+  }
+  73.335%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-court-basketball {
+  animation: hero-court-basketball var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-court-basketball {
+  0%,
+  70.608% {
+    opacity: 0;
+  }
+  73.335%,
+  81.735% {
+    opacity: 1;
+  }
+  84.442%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-court-tennis {
+  animation: hero-court-tennis var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-court-tennis {
+  0%,
+  81.735% {
+    opacity: 0;
+  }
+  84.442%,
+  92% {
+    opacity: 1;
+  }
+  96%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* La pelota cruza la cancha mientras se ve; vuelve al inicio cuando no.
+   Fútbol: pases entre los 4 jugadores (pausa corta en cada uno) y remate al
+   arco derecho. Básquet: triple desde (246, 124); el scale simula la altura
+   de la parábola y el 0,6 final es la pelota pasando por el aro. Los
+   translate de fútbol son los pies de cada jugador (+8, +2) menos el
+   centro (200, 150) del SVG, ver sports-montage.tsx. */
+.hero-ball-football {
+  animation: hero-ball-football var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-ball-football {
+  0%,
+  51.067% {
+    transform: translate(-62px, 42px);
+  }
+  53.2%,
+  54.267% {
+    transform: translate(-17px, -48px);
+  }
+  56.4%,
+  57.467% {
+    transform: translate(43px, 27px);
+  }
+  59.067%,
+  59.92% {
+    transform: translate(78px, -33px);
+  }
+  61.52%,
+  64.833% {
+    transform: translate(113px, -10px);
+  }
+  66.333%,
+  100% {
+    transform: translate(-62px, 42px);
+  }
+}
+
+.hero-ball-padel {
+  animation: hero-ball-padel var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-ball-padel {
+  0%,
+  64.083% {
+    transform: translate(70px, -40px);
+  }
+  71.433% {
+    transform: translate(-70px, 30px);
+  }
+  100% {
+    transform: translate(70px, -40px);
+  }
+}
+
+.hero-ball-basketball {
+  animation: hero-ball-basketball var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-ball-basketball {
+  0%,
+  75.333% {
+    transform: translate(46px, -26px) scale(1);
+  }
+  78.333% {
+    transform: translate(72px, -13px) scale(1.7);
+  }
+  80.667% {
+    transform: translate(98px, 0) scale(1);
+  }
+  82%,
+  100% {
+    transform: translate(98px, 0) scale(0.6);
+  }
+}
+
+.hero-ball-tennis {
+  animation: hero-ball-tennis var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-ball-tennis {
+  0%,
+  83.917% {
+    transform: translate(-80px, -40px);
+  }
+  92% {
+    transform: translate(80px, 40px);
+  }
+  100% {
+    transform: translate(-80px, -40px);
+  }
+}
+
+/* ---------- Chips de reservas ---------- */
+
+/* Nacen sobre el horario elegido y suben a su lugar fijo arriba */
+.hero-chip-football {
+  animation: hero-chip-football var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-chip-football {
+  0%,
+  13.334% {
+    opacity: 0;
+    transform: translate(105px, 136px) scale(0.8);
+  }
+  14.4% {
+    opacity: 1;
+    transform: translate(105px, 136px) scale(0.8);
+  }
+  17.334%,
+  91.667% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  95.833% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(105px, 136px) scale(0.8);
+  }
+}
+
+.hero-chip-padel {
+  animation: hero-chip-padel var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-chip-padel {
+  0%,
+  33.334% {
+    opacity: 0;
+    transform: translate(-67.3px, 128.3px) scale(0.8);
+  }
+  34.4% {
+    opacity: 1;
+    transform: translate(-67.3px, 128.3px) scale(0.8);
+  }
+  37.334%,
+  91.667% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  95.833% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-67.3px, 128.3px) scale(0.8);
+  }
+}
+
+/* ---------- Movimiento reducido: cuadro estático ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-stage,
+  .hero-stage * {
+    animation: none;
+  }
+}
