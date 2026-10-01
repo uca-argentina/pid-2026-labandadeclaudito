@@ -20,6 +20,7 @@ export function CourtBookingSheet({
   precioBase,
   duracionTurnoMin,
   fechaInicial,
+  className,
 }: {
   courtId: string
   courtName: string
@@ -27,12 +28,13 @@ export function CourtBookingSheet({
   precioBase: string
   duracionTurnoMin: number
   fechaInicial?: string
+  className?: string
 }) {
   return (
     <Sheet>
       <SheetTrigger
         render={
-          <Button>
+          <Button className={className}>
             <CalendarPlus className="size-3.5" />
             Reservar
           </Button>
@@ -52,7 +54,6 @@ export function CourtBookingSheet({
             courtId={courtId}
             courtName={courtName}
             precioBase={precioBase}
-            duracionTurnoMin={duracionTurnoMin}
             fechaInicial={fechaInicial}
           />
         </div>
