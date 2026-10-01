@@ -1,5 +1,6 @@
-// Escena 4 (7,5–11 s): canchas vistas desde arriba, una tras otra con
-// fundido: fútbol, pádel, básquet y tenis. Una pelota cruza cada cancha.
+// Escena 4 (7,5–13,75 s): canchas vistas desde arriba, una tras otra con
+// fundido: fútbol, pádel, básquet y tenis. Una pelota cruza cada cancha; en
+// la de fútbol se la pasan 4 jugadores y termina en gol.
 // Sin animación (prefers-reduced-motion) queda visible la de fútbol.
 export function SportsMontage() {
   return (
@@ -16,8 +17,17 @@ export function SportsMontage() {
             <rect x="84" y="135" width="6" height="30" />
             <rect x="310" y="135" width="6" height="30" />
           </g>
+          {/* Jugadores que se pasan la pelota (ver hero-ball-football en el
+              CSS) y el arquero rival, que queda tirado al palo equivocado */}
+          <g strokeWidth="1.5" className="stroke-white">
+            <circle cx="130" cy="190" r="5.5" className="fill-red-500" />
+            <circle cx="175" cy="100" r="5.5" className="fill-red-500" />
+            <circle cx="235" cy="175" r="5.5" className="fill-red-500" />
+            <circle cx="270" cy="115" r="5.5" className="fill-red-500" />
+            <circle cx="303" cy="160" r="5.5" className="fill-sky-500" />
+          </g>
           <g className="hero-ball-football">
-            <SoccerBall cx={200} cy={150} r={7} />
+            <SoccerBall cx={200} cy={150} r={5.5} />
           </g>
           <CourtLabel text="Fútbol" />
         </g>
@@ -58,25 +68,38 @@ export function SportsMontage() {
           <CourtLabel text="Pádel" />
         </g>
 
+        {/* Básquet FIBA: 28 x 15 m (7,86 px/m), parquet. Línea de 3 a 6,75 m
+            del aro (recta en las esquinas). Un jugador tira un triple: la
+            pelota "sube" agrandándose (vista desde arriba) y cae en el aro. */}
         <g className="hero-court-basketball">
-          <rect x="80" y="58" width="240" height="184" rx="6" className="fill-accent" />
-          <g strokeWidth="2" className="stroke-primary fill-none">
-            <rect x="90" y="68" width="220" height="164" rx="2" />
-            <line x1="200" y1="68" x2="200" y2="232" />
-            <circle cx="200" cy="150" r="20" />
-            <rect x="90" y="125" width="40" height="50" />
-            <rect x="270" y="125" width="40" height="50" />
-            <path d="M90 92 A62 58 0 0 1 90 208" />
-            <path d="M310 92 A62 58 0 0 0 310 208" />
-            <circle cx="100" cy="150" r="5" />
-            <circle cx="300" cy="150" r="5" />
+          <rect x="74" y="80" width="252" height="140" rx="6" className="fill-hero-wood" />
+          <rect x="90" y="131" width="46" height="38" className="fill-orange-400" />
+          <rect x="264" y="131" width="46" height="38" className="fill-orange-400" />
+          <g strokeWidth="2" className="fill-none stroke-white">
+            <rect x="90" y="91" width="220" height="118" />
+            <line x1="200" y1="91" x2="200" y2="209" />
+            <circle cx="200" cy="150" r="14" />
+            <rect x="90" y="131" width="46" height="38" />
+            <rect x="264" y="131" width="46" height="38" />
+            <path d="M136 136 A14 14 0 0 1 136 164 M264 136 A14 14 0 0 0 264 164" />
+            <path d="M90 98 H112 A53 53 0 0 1 112 202 H90 M310 98 H288 A53 53 0 0 0 288 202 H310" />
           </g>
+          {/* Tableros */}
+          <path d="M99 143 V157 M301 143 V157" strokeWidth="3" className="stroke-neutral-800" />
+          <circle
+            cx="218"
+            cy="118"
+            r="5.5"
+            strokeWidth="1.5"
+            className="fill-red-500 stroke-white"
+          />
           <g className="hero-ball-basketball">
-            <circle cx="200" cy="150" r="7" className="fill-primary" />
-            <g strokeWidth="1" className="stroke-primary-foreground fill-none">
-              <line x1="193" y1="150" x2="207" y2="150" />
-              <line x1="200" y1="143" x2="200" y2="157" />
-            </g>
+            <BasketBall cx={200} cy={150} r={5} />
+          </g>
+          {/* Aros encima de la pelota: al final queda "adentro" */}
+          <g strokeWidth="1.5" className="fill-none stroke-orange-600">
+            <circle cx="102" cy="150" r="5" />
+            <circle cx="298" cy="150" r="5" />
           </g>
           <CourtLabel text="Básquet" />
         </g>
@@ -122,6 +145,20 @@ export function SoccerBall({ cx, cy, r }: BallProps) {
       <path
         d="M0 -4L0 -7.4 M3.8 -1.2L7 -2.3 M2.4 3.2L4.3 6 M-2.4 3.2L-4.3 6 M-3.8 -1.2L-7 -2.3 M2.6 -8.4L5.9 -8.1L7.2 -5 M8.8 0.2L9.5 3.1L7 5.3 M2.9 8.3L0 10L-2.9 8.3 M-7 5.3L-9.5 3.1L-8.8 0.2 M-7.2 -5L-5.9 -8.1L-2.6 -8.4"
         strokeWidth="1"
+        className="fill-none stroke-neutral-900"
+      />
+    </g>
+  )
+}
+
+// Pelota de básquet: naranja con las costuras en cruz y las dos curvas.
+export function BasketBall({ cx, cy, r }: BallProps) {
+  return (
+    <g transform={`translate(${cx} ${cy}) scale(${r / 10})`}>
+      <circle r="10" className="fill-orange-500" />
+      <path
+        d="M-10 0H10 M0 -10V10 M-7 -7Q-2 0 -7 7 M7 -7Q2 0 7 7"
+        strokeWidth="1.2"
         className="fill-none stroke-neutral-900"
       />
     </g>

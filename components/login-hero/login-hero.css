@@ -3,9 +3,9 @@
  * FUERA DEL ALCANCE DEL PARCIAL.
  *
  * Cómo funciona el loop:
- * - Cada elemento tiene UN @keyframes, todos con la misma duración (12 s),
+ * - Cada elemento tiene UN @keyframes, todos con la misma duración (15 s),
  *   la misma curva e `infinite`. Nunca se usa animation-delay: el momento en
- *   que pasa cada cosa sale de los porcentajes (1 s = 8,333 %).
+ *   que pasa cada cosa sale de los porcentajes (1 s = 6,667 %).
  * - Todo @keyframes arranca con `0%, 100%` en el mismo selector (o deja el
  *   100 % igual al 0 %), así el último cuadro es idéntico al primero y no se
  *   nota el salto al reiniciar.
@@ -18,12 +18,13 @@
  *   0–3 s      laptop: mano mueve el mouse, clic, check, sube chip de fútbol
  *   3–6 s      celular: el pulgar toca, onda, check, sube chip de pádel
  *   6–7,5 s    logo gira, barrido de reloj, sol → luna
- *   7,5–11 s   canchas: fútbol, pádel, básquet, tenis (0,875 s c/u)
- *   11–12 s    fundido al escritorio vacío (= cuadro de 0 s)
+ *   7,5–13,75 s canchas: fútbol con pases y gol (2 s), pádel (1,25 s),
+ *              triple de básquet (1,75 s), tenis (1,25 s)
+ *   13,75–15 s fundido al escritorio vacío (= cuadro de 0 s)
  */
 
 .hero-stage {
-  --hero-duration: 12s;
+  --hero-duration: 15s;
   --hero-easing: ease-in-out;
 }
 
@@ -55,10 +56,10 @@
 }
 @keyframes hero-laptop {
   0%,
-  23.333% {
+  18.666% {
     opacity: 1;
   }
-  26.667%,
+  21.334%,
   93.75% {
     opacity: 0;
   }
@@ -68,7 +69,7 @@
 }
 
 /* La mano entra sola desde abajo hasta el mouse, lo mueve para llevar el
-   cursor al horario y vuelve a salir por abajo (a 0 s y 12 s el escritorio
+   cursor al horario y vuelve a salir por abajo (a 0 s y 15 s el escritorio
    queda con el mouse solo). El dibujo está en la posición de llegada (0, 0);
    el mouse arranca corrido hacia atrás, en la dirección en que viaja el
    cursor, y la mano llega ahí antes de moverlo */
@@ -79,14 +80,14 @@
   0% {
     transform: translate(-6.64px, 95.88px);
   }
-  5% {
+  4% {
     transform: translate(-6.64px, -4.12px);
   }
-  11.667%,
-  26.667% {
+  9.334%,
+  21.334% {
     transform: translate(0, 0);
   }
-  28%,
+  22.4%,
   100% {
     transform: translate(-6.64px, 95.88px);
   }
@@ -97,14 +98,14 @@
 }
 @keyframes hero-mouse {
   0%,
-  5% {
+  4% {
     transform: translate(-6.64px, -4.12px);
   }
-  11.667%,
-  26.667% {
+  9.334%,
+  21.334% {
     transform: translate(0, 0);
   }
-  28%,
+  22.4%,
   100% {
     transform: translate(-6.64px, -4.12px);
   }
@@ -119,14 +120,14 @@
 }
 @keyframes hero-index-finger {
   0%,
-  12.5% {
+  10% {
     transform: rotate(0deg);
   }
-  13%,
-  13.4% {
+  10.4%,
+  10.72% {
     transform: rotate(-7deg);
   }
-  14%,
+  11.2%,
   100% {
     transform: rotate(0deg);
   }
@@ -139,21 +140,21 @@
 }
 @keyframes hero-cursor {
   0%,
-  5% {
+  4% {
     transform: translate(0, 0) scale(1);
   }
-  11.667%,
-  12.5% {
+  9.334%,
+  10% {
     transform: translate(58px, 58px) scale(1);
   }
-  13% {
+  10.4% {
     transform: translate(58px, 58px) scale(0.8);
   }
-  13.5%,
-  26.667% {
+  10.8%,
+  21.334% {
     transform: translate(58px, 58px) scale(1);
   }
-  28%,
+  22.4%,
   100% {
     transform: translate(0, 0) scale(1);
   }
@@ -164,14 +165,14 @@
 }
 @keyframes hero-laptop-slot {
   0%,
-  12.5% {
+  10% {
     opacity: 0;
   }
-  14%,
-  26.667% {
+  11.2%,
+  21.334% {
     opacity: 1;
   }
-  28%,
+  22.4%,
   100% {
     opacity: 0;
   }
@@ -182,17 +183,17 @@
 }
 @keyframes hero-laptop-check {
   0%,
-  14% {
+  11.2% {
     transform: scale(0);
   }
-  16% {
+  12.8% {
     transform: scale(1.25);
   }
-  17.5%,
-  26.667% {
+  14%,
+  21.334% {
     transform: scale(1);
   }
-  28%,
+  22.4%,
   100% {
     transform: scale(0);
   }
@@ -205,14 +206,14 @@
 }
 @keyframes hero-phone {
   0%,
-  23.333% {
+  18.666% {
     opacity: 0;
   }
-  26.667%,
-  48% {
+  21.334%,
+  38.4% {
     opacity: 1;
   }
-  51%,
+  40.8%,
   100% {
     opacity: 0;
   }
@@ -224,14 +225,14 @@
 }
 @keyframes hero-phone-hand {
   0%,
-  25% {
+  20% {
     transform: translateY(50px);
   }
-  30%,
-  51% {
+  24%,
+  40.8% {
     transform: translateY(0);
   }
-  53%,
+  42.4%,
   100% {
     transform: translateY(50px);
   }
@@ -247,14 +248,14 @@
 }
 @keyframes hero-thumb {
   0%,
-  31% {
+  24.8% {
     transform: rotate(0deg);
   }
-  35.833%,
-  37.5% {
+  28.666%,
+  30% {
     transform: rotate(-8deg);
   }
-  41.5%,
+  33.2%,
   100% {
     transform: rotate(0deg);
   }
@@ -265,19 +266,19 @@
 }
 @keyframes hero-ripple {
   0%,
-  35.833% {
+  28.666% {
     opacity: 0;
     transform: scale(0.2);
   }
-  36.2% {
+  28.96% {
     opacity: 1;
     transform: scale(0.4);
   }
-  38.5% {
+  30.8% {
     opacity: 0.9;
     transform: scale(1.7);
   }
-  41% {
+  32.8% {
     opacity: 0;
     transform: scale(2.6);
   }
@@ -292,14 +293,14 @@
 }
 @keyframes hero-phone-slot {
   0%,
-  36% {
+  28.8% {
     opacity: 0;
   }
-  37.5%,
-  51% {
+  30%,
+  40.8% {
     opacity: 1;
   }
-  53%,
+  42.4%,
   100% {
     opacity: 0;
   }
@@ -310,17 +311,17 @@
 }
 @keyframes hero-phone-check {
   0%,
-  37.5% {
+  30% {
     transform: scale(0);
   }
-  39.583% {
+  31.666% {
     transform: scale(1.25);
   }
-  41%,
-  51% {
+  32.8%,
+  40.8% {
     transform: scale(1);
   }
-  53%,
+  42.4%,
   100% {
     transform: scale(0);
   }
@@ -333,14 +334,14 @@
 }
 @keyframes hero-logo-scene {
   0%,
-  48% {
+  38.4% {
     opacity: 0;
   }
-  51%,
-  60.417% {
+  40.8%,
+  48.334% {
     opacity: 1;
   }
-  63.5%,
+  51.067%,
   100% {
     opacity: 0;
   }
@@ -352,10 +353,10 @@
 }
 @keyframes hero-logo {
   0%,
-  50% {
+  40% {
     transform: rotate(0deg);
   }
-  61.667%,
+  49.334%,
   100% {
     transform: rotate(360deg);
   }
@@ -368,10 +369,10 @@
 }
 @keyframes hero-sweep {
   0%,
-  51% {
+  40.8% {
     transform: rotate(0deg);
   }
-  60%,
+  48%,
   100% {
     transform: rotate(360deg);
   }
@@ -384,14 +385,14 @@
 }
 @keyframes hero-orbit {
   0%,
-  50% {
+  40% {
     transform: rotate(-70deg);
   }
-  61.667%,
-  63.5% {
+  49.334%,
+  51.067% {
     transform: rotate(70deg);
   }
-  66%,
+  53.733%,
   100% {
     transform: rotate(-70deg);
   }
@@ -404,16 +405,16 @@
 }
 @keyframes hero-sun {
   0%,
-  54% {
+  43.2% {
     opacity: 1;
     transform: scale(1);
   }
-  56%,
-  63.5% {
+  44.8%,
+  51.067% {
     opacity: 0;
     transform: scale(0.4);
   }
-  66%,
+  53.733%,
   100% {
     opacity: 1;
     transform: scale(1);
@@ -425,33 +426,33 @@
 }
 @keyframes hero-moon {
   0%,
-  56% {
+  44.8% {
     opacity: 0;
     transform: scale(0.4);
   }
-  58.5%,
-  63.5% {
+  46.8%,
+  51.067% {
     opacity: 1;
     transform: scale(1);
   }
-  66%,
+  53.733%,
   100% {
     opacity: 0;
     transform: scale(0.4);
   }
 }
 
-/* ---------- Escena 4: montaje de canchas (7,5–11 s) ---------- */
+/* ---------- Escena 4: montaje de canchas (7,5–13,75 s) ---------- */
 
 .hero-montage {
   animation: hero-montage var(--hero-duration) var(--hero-easing) infinite;
 }
 @keyframes hero-montage {
   0%,
-  61% {
+  48.8% {
     opacity: 0;
   }
-  64%,
+  51.6%,
   91.667% {
     opacity: 1;
   }
@@ -461,17 +462,17 @@
   }
 }
 
-/* Cada cancha dura 0,875 s (7,29 %): fútbol 62,5 → 69,8 → pádel → 77,1 →
-   básquet → 84,4 → tenis → 91,7. Cruce de 1,5 % entre una y otra. */
+/* Fútbol 2 s (50 → 63,3 %), pádel 1,25 s (→ 71,7), básquet 1,75 s (→ 83,3),
+   tenis 1,25 s (→ 91,7). Cruce de ~2 % entre una y otra. */
 .hero-court-football {
   animation: hero-court-football var(--hero-duration) var(--hero-easing) infinite;
 }
 @keyframes hero-court-football {
   0%,
-  69% {
+  62.533% {
     opacity: 1;
   }
-  70.5%,
+  64.458%,
   96% {
     opacity: 0;
   }
@@ -485,14 +486,14 @@
 }
 @keyframes hero-court-padel {
   0%,
-  69% {
+  62.533% {
     opacity: 0;
   }
-  70.5%,
-  76.3% {
+  64.458%,
+  70.608% {
     opacity: 1;
   }
-  77.8%,
+  73.335%,
   100% {
     opacity: 0;
   }
@@ -503,14 +504,14 @@
 }
 @keyframes hero-court-basketball {
   0%,
-  76.3% {
+  70.608% {
     opacity: 0;
   }
-  77.8%,
-  83.6% {
+  73.335%,
+  81.735% {
     opacity: 1;
   }
-  85.1%,
+  84.442%,
   100% {
     opacity: 0;
   }
@@ -521,10 +522,10 @@
 }
 @keyframes hero-court-tennis {
   0%,
-  83.6% {
+  81.735% {
     opacity: 0;
   }
-  85.1%,
+  84.442%,
   92% {
     opacity: 1;
   }
@@ -534,21 +535,39 @@
   }
 }
 
-/* La pelota cruza la cancha mientras se ve; vuelve al inicio cuando no */
+/* La pelota cruza la cancha mientras se ve; vuelve al inicio cuando no.
+   Fútbol: pases entre los 4 jugadores (pausa corta en cada uno) y remate al
+   arco derecho. Básquet: triple desde (246, 124); el scale simula la altura
+   de la parábola y el 0,6 final es la pelota pasando por el aro. Los
+   translate de fútbol son los pies de cada jugador (+8, +2) menos el
+   centro (200, 150) del SVG, ver sports-montage.tsx. */
 .hero-ball-football {
   animation: hero-ball-football var(--hero-duration) var(--hero-easing) infinite;
 }
 @keyframes hero-ball-football {
   0%,
-  62.5% {
-    transform: translate(-70px, 20px);
+  51.067% {
+    transform: translate(-62px, 42px);
   }
-  70% {
-    transform: translate(70px, -20px);
+  53.2%,
+  54.267% {
+    transform: translate(-17px, -48px);
   }
-  72%,
+  56.4%,
+  57.467% {
+    transform: translate(43px, 27px);
+  }
+  59.067%,
+  59.92% {
+    transform: translate(78px, -33px);
+  }
+  61.52%,
+  64.833% {
+    transform: translate(113px, -10px);
+  }
+  66.333%,
   100% {
-    transform: translate(-70px, 20px);
+    transform: translate(-62px, 42px);
   }
 }
 
@@ -557,10 +576,10 @@
 }
 @keyframes hero-ball-padel {
   0%,
-  69.5% {
+  64.083% {
     transform: translate(70px, -40px);
   }
-  77.3% {
+  71.433% {
     transform: translate(-70px, 30px);
   }
   100% {
@@ -573,14 +592,18 @@
 }
 @keyframes hero-ball-basketball {
   0%,
-  76.8% {
-    transform: translate(-30px, 40px);
+  75.333% {
+    transform: translate(46px, -26px) scale(1);
   }
-  84.6% {
-    transform: translate(90px, 0);
+  78.333% {
+    transform: translate(72px, -13px) scale(1.7);
   }
+  80.667% {
+    transform: translate(98px, 0) scale(1);
+  }
+  82%,
   100% {
-    transform: translate(-30px, 40px);
+    transform: translate(98px, 0) scale(0.6);
   }
 }
 
@@ -589,7 +612,7 @@
 }
 @keyframes hero-ball-tennis {
   0%,
-  84.1% {
+  83.917% {
     transform: translate(-80px, -40px);
   }
   92% {
@@ -608,15 +631,15 @@
 }
 @keyframes hero-chip-football {
   0%,
-  16.667% {
+  13.334% {
     opacity: 0;
     transform: translate(105px, 136px) scale(0.8);
   }
-  18% {
+  14.4% {
     opacity: 1;
     transform: translate(105px, 136px) scale(0.8);
   }
-  21.667%,
+  17.334%,
   91.667% {
     opacity: 1;
     transform: translate(0, 0) scale(1);
@@ -636,15 +659,15 @@
 }
 @keyframes hero-chip-padel {
   0%,
-  41.667% {
+  33.334% {
     opacity: 0;
     transform: translate(-67.3px, 128.3px) scale(0.8);
   }
-  43% {
+  34.4% {
     opacity: 1;
     transform: translate(-67.3px, 128.3px) scale(0.8);
   }
-  46.667%,
+  37.334%,
   91.667% {
     opacity: 1;
     transform: translate(0, 0) scale(1);
