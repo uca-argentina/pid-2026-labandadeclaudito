@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
-import { complexImageSchema, MAX_IMAGES_PER_COMPLEX } from '@/lib/validations/complex'
+import { complexImageSchema, esImagenReal, MAX_IMAGES_PER_COMPLEX } from '@/lib/validations/complex'
 import { requireRole } from '@/lib/auth-helpers'
 import { getComplexByOwner } from '@/lib/ownership'
 import { db } from '@/lib/db'
@@ -21,6 +21,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const parsed = complexImageSchema.safeParse({ imagen: formData.get('imagen') })
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+  }
+
+  const bytes = new Uint8Array(await parsed.data.imagen.arrayBuffer())
+  if (!esImagenReal(bytes)) {
+    return NextResponse.json({ error: 'Solo se aceptan fotos JPG, PNG o WebP.' }, { status: 400 })
   }
 
   const cantidadDeFotos = await db.imagenComplejo.count({ where: { complejoId, activo: true } })

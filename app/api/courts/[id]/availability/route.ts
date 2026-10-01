@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getAvailableSlots } from '@/lib/availability'
+import { esDiaReal } from '@/lib/time'
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
@@ -9,7 +10,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const { searchParams } = new URL(request.url)
   const fecha = searchParams.get('fecha')
-  if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+  if (!fecha || !esDiaReal(fecha)) {
     return NextResponse.json({ error: 'Fecha inválida, formato YYYY-MM-DD' }, { status: 400 })
   }
 

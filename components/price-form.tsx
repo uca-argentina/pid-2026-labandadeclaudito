@@ -98,7 +98,7 @@ export function PriceForm({
       <div className="space-y-2">
         <Label>Día</Label>
         <Select value={diaSemana} onValueChange={(v) => v && setDiaSemana(v)}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full" aria-label="Día">
             <SelectValue>
               {(v: string) => (v === TODOS_LOS_DIAS ? 'Todos los días' : diasSemana[Number(v)])}
             </SelectValue>
@@ -131,6 +131,7 @@ export function PriceForm({
           <div className="space-y-2">
             <Label>Desde</Label>
             <TimeSelect
+              label="Desde"
               value={horaInicio}
               onChange={setHoraInicio}
               invalid={!!fieldErrors.horaInicio}
@@ -145,7 +146,12 @@ export function PriceForm({
 
           <div className="space-y-2">
             <Label>Hasta</Label>
-            <TimeSelect value={horaFin} onChange={setHoraFin} invalid={!!fieldErrors.horaFin} />
+            <TimeSelect
+              label="Hasta"
+              value={horaFin}
+              onChange={setHoraFin}
+              invalid={!!fieldErrors.horaFin}
+            />
             {fieldErrors.horaFin && (
               <p className="text-destructive flex items-center gap-1 text-xs font-medium">
                 <AlertCircle className="size-3.5" />

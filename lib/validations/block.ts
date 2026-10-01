@@ -1,12 +1,12 @@
 import { z } from 'zod'
+import { esDiaReal } from '@/lib/time'
 
-const dateRegex = /^\d{4}-\d{2}-\d{2}$/
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
 
 export const createBlockSchema = z
   .object({
-    startDate: z.string().regex(dateRegex, 'Formato YYYY-MM-DD'),
-    endDate: z.string().regex(dateRegex, 'Formato YYYY-MM-DD'),
+    startDate: z.string().refine(esDiaReal, 'Elegí una fecha válida'),
+    endDate: z.string().refine(esDiaReal, 'Elegí una fecha válida'),
     startTime: z.string().regex(timeRegex, 'Formato HH:MM'),
     endTime: z.string().regex(timeRegex, 'Formato HH:MM'),
     reason: z.string().max(200).optional(),

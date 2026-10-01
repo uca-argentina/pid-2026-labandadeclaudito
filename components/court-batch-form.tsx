@@ -102,7 +102,7 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
                 }
               }}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" aria-label="Deporte">
                 <SelectValue>{(v: typeof deporte) => deporteLabels[v]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -122,7 +122,7 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
               value={tipoSuperficie}
               onValueChange={(v) => setTipoSuperficie(v as typeof tipoSuperficie)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" aria-label="Superficie">
                 <SelectValue>{(v: typeof tipoSuperficie) => superficieLabels[v]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -185,18 +185,18 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Apertura</Label>
-            <TimeSelect value={horaApertura} onChange={setHoraApertura} />
+            <TimeSelect label="Apertura" value={horaApertura} onChange={setHoraApertura} />
           </div>
 
           <div className="space-y-2">
             <Label>Cierre</Label>
-            <TimeSelect value={horaCierre} onChange={setHoraCierre} />
+            <TimeSelect label="Cierre" value={horaCierre} onChange={setHoraCierre} />
           </div>
 
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="duracionTurnoMin">Duración de turno</Label>
             <Select value={duracionTurnoMin} onValueChange={(v) => v && setDuracionTurnoMin(v)}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" aria-label="Duración de turno">
                 <SelectValue>{(v: string) => duracionOpciones[v]}</SelectValue>
               </SelectTrigger>
               <SelectContent>

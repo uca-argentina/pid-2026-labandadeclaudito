@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { updatePriceSchema } from '@/lib/validations/price'
 import { requireRole } from '@/lib/auth-helpers'
 import { getPriceWithComplex } from '@/lib/ownership'
+import { preciosChocan } from '@/lib/availability'
 import { db } from '@/lib/db'
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +19,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const parsed = updatePriceSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
+  }
+
+  const otrosPrecios = await db.precioEspecial.findMany({
+    where: { canchaId: precioEspecial.canchaId, activo: true, id: { not: id } },
+  })
+  if (otrosPrecios.some((otro) => preciosChocan(parsed.data, otro))) {
+    return NextResponse.json(
+      { error: 'Ya hay un precio especial para ese día y horario' },
+      { status: 409 },
+    )
   }
 
   const actualizado = await db.precioEspecial.update({

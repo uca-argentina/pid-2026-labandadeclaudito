@@ -30,7 +30,7 @@ export function TimeRangeFilter({
           />
           Desde
         </label>
-        {usaDesde && <TimeSelect value={horaDesde} onChange={setHoraDesde} />}
+        {usaDesde && <TimeSelect label="Desde" value={horaDesde} onChange={setHoraDesde} />}
         <input type="hidden" name="horaDesde" value={usaDesde ? horaDesde : ''} />
       </div>
 
@@ -43,7 +43,7 @@ export function TimeRangeFilter({
           />
           Hasta
         </label>
-        {usaHasta && <TimeSelect value={horaHasta} onChange={setHoraHasta} />}
+        {usaHasta && <TimeSelect label="Hasta" value={horaHasta} onChange={setHoraHasta} />}
         <input type="hidden" name="horaHasta" value={usaHasta ? horaHasta : ''} />
       </div>
     </div>

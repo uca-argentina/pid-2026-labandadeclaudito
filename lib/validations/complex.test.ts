@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { complexImageSchema, createComplexSchema, MAX_IMAGE_BYTES } from './complex'
+import { complexImageSchema, createComplexSchema, esImagenReal, MAX_IMAGE_BYTES } from './complex'
 
 describe('complexImageSchema', () => {
   test('acepta una foto PNG chica', () => {
@@ -71,5 +71,19 @@ describe('createComplexSchema — política de cancelación', () => {
 
   test('rechaza el campo vacío', () => {
     expect(createComplexSchema.safeParse({ ...base, cancellationHours: NaN }).success).toBe(false)
+  })
+})
+
+describe('esImagenReal', () => {
+  test('reconoce PNG, JPG y WebP por sus primeros bytes', () => {
+    expect(esImagenReal(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe(
+      true,
+    )
+    expect(esImagenReal(new Uint8Array([0xff, 0xd8, 0xff, 0xe0]))).toBe(true)
+    expect(esImagenReal(new TextEncoder().encode('RIFF1234WEBPVP8 '))).toBe(true)
+  })
+
+  test('rechaza un texto con extensión de imagen', () => {
+    expect(esImagenReal(new TextEncoder().encode('hola\n'))).toBe(false)
   })
 })

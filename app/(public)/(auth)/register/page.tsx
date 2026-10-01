@@ -24,8 +24,10 @@ export default function RegistroPage() {
 
     const form = new FormData(e.currentTarget)
 
-    // TODO (vos): comparar form.get('confirmPassword') con form.get('password') acá.
-    // Si no coinciden: setError('Las contraseñas no coinciden') y return.
+    if (form.get('confirmPassword') !== form.get('password')) {
+      setError('Las contraseñas no coinciden.')
+      return
+    }
 
     const datos = {
       nombre: form.get('nombre'),
@@ -36,7 +38,7 @@ export default function RegistroPage() {
 
     const parsed = registerSchema.safeParse(datos)
     if (!parsed.success) {
-      setError('Revisá los datos, algo no es válido')
+      setError(parsed.error.issues[0].message)
       return
     }
     setCargando(true)

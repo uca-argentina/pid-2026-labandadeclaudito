@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
+  esDiaReal,
   formatAdvanceTime,
   generateSlots,
   horariosSeSuperponen,
@@ -221,5 +222,18 @@ describe('refundsDeposit', () => {
     const deNoche = new Date('2026-09-17T02:00:00Z')
     expect(refundsDeposit('2026-09-17', '02:00', 4, 4, deNoche)).toBe(false)
     expect(refundsDeposit('2026-09-17', '03:00', 4, 4, deNoche)).toBe(true)
+  })
+})
+
+describe('esDiaReal', () => {
+  test('acepta un día que existe, incluido el 29 de febrero de un año bisiesto', () => {
+    expect(esDiaReal('2026-11-30')).toBe(true)
+    expect(esDiaReal('2028-02-29')).toBe(true)
+  })
+
+  test('rechaza días que no existen aunque tengan formato de fecha', () => {
+    expect(esDiaReal('2026-11-31')).toBe(false)
+    expect(esDiaReal('2026-02-29')).toBe(false)
+    expect(esDiaReal('2026-1-05')).toBe(false)
   })
 })

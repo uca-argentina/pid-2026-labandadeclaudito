@@ -28,6 +28,14 @@ export function horariosSeSuperponen(
   return inicioA < finBComparable && inicioB < finAComparable
 }
 
+// Que exista de verdad: "2026-02-31" tiene formato de fecha pero no es un día
+// (new Date lo pasa al 3 de marzo sin avisar).
+export function esDiaReal(texto: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(texto)) return false
+  const fecha = new Date(`${texto}T00:00:00Z`)
+  return !Number.isNaN(fecha.getTime()) && fecha.toISOString().slice(0, 10) === texto
+}
+
 // Las fechas de reserva son un día de calendario (@db.Date) y Prisma las
 // devuelve como medianoche UTC: hay que leer el día en UTC o en Argentina se
 // ve el día anterior.

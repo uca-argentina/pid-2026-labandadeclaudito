@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { activeFilterChips, filtersToQueryString, matchingSlots } from './court-search'
+import {
+  activeFilterChips,
+  filtersToQueryString,
+  matchingSlots,
+  preciosDeLaSemana,
+} from './court-search'
+import { Prisma } from '@/lib/generated/prisma/client'
 
 describe('filtersToQueryString', () => {
   test('sin filtros devuelve texto vacío', () => {
@@ -159,5 +165,24 @@ describe('activeFilterChips', () => {
     const filtros = { fecha: '2026-10-03', horaDesde: '18:00', horaHasta: '22:00' }
     const chipDeHorario = activeFilterChips(filtros)[1]
     expect(chipDeHorario.withoutIt).toEqual({ fecha: '2026-10-03' })
+  })
+})
+
+describe('preciosDeLaSemana', () => {
+  // Cancha de 08 a 10 con base $20.000 y un especial de $25.000 todos los días
+  const cancha = {
+    horaApertura: '08:00',
+    horaCierre: '10:00',
+    duracionTurnoMin: 60,
+    precioBase: new Prisma.Decimal(20000),
+    preciosEspeciales: [
+      { diaSemana: null, horaInicio: null, horaFin: null, precio: new Prisma.Decimal(25000) },
+    ],
+  } as unknown as Parameters<typeof preciosDeLaSemana>[0]
+
+  test('un especial para toda la semana reemplaza al precio base en todos los turnos', () => {
+    const precios = preciosDeLaSemana(cancha)
+    expect(precios).toHaveLength(14)
+    expect(Math.min(...precios)).toBe(25000)
   })
 })

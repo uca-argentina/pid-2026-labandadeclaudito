@@ -123,7 +123,7 @@ export function CourtEditForm({
                 }
               }}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" aria-label="Deporte">
                 <SelectValue>{(v: typeof deporte) => deporteLabels[v]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -143,7 +143,7 @@ export function CourtEditForm({
               value={tipoSuperficie}
               onValueChange={(v) => setTipoSuperficie(v as typeof tipoSuperficie)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" aria-label="Superficie">
                 <SelectValue>{(v: typeof tipoSuperficie) => superficieLabels[v]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -184,12 +184,12 @@ export function CourtEditForm({
 
           <div className="space-y-2">
             <Label>Apertura</Label>
-            <TimeSelect value={horaApertura} onChange={setHoraApertura} />
+            <TimeSelect label="Apertura" value={horaApertura} onChange={setHoraApertura} />
           </div>
 
           <div className="space-y-2">
             <Label>Cierre</Label>
-            <TimeSelect value={horaCierre} onChange={setHoraCierre} />
+            <TimeSelect label="Cierre" value={horaCierre} onChange={setHoraCierre} />
           </div>
 
           <div className="space-y-2">

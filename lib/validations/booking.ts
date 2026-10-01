@@ -1,8 +1,9 @@
 import { z } from 'zod'
+import { esDiaReal } from '@/lib/time'
 
 export const createBookingSchema = z.object({
   canchaId: z.string().min(1),
-  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD'),
+  fecha: z.string().refine(esDiaReal, 'Fecha inválida'),
   horaInicio: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Formato HH:MM'),
 })
 

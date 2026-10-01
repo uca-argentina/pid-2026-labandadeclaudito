@@ -47,6 +47,23 @@ export function precioDelTurno(
   return masEspecifico.precio
 }
 
+type FranjaDePrecio = {
+  diaSemana: number | null
+  horaInicio: string | null
+  horaFin: string | null
+}
+
+// Dos precios especiales de una cancha chocan si tienen la misma prioridad
+// (mismo día, y los dos con franja o los dos sin) y cubren algún turno en
+// común: precioDelTurno no tendría cómo elegir entre los dos.
+export function preciosChocan(a: FranjaDePrecio, b: FranjaDePrecio): boolean {
+  if (a.diaSemana !== b.diaSemana) return false
+  if (a.horaInicio === null || b.horaInicio === null) {
+    return a.horaInicio === null && b.horaInicio === null
+  }
+  return horariosSeSuperponen(a.horaInicio, a.horaFin!, b.horaInicio, b.horaFin!)
+}
+
 // El último turno del día puede ser más corto que duracionTurnoMin (ver
 // agregarSlots en lib/time.ts). Ese turno cobra la parte proporcional:
 // 30 min de un turno de 90 = 1/3 del precio.

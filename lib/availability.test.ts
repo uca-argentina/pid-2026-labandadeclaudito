@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Prisma } from '@/lib/generated/prisma/client'
-import { precioDelTurno, precioProporcional } from './availability'
+import { precioDelTurno, precioProporcional, preciosChocan } from './availability'
 
 describe('precioDelTurno', () => {
   const precioBase = new Prisma.Decimal(1000)
@@ -62,5 +62,34 @@ describe('precioProporcional', () => {
   it('un turno corto que termina a medianoche también cobra la parte proporcional', () => {
     const precio = precioProporcional(precioCompleto, '23:30', '00:00', 90)
     expect(precio.equals(new Prisma.Decimal(3000))).toBe(true)
+  })
+})
+
+describe('preciosChocan', () => {
+  const todoElDia = { diaSemana: null, horaInicio: null, horaFin: null }
+  const lunesALaNoche = { diaSemana: 1, horaInicio: '19:00', horaFin: '23:00' }
+
+  it('dos precios para todos los días, todo el día, chocan', () => {
+    expect(preciosChocan(todoElDia, todoElDia)).toBe(true)
+  })
+
+  it('franjas que se pisan el mismo día chocan', () => {
+    expect(
+      preciosChocan(lunesALaNoche, { diaSemana: 1, horaInicio: '22:00', horaFin: '23:30' }),
+    ).toBe(true)
+  })
+
+  it('franjas pegadas no chocan', () => {
+    expect(
+      preciosChocan(lunesALaNoche, { diaSemana: 1, horaInicio: '23:00', horaFin: '23:30' }),
+    ).toBe(false)
+  })
+
+  it('distinto día o distinta prioridad no chocan: gana el más específico', () => {
+    expect(preciosChocan(lunesALaNoche, { ...lunesALaNoche, diaSemana: 2 })).toBe(false)
+    expect(preciosChocan(lunesALaNoche, { diaSemana: 1, horaInicio: null, horaFin: null })).toBe(
+      false,
+    )
+    expect(preciosChocan(lunesALaNoche, todoElDia)).toBe(false)
   })
 })

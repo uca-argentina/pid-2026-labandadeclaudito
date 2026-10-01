@@ -1,26 +1,43 @@
 import { db } from '@/lib/db'
-import { getAvailableSlots } from '@/lib/availability'
+import { getAvailableSlots, precioDelTurno } from '@/lib/availability'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
-import { formatearDia } from '@/lib/time'
-import type { Cancha } from '@/lib/generated/prisma/client'
+import { formatearDia, generateSlots } from '@/lib/time'
+import type { Cancha, PrecioEspecial } from '@/lib/generated/prisma/client'
 import type { SearchCourtsFilters } from '@/lib/validations/court-search'
 
 // Qué canchas cumplen los filtros que se pueden resolver en la DB. Lo usan la
 // búsqueda y el detalle del complejo, para que en los dos lados se vean las
 // mismas canchas. Los filtros en undefined no filtran nada.
-// Con fecha, el precio no se filtra acá: se mira turno por turno (matchingSlots),
-// porque un turno puede tener un precio especial distinto del precio base.
+// El precio no se filtra acá: un turno puede tener un precio especial distinto
+// del precio base, así que se mira turno por turno en courtsThatMatch.
 function courtFilter(filtros: SearchCourtsFilters) {
-  const filtraPorPrecioBase = filtros.fecha === undefined
-
   return {
     activo: true,
     deporte: filtros.deporte,
     tipoSuperficie: filtros.tipoSuperficie,
-    precioBase: filtraPorPrecioBase
-      ? { gte: filtros.precioMin, lte: filtros.precioMax }
-      : undefined,
   }
+}
+
+type CanchaConPrecios = Cancha & { preciosEspeciales: PrecioEspecial[] }
+
+// Sin fecha: todos los precios que puede tener un turno de la cancha en
+// cualquier día de la semana (el base o el especial que le toque).
+export function preciosDeLaSemana(cancha: CanchaConPrecios): number[] {
+  const turnos = generateSlots(cancha.horaApertura, cancha.horaCierre, cancha.duracionTurnoMin)
+  const precios: number[] = []
+
+  for (let diaSemana = 0; diaSemana < 7; diaSemana++) {
+    for (const turno of turnos) {
+      const precio = precioDelTurno(
+        cancha.precioBase,
+        cancha.preciosEspeciales,
+        diaSemana,
+        turno.horaInicio,
+      )
+      precios.push(Number(precio))
+    }
+  }
+  return precios
 }
 
 type SlotConPrecio = { horaInicio: string; disponible: boolean; precio: number }
@@ -65,23 +82,36 @@ export async function getSearchableZones() {
 }
 
 // priceFrom: lo que se muestra como "desde $X". Con fecha es el turno más barato
-// que cumple los filtros ese día; sin fecha, el precio base de la cancha.
-export type CourtWithPrice = Cancha & { priceFrom: number }
+// que cumple los filtros ese día; sin fecha, el turno más barato de la semana
+// que está en el rango de precio.
+export type CourtWithPrice = CanchaConPrecios & { priceFrom: number }
 
-// Sin fecha no hay nada que calcular. Con fecha se consulta la disponibilidad
-// real de cada cancha (reservas, bloqueos y turnos que ya pasaron) y se dejan
-// solo las que tienen algún turno que cumple ventana y precio. Las canchas se
-// consultan en paralelo porque cada una son varias consultas a la DB.
+// Sin fecha se miran los precios de toda la semana. Con fecha se consulta la
+// disponibilidad real de cada cancha (reservas, bloqueos y turnos que ya
+// pasaron) y se dejan solo las que tienen algún turno que cumple ventana y
+// precio. Las canchas se consultan en paralelo porque cada una son varias
+// consultas a la DB.
 // jugadorId (opcional): los turnos que se cruzan con otra reserva del
 // jugador no cuentan como libres (no puede estar en dos canchas a la vez).
 async function courtsThatMatch(
-  canchas: Cancha[],
+  canchas: CanchaConPrecios[],
   filtros: SearchCourtsFilters,
   jugadorId?: string,
 ): Promise<CourtWithPrice[]> {
   const fecha = filtros.fecha
   if (fecha === undefined) {
-    return canchas.map((cancha) => ({ ...cancha, priceFrom: Number(cancha.precioBase) }))
+    const resultado: CourtWithPrice[] = []
+    for (const cancha of canchas) {
+      const enRango = preciosDeLaSemana(cancha).filter(
+        (precio) =>
+          (filtros.precioMin === undefined || precio >= filtros.precioMin) &&
+          (filtros.precioMax === undefined || precio <= filtros.precioMax),
+      )
+      if (enRango.length > 0) {
+        resultado.push({ ...cancha, priceFrom: Math.min(...enRango) })
+      }
+    }
+    return resultado
   }
 
   const canchasConTurnos = await Promise.all(
@@ -130,7 +160,11 @@ export async function searchComplexes(filtros: SearchCourtsFilters, jugadorId?: 
     },
     include: {
       imagenes: { where: { activo: true }, orderBy: { orden: 'asc' }, take: 1 },
-      canchas: { where: courtFilter(filtros), orderBy: { nombre: 'asc' } },
+      canchas: {
+        where: courtFilter(filtros),
+        orderBy: { nombre: 'asc' },
+        include: { preciosEspeciales: { where: { activo: true } } },
+      },
     },
     orderBy: { nombre: 'asc' },
   })
@@ -155,7 +189,11 @@ export async function getComplexDetail(
   const complejo = await db.complejo.findFirst({
     where: { id, activo: true },
     include: {
-      canchas: { where: courtFilter(filtros), orderBy: { nombre: 'asc' } },
+      canchas: {
+        where: courtFilter(filtros),
+        orderBy: { nombre: 'asc' },
+        include: { preciosEspeciales: { where: { activo: true } } },
+      },
       imagenes: { where: { activo: true }, orderBy: { orden: 'asc' } },
     },
   })

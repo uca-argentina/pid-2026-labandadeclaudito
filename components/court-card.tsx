@@ -1,12 +1,19 @@
 import { Clock } from 'lucide-react'
-import type { Cancha, Deporte } from '@/lib/generated/prisma/client'
+import type { Deporte } from '@/lib/generated/prisma/client'
+import type { CourtWithPrice } from '@/lib/court-search'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { CourtBookingSheet } from '@/components/court-booking-sheet'
 
 // Card de una cancha en el detalle del complejo. A la izquierda, una franja
 // recortada en diagonal con un dibujo de la cancha según el deporte; a la
 // derecha, los datos y el botón.
-export function CourtCard({ cancha, fechaInicial }: { cancha: Cancha; fechaInicial?: string }) {
+export function CourtCard({
+  cancha,
+  fechaInicial,
+}: {
+  cancha: CourtWithPrice
+  fechaInicial?: string
+}) {
   return (
     <div className="border-border bg-card relative min-h-39 overflow-hidden rounded-2xl border">
       <div className="absolute inset-y-0 left-0 w-25 opacity-75 [clip-path:polygon(0_0,58%_0,100%_100%,0_100%)] [mask-image:linear-gradient(90deg,black_40%,rgb(0_0_0/0.3)_100%)]">
@@ -47,9 +54,8 @@ export function CourtCard({ cancha, fechaInicial }: { cancha: Cancha; fechaInici
 
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-primary text-xl font-bold">
-              {formatPrecio(cancha.precioBase.toString())}
-            </p>
+            <p className="text-muted-foreground text-xs">desde</p>
+            <p className="text-primary text-xl font-bold">{formatPrecio(cancha.priceFrom)}</p>
             <p className="text-muted-foreground text-xs whitespace-nowrap">
               por turno de {cancha.duracionTurnoMin} min
             </p>

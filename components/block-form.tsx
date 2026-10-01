@@ -3,11 +3,21 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, Loader2, Save } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { TimeSelect } from '@/components/time-select'
-import { createBlockSchema } from '@/lib/validations/block'
+import { createBlockSchema, type CreateBlockInput } from '@/lib/validations/block'
 
 type BloqueoExistente = {
   id: string
@@ -33,6 +43,33 @@ export function BlockForm({
   const [cargando, setCargando] = useState(false)
   const [horaDesde, setHoraDesde] = useState(block?.startTime ?? '08:00')
   const [horaHasta, setHoraHasta] = useState(block?.endTime ?? '23:00')
+  // Si el bloqueo pisa reservas, la API no lo guarda hasta que el dueño confirma
+  const [aConfirmar, setAConfirmar] = useState<{
+    datos: CreateBlockInput
+    reservas: number
+  } | null>(null)
+
+  async function guardar(datos: CreateBlockInput, confirmar: boolean) {
+    setCargando(true)
+    const url = block ? `/api/blocks/${block.id}` : `/api/courts/${courtId}/blocks`
+    const res = await fetch(url, {
+      method: block ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...datos, confirmar }),
+    })
+    if (res.ok) {
+      router.push(`/dueno/complejos/${complejoId}/canchas/${courtId}/bloqueos`)
+      router.refresh()
+      return
+    }
+    const json = await res.json()
+    if (json.reservasAfectadas) {
+      setAConfirmar({ datos, reservas: json.reservasAfectadas })
+    } else {
+      setError(json.error)
+    }
+    setCargando(false)
+  }
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -60,21 +97,7 @@ export function BlockForm({
       return
     }
 
-    setCargando(true)
-    const url = block ? `/api/blocks/${block.id}` : `/api/courts/${courtId}/blocks`
-    const res = await fetch(url, {
-      method: block ? 'PATCH' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(parsed.data),
-    })
-    if (res.ok) {
-      router.push(`/dueno/complejos/${complejoId}/canchas/${courtId}/bloqueos`)
-      router.refresh()
-      return
-    }
-    const json = await res.json()
-    setError(json.error)
-    setCargando(false)
+    await guardar(parsed.data, false)
   }
 
   return (
@@ -122,7 +145,12 @@ export function BlockForm({
 
         <div className="space-y-2">
           <Label>Horario desde</Label>
-          <TimeSelect value={horaDesde} onChange={setHoraDesde} invalid={!!fieldErrors.startTime} />
+          <TimeSelect
+            label="Horario desde"
+            value={horaDesde}
+            onChange={setHoraDesde}
+            invalid={!!fieldErrors.startTime}
+          />
           {fieldErrors.startTime && (
             <p className="text-destructive flex items-center gap-1 text-xs font-medium">
               <AlertCircle className="size-3.5" />
@@ -133,7 +161,12 @@ export function BlockForm({
 
         <div className="space-y-2">
           <Label>Horario hasta</Label>
-          <TimeSelect value={horaHasta} onChange={setHoraHasta} invalid={!!fieldErrors.endTime} />
+          <TimeSelect
+            label="Horario hasta"
+            value={horaHasta}
+            onChange={setHoraHasta}
+            invalid={!!fieldErrors.endTime}
+          />
           {fieldErrors.endTime && (
             <p className="text-destructive flex items-center gap-1 text-xs font-medium">
               <AlertCircle className="size-3.5" />
@@ -154,8 +187,8 @@ export function BlockForm({
       </div>
 
       <p className="text-muted-foreground text-xs">
-        El horario se bloquea todos los días entre las dos fechas. Si hay reservas confirmadas en
-        ese rango, se cancelan automáticamente.
+        El horario se bloquea todos los días entre las dos fechas. Si hay reservas en ese rango,
+        antes de guardar te avisamos cuántas se cancelan.
       </p>
 
       <div className="flex justify-end gap-3">
@@ -173,6 +206,34 @@ export function BlockForm({
       </div>
 
       {error && <p className="text-destructive text-sm">{error}</p>}
+
+      <AlertDialog
+        open={aConfirmar !== null}
+        onOpenChange={(abierto) => !abierto && setAConfirmar(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar las reservas de ese horario?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {aConfirmar?.reservas === 1
+                ? 'Hay 1 reserva'
+                : `Hay ${aConfirmar?.reservas} reservas`}{' '}
+              en ese horario. Si guardás el bloqueo se cancelan y a los jugadores se les devuelve la
+              seña.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Volver</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={cargando}
+              onClick={() => aConfirmar && guardar(aConfirmar.datos, true)}
+            >
+              {cargando ? 'Guardando...' : 'Sí, bloquear y cancelar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   )
 }

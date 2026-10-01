@@ -23,10 +23,9 @@ export const createComplexSchema = z.object({
     .refine((telefono) => contarDigitos(telefono) >= 8, {
       message: 'Ingresá un teléfono con característica. Ej: 11 4589-2231',
     }),
-  // % de seña por defecto de las canchas del complejo. No se pide al crear
-  // (el form de alta lo manda fijo en 30); se ajusta después desde "Editar
-  // complejo". z.number() sin coerce: cada form convierte el string a número
-  // antes de validar (react-hook-form con valueAsNumber, o Number() a mano).
+  // % de seña por defecto de las canchas del complejo (30 si no se toca).
+  // z.number() sin coerce: cada form convierte el string a número antes de
+  // validar (react-hook-form con valueAsNumber, o Number() a mano).
   porcentajeSenaDefault: z
     .number()
     .int('Tiene que ser un número entero')
@@ -64,3 +63,17 @@ export const complexImageSchema = z.object({
       message: 'Solo se aceptan fotos JPG, PNG o WebP.',
     }),
 })
+
+// El tipo del archivo lo manda el navegador según la extensión: un .txt
+// renombrado a .png pasa el schema. Esto mira los primeros bytes, que en
+// JPG, PNG y WebP son siempre los mismos.
+export function esImagenReal(bytes: Uint8Array): boolean {
+  const empiezaCon = (firma: number[], desde = 0) =>
+    firma.every((byte, i) => bytes[desde + i] === byte)
+
+  const jpg = empiezaCon([0xff, 0xd8, 0xff])
+  const png = empiezaCon([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+  // WebP: "RIFF", 4 bytes de tamaño, "WEBP"
+  const webp = empiezaCon([0x52, 0x49, 0x46, 0x46]) && empiezaCon([0x57, 0x45, 0x42, 0x50], 8)
+  return jpg || png || webp
+}

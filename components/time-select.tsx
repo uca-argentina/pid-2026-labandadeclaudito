@@ -11,12 +11,15 @@ const selectClassName =
 // se veía distinto para cada integrante del equipo. Estos dos <select> de
 // hora y minuto se ven siempre igual, para cualquiera.
 export function TimeSelect({
+  label,
   name,
   value,
   onChange,
   disabled,
   invalid,
 }: {
+  // Para lectores de pantalla: "Apertura" → "Apertura, hora" / "Apertura, minuto"
+  label: string
   name?: string
   value: string
   onChange: (value: string) => void
@@ -33,7 +36,7 @@ export function TimeSelect({
   return (
     <div className="flex items-center gap-1.5">
       <select
-        aria-label="Hora"
+        aria-label={`${label}, hora`}
         aria-invalid={invalid}
         value={hora}
         disabled={disabled}
@@ -48,7 +51,7 @@ export function TimeSelect({
       </select>
       <span className="text-muted-foreground">:</span>
       <select
-        aria-label="Minuto"
+        aria-label={`${label}, minuto`}
         aria-invalid={invalid}
         value={minuto}
         disabled={disabled}

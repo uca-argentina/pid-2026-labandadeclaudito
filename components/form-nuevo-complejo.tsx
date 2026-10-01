@@ -48,10 +48,8 @@ export function FormNuevoComplejo() {
 
   const { register, handleSubmit, formState } = useForm<CreateComplexInput>({
     resolver: zodResolver(createComplexSchema),
-    // porcentajeSenaDefault no se pide acá (queda en 30), se ajusta después
-    // desde "Editar complejo". minAdvanceMinutesDefault se carga con un
-    // TimeSelect que no maneja react-hook-form: se pasa a minutos en
-    // onSubmit.
+    // minAdvanceMinutesDefault se carga con un TimeSelect que no maneja
+    // react-hook-form: se pasa a minutos en onSubmit.
     defaultValues: {
       nombre: '',
       direccion: '',
@@ -266,6 +264,23 @@ export function FormNuevoComplejo() {
               Lo usamos para que los jugadores te contacten por una reserva.
             </p>
             <MensajeError mensaje={errores.contacto?.message} />
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="porcentajeSenaDefault">Seña por defecto (%)</Label>
+            <Input
+              id="porcentajeSenaDefault"
+              type="number"
+              min={0}
+              max={100}
+              aria-invalid={errores.porcentajeSenaDefault ? true : undefined}
+              {...register('porcentajeSenaDefault', { valueAsNumber: true })}
+            />
+            <p className="text-muted-foreground text-sm">
+              Se cobra al reservar en todas tus canchas. Una cancha puede tener su propio % (se
+              configura al editarla).
+            </p>
+            <MensajeError mensaje={errores.porcentajeSenaDefault?.message} />
           </div>
 
           <div className="sm:col-span-2">

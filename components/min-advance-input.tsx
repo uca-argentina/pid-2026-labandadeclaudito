@@ -46,7 +46,7 @@ export function MinAdvanceInput({
         </label>
       )}
 
-      {mostrarSelector && <TimeSelect value={valor} onChange={setValor} />}
+      {mostrarSelector && <TimeSelect label={label} value={valor} onChange={setValor} />}
       <input type="hidden" name={name} value={mostrarSelector ? valor : ''} />
 
       <p className="text-muted-foreground text-xs">{help}</p>

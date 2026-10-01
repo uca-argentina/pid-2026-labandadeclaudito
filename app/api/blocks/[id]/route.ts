@@ -28,6 +28,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const idsDeReservas = await findOverlappingBookingIds(block.courtId, parsed.data)
 
+  // Igual que al crear: cancelar reservas necesita confirmación del dueño.
+  if (idsDeReservas.length > 0 && body.confirmar !== true) {
+    return NextResponse.json(
+      { error: 'El bloqueo cancela reservas', reservasAfectadas: idsDeReservas.length },
+      { status: 409 },
+    )
+  }
+
   // Estas cancelaciones las provoca el dueño, no el jugador: la seña se
   // devuelve siempre, sin mirar la política de horas.
   const [actualizado] = await db.$transaction([
