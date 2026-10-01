@@ -1,23 +1,26 @@
 import { Building2, CalendarCheck, Clock, Pause, Play, Trophy } from 'lucide-react'
-import { BookingChips } from './scenes/booking-chips'
+import { FootballScene } from './scenes/football-scene'
 import { LaptopScene } from './scenes/laptop-scene'
-import { LogoTransition } from './scenes/logo-transition'
+import { PadelScene } from './scenes/padel-scene'
 import { PainScene } from './scenes/pain-scene'
 import { PhoneScene } from './scenes/phone-scene'
-import { SportsMontage } from './scenes/sports-montage'
+import { TimeScene } from './scenes/time-scene'
 import './login-hero.css'
 
 const BENEFITS = [
   { icon: Trophy, text: 'Fútbol, pádel, básquet, tenis y más deportes' },
   { icon: Building2, text: 'Todos los complejos en un solo lugar' },
   { icon: Clock, text: 'Horarios libres al instante, sin llamar' },
-  { icon: CalendarCheck, text: 'Reservá con seña y cancelá hasta 24 hs antes' },
+  { icon: CalendarCheck, text: 'Cancelá hasta 24 hs antes si cambian los planes' },
 ]
 
 // Panel izquierdo del login/registro. FUERA DEL ALCANCE DEL PARCIAL: es una
 // animación decorativa en SVG + CSS puro (ver login-hero.css para el loop).
-// Todas las escenas comparten el mismo viewBox 400x300 y se apilan una encima
-// de otra dentro del "escenario"; cada una aparece y desaparece con opacity.
+// Cuenta dos historias de grupos distintos: dolor → reserva del grupo A (fútbol)
+// → pasa el tiempo → llegan y juegan → reserva del grupo B (pádel) → pasa el
+// tiempo → llegan y juegan. Todas las escenas comparten el mismo viewBox 400x300
+// y se apilan una encima de otra dentro del "escenario"; cada una aparece y
+// desaparece con opacity.
 // El panel queda fijo (sticky) para que no se mueva si el formulario es alto.
 export function LoginHero() {
   return (
@@ -33,23 +36,15 @@ export function LoginHero() {
 
         <div
           aria-hidden="true"
-          className="hero-frame border-border bg-background relative aspect-4/3 w-full overflow-hidden rounded-3xl border"
+          className="hero-frame border-border bg-background relative aspect-[400/340] w-full overflow-hidden rounded-3xl border"
         >
           <PainScene />
           <LaptopScene />
+          <TimeScene id="a" sport="futbol" title="Fútbol 5 · Sáb 21:00" complex="Complejo Oeste" />
+          <FootballScene />
           <PhoneScene />
-          <LogoTransition />
-          <SportsMontage />
-          <BookingChips />
-        </div>
-
-        <div aria-hidden="true" className="relative h-7 text-sm font-medium">
-          <p className="hero-caption-before text-destructive absolute inset-0 text-center">
-            Antes: llamar a cada complejo, uno por uno
-          </p>
-          <p className="hero-caption-after text-primary absolute inset-0 text-center">
-            Ahora: todo en un solo lugar, en segundos
-          </p>
+          <TimeScene id="b" sport="padel" title="Pádel · Dom 20:00" complex="Club Palermo" />
+          <PadelScene />
         </div>
 
         <ul className="space-y-2 text-sm [@media(max-height:820px)]:hidden">

@@ -1,6 +1,7 @@
 import { Phone } from 'lucide-react'
+import { CAPTION_PAIN, SceneCaption } from './scene-caption'
 
-// Escena 0 (0–2,4 s): el punto de dolor. Para reservar una cancha hay que
+// Escena 0: el punto de dolor. Para reservar una cancha hay que
 // llamar a cada complejo y todos dicen que no. Después viene la solución
 // (laptop y celular). El fondo es el mismo del escenario para que no se note
 // el corte al volver a empezar el loop.
@@ -12,7 +13,7 @@ const COMPLEXES = [
 
 export function PainScene() {
   return (
-    <svg viewBox="0 0 400 300" className="absolute inset-0 size-full">
+    <svg viewBox="0 0 400 340" className="absolute inset-0 size-full">
       <g className="hero-pain">
         {COMPLEXES.map((complex) => (
           <g key={complex.name}>
@@ -88,6 +89,7 @@ export function PainScene() {
             </g>
           </g>
         ))}
+        <SceneCaption text={CAPTION_PAIN} tone="alert" />
       </g>
     </svg>
   )
