@@ -1,29 +1,16 @@
-import Image from 'next/image'
 import { Clock } from 'lucide-react'
 import type { Cancha, Deporte } from '@/lib/generated/prisma/client'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { CourtBookingSheet } from '@/components/court-booking-sheet'
 
 // Card de una cancha en el detalle del complejo. A la izquierda, una franja
-// recortada en diagonal con la foto del complejo (o, si no tiene fotos, un
-// dibujo de la cancha según el deporte); a la derecha, los datos y el botón.
-export function CourtCard({
-  cancha,
-  fotoUrl,
-  fechaInicial,
-}: {
-  cancha: Cancha
-  fotoUrl?: string
-  fechaInicial?: string
-}) {
+// recortada en diagonal con un dibujo de la cancha según el deporte; a la
+// derecha, los datos y el botón.
+export function CourtCard({ cancha, fechaInicial }: { cancha: Cancha; fechaInicial?: string }) {
   return (
     <div className="border-border bg-card relative h-39 overflow-hidden rounded-2xl border">
       <div className="absolute inset-y-0 left-0 w-25 opacity-75 [clip-path:polygon(0_0,58%_0,100%_100%,0_100%)] [mask-image:linear-gradient(90deg,black_40%,rgb(0_0_0/0.3)_100%)]">
-        {fotoUrl ? (
-          <Image src={fotoUrl} alt="" fill sizes="100px" className="object-cover" />
-        ) : (
-          <CourtIllustration deporte={cancha.deporte} />
-        )}
+        <CourtIllustration deporte={cancha.deporte} />
       </div>
       {/* Línea sobre el borde del recorte, mismos puntos que el clip-path */}
       <svg

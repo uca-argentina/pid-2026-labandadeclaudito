@@ -61,12 +61,7 @@ export default async function ComplejoDetallePage({
       ) : (
         <div className="mt-6 grid gap-5 lg:grid-cols-2">
           {complejo.canchas.map((cancha) => (
-            <CourtCard
-              key={cancha.id}
-              cancha={cancha}
-              fotoUrl={complejo.imagenes[0]?.url}
-              fechaInicial={filtros.fecha}
-            />
+            <CourtCard key={cancha.id} cancha={cancha} fechaInicial={filtros.fecha} />
           ))}
         </div>
       )}
