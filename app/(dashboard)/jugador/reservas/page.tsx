@@ -1,20 +1,22 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { CalendarCheck, Clock, MapPin, Wallet } from 'lucide-react'
+import { CalendarCheck, Clock, Hourglass, MapPin, Wallet } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { pendientesVencidas } from '@/lib/bookings'
 import { deporteLabels, formatPrecio } from '@/lib/labels'
 import { montoDelHistorial } from '@/lib/historial'
-import { estadoDeReserva } from '@/lib/estado-reserva'
+import { estadoDeReserva, venceLaSena } from '@/lib/estado-reserva'
 import { diaDeReserva, formatearDia, momentoActual, refundsDeposit, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { CancelBookingButton } from '@/components/cancel-booking-button'
 import { CollapsibleSection } from '@/components/collapsible-section'
 import { PayDepositButton } from '@/components/pay-deposit-button'
+import { RefreshWhenDepositExpires } from '@/components/refresh-when-deposit-expires'
 
 async function getReservas(jugadorId: string) {
   return db.reserva.findMany({
-    where: { jugadorId },
+    where: { jugadorId, NOT: pendientesVencidas() },
     include: { cancha: { include: { complejo: true } }, pago: true },
     orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
   })
@@ -133,6 +135,7 @@ function TarjetaReserva({
 
   const muestraPagar = reserva.estado === 'PENDIENTE' && !yaPaso
   const muestraCancelar = !cancelada && !yaPaso
+  const horaLimiteSena = momentoActual(venceLaSena(reserva.createdAt)).hora
 
   // Aviso para el diálogo de cancelar: mismo cálculo que hace el endpoint.
   let avisoSena: string | null = null
@@ -181,6 +184,13 @@ function TarjetaReserva({
           <Clock className="size-3.5 shrink-0" />
           {formatearDia(dia)} · {reserva.horaInicio} a {reserva.horaFin} hs
         </p>
+        {muestraPagar && (
+          <p className="text-foreground flex items-center gap-1.5 font-medium">
+            <Hourglass className="size-3.5 shrink-0" />
+            Pagá la seña antes de las {horaLimiteSena} hs o el turno se libera
+            <RefreshWhenDepositExpires venceEn={venceLaSena(reserva.createdAt).toISOString()} />
+          </p>
+        )}
       </div>
 
       {/* Footer con borde arriba, separado del cuerpo: precio a la izquierda,

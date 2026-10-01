@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { pendientesVencidas } from '@/lib/bookings'
 import { diaDeReserva } from '@/lib/time'
 
 export type BlockRange = {
@@ -89,6 +90,7 @@ export async function findOverlappingBookingIds(courtId: string, range: BlockRan
       canchaId: courtId,
       estado: { not: 'CANCELADA' },
       fecha: { gte: new Date(range.startDate), lte: new Date(range.endDate) },
+      NOT: pendientesVencidas(),
     },
   })
 

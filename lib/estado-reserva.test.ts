@@ -1,5 +1,22 @@
 import { describe, expect, test } from 'vitest'
-import { estadoDeReserva } from './estado-reserva'
+import { estadoDeReserva, senaVencida } from './estado-reserva'
+
+describe('senaVencida', () => {
+  const creadaEn = new Date('2026-09-29T15:00:00Z')
+
+  function minutosDespues(minutos: number) {
+    return new Date(creadaEn.getTime() + minutos * 60 * 1000)
+  }
+
+  test('dentro de los 15 minutos todavía se puede pagar', () => {
+    expect(senaVencida(creadaEn, minutosDespues(14))).toBe(false)
+    expect(senaVencida(creadaEn, minutosDespues(15))).toBe(false)
+  })
+
+  test('pasados los 15 minutos, la seña venció', () => {
+    expect(senaVencida(creadaEn, minutosDespues(16))).toBe(true)
+  })
+})
 
 // Todas las reservas de los tests son el 2026-09-29 de 20:00 a 21:00, salvo
 // que el test diga otra cosa.

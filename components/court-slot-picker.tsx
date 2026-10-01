@@ -7,6 +7,7 @@ import { Calendar, Check, CheckCircle2, Clock, Loader2, Wallet } from 'lucide-re
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { MINUTOS_PARA_PAGAR_SENA, venceLaSena } from '@/lib/estado-reserva'
 import { formatPrecio } from '@/lib/labels'
 import { diaDeHoy, formatAdvanceTime } from '@/lib/time'
 
@@ -49,6 +50,7 @@ export function CourtSlotPicker({
     id: string
     hora: string
     montoSena: number
+    venceEn: string
   } | null>(null)
 
   async function cargarDisponibilidad(fechaConsultada: Date) {
@@ -79,6 +81,31 @@ export function CourtSlotPicker({
     }
   }, [fecha, courtId])
 
+  // Si el jugador no paga la seña a tiempo: se avisa y se recarga la grilla,
+  // donde el turno ya aparece libre. Es un temporizador del navegador, solo
+  // mientras esta pantalla está abierta.
+  useEffect(() => {
+    if (!reservaHecha || estado === 'exito' || estado === 'pagando') return
+
+    const msHastaVencer = new Date(reservaHecha.venceEn).getTime() - Date.now()
+    const id = setTimeout(async () => {
+      setReservaHecha(null)
+      setMensajeError(
+        `Se venció el plazo de ${MINUTOS_PARA_PAGAR_SENA} minutos para pagar la seña. El turno se liberó.`,
+      )
+      setEstado('error')
+
+      const fechaISO = format(fecha, 'yyyy-MM-dd')
+      const res = await fetch(`/api/courts/${courtId}/availability?fecha=${fechaISO}`)
+      const json = await res.json()
+      if (res.ok) {
+        setSlots(json.slots)
+      }
+    }, msHastaVencer + 1000)
+
+    return () => clearTimeout(id)
+  }, [reservaHecha, estado, fecha, courtId])
+
   const slotSeleccionado = slots.find((slot) => slot.horaInicio === horaSeleccionada)
   const montoSenaSeleccionada = slotSeleccionado
     ? (Number(slotSeleccionado.precio) * porcentajeSena) / 100
@@ -105,6 +132,7 @@ export function CourtSlotPicker({
         id: json.reserva.id,
         hora: horaSeleccionada,
         montoSena: montoSenaSeleccionada,
+        venceEn: venceLaSena(new Date(json.reserva.createdAt)).toISOString(),
       })
       setHoraSeleccionada(null)
       setEstado('pendiente')
@@ -263,7 +291,10 @@ export function CourtSlotPicker({
               <p className="text-sm font-medium">
                 Reservaste {courtName} a las {reservaHecha.hora} hs
               </p>
-              <p className="text-muted-foreground text-xs">Pagá la seña para confirmar el turno.</p>
+              <p className="text-muted-foreground text-xs">
+                Pagá la seña para confirmar el turno. Tenés {MINUTOS_PARA_PAGAR_SENA} minutos; si
+                no, el turno se libera.
+              </p>
             </div>
           </div>
           <Button onClick={pagarSena} disabled={estado === 'pagando'} className="self-end">

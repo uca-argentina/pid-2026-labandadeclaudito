@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { ArrowRight, Building2, CalendarClock, Clock, LayoutGrid, Plus, User } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { pendientesVencidas } from '@/lib/bookings'
 import { deporteLabels } from '@/lib/labels'
 import { diaDeHoy, diaDeReserva, formatearDia } from '@/lib/time'
 import { StatCard } from '@/components/stat-card'
@@ -26,6 +27,7 @@ export default async function DuenoHomePage() {
     where: {
       cancha: canchasDelDuenio,
       estado: { not: 'CANCELADA' },
+      NOT: pendientesVencidas(),
       fecha: { gte: desdeHoy },
     },
   })
@@ -34,6 +36,7 @@ export default async function DuenoHomePage() {
     where: {
       cancha: canchasDelDuenio,
       estado: { not: 'CANCELADA' },
+      NOT: pendientesVencidas(),
       fecha: { gte: desdeHoy },
     },
     include: { cancha: { include: { complejo: true } }, jugador: true },

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { pendientesVencidas } from '@/lib/bookings'
 import { deporteLabels } from '@/lib/labels'
 import { diaDeHoy, diaDeReserva, formatearDia } from '@/lib/time'
 import { StatCard } from '@/components/stat-card'
@@ -26,6 +27,7 @@ export default async function JugadorHomePage() {
     where: {
       jugadorId: session.user.id,
       estado: { not: 'CANCELADA' },
+      NOT: pendientesVencidas(),
       fecha: { gte: desdeHoy },
     },
     include: { cancha: { include: { complejo: true } } },
@@ -37,11 +39,14 @@ export default async function JugadorHomePage() {
     where: {
       jugadorId: session.user.id,
       estado: { not: 'CANCELADA' },
+      NOT: pendientesVencidas(),
       fecha: { gte: desdeHoy },
     },
   })
 
-  const totalReservas = await db.reserva.count({ where: { jugadorId: session.user.id } })
+  const totalReservas = await db.reserva.count({
+    where: { jugadorId: session.user.id, NOT: pendientesVencidas() },
+  })
 
   const totalComplejos = await db.complejo.count({
     where: { activo: true, canchas: { some: { activo: true } } },

@@ -4,6 +4,7 @@ import { createBookingSchema } from '@/lib/validations/booking'
 import { requireRole } from '@/lib/auth-helpers'
 import { precioDelTurno, precioProporcional } from '@/lib/availability'
 import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
+import { pendientesVencidas } from '@/lib/bookings'
 import {
   diaSemanaDeReserva,
   formatAdvanceTime,
@@ -22,6 +23,11 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
   }
+
+  // Baja física de las reservas pendientes que no pagaron la seña a tiempo.
+  // No hay cron: se aprovecha cada pedido de reserva para barrerlas. Mientras
+  // tanto, el resto de las consultas las ignora con NOT: pendientesVencidas().
+  await db.reserva.deleteMany({ where: pendientesVencidas() })
 
   const cancha = await db.cancha.findFirst({
     where: { id: parsed.data.canchaId, activo: true, complejo: { activo: true } },
@@ -124,7 +130,15 @@ export async function POST(request: Request) {
     const reserva = await db.$transaction(async (tx) => {
       const reserva = await tx.reserva.update({
         where: { id: reservaExistente.id },
-        data: { jugadorId: session.user.id, horaFin, estado: 'PENDIENTE', precioTurno },
+        // createdAt se renueva: es una reserva nueva y el plazo de 15
+        // minutos para pagar la seña se cuenta desde ahora.
+        data: {
+          jugadorId: session.user.id,
+          horaFin,
+          estado: 'PENDIENTE',
+          precioTurno,
+          createdAt: new Date(),
+        },
       })
       // La fila se reusa, así que el Pago de la reserva cancelada anterior
       // quedaría colgado: se borra, la nueva reserva todavía no pagó seña.

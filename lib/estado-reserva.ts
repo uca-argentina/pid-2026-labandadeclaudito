@@ -36,6 +36,21 @@ export function estadoDeReserva(
   return estadoDeUnTurnoTerminado(asistio)
 }
 
+export const MINUTOS_PARA_PAGAR_SENA = 15
+
+export const MENSAJE_SENA_VENCIDA =
+  'Se venció el plazo de 15 minutos para pagar la seña. Reservá el turno de nuevo.'
+
+// Una reserva pendiente tiene 15 minutos desde que se pidió para pagar la
+// seña. Pasado ese plazo deja de ocupar el turno y no se muestra más.
+export function venceLaSena(creadaEn: Date): Date {
+  return new Date(creadaEn.getTime() + MINUTOS_PARA_PAGAR_SENA * 60 * 1000)
+}
+
+export function senaVencida(creadaEn: Date, ahora: Date = new Date()): boolean {
+  return ahora > venceLaSena(creadaEn)
+}
+
 // Terminado el turno, lo que manda es si el dueño marcó la asistencia.
 function estadoDeUnTurnoTerminado(asistio: boolean | null): EstadoVisible {
   if (asistio === true) return 'ASISTIO'

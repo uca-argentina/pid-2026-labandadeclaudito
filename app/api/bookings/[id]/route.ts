@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth-helpers'
+import { MENSAJE_SENA_VENCIDA, senaVencida } from '@/lib/estado-reserva'
 import { diaDeReserva, refundsDeposit, turnoYaPaso } from '@/lib/time'
 import { db } from '@/lib/db'
 
@@ -21,6 +22,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if (reserva.estado === 'CANCELADA') {
     return NextResponse.json({ error: 'La reserva ya estaba cancelada' }, { status: 409 })
+  }
+  if (reserva.estado === 'PENDIENTE' && senaVencida(reserva.createdAt)) {
+    return NextResponse.json({ error: MENSAJE_SENA_VENCIDA }, { status: 409 })
   }
 
   const dia = diaDeReserva(reserva.fecha)
