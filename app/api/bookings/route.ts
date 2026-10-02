@@ -2,8 +2,16 @@ import { NextResponse } from 'next/server'
 import { Prisma } from '@/lib/generated/prisma/client'
 import { createBookingSchema } from '@/lib/validations/booking'
 import { requireRole } from '@/lib/auth-helpers'
-import { generateSlots } from '@/lib/availability'
-import { sumarMinutos, turnoYaPaso } from '@/lib/time'
+import { precioDelTurno, precioProporcional } from '@/lib/availability'
+import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
+import { pendientesVencidas } from '@/lib/bookings'
+import {
+  diaSemanaDeReserva,
+  formatAdvanceTime,
+  generateSlots,
+  horariosSeSuperponen,
+  isTooSoonToBook,
+} from '@/lib/time'
 import { db } from '@/lib/db'
 
 export async function POST(request: Request) {
@@ -16,22 +24,41 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
   }
 
+  // Baja física de las reservas pendientes que no pagaron la seña a tiempo.
+  // No hay cron: se aprovecha cada pedido de reserva para barrerlas. Mientras
+  // tanto, el resto de las consultas las ignora con NOT: pendientesVencidas().
+  await db.reserva.deleteMany({ where: pendientesVencidas() })
+
   const cancha = await db.cancha.findFirst({
     where: { id: parsed.data.canchaId, activo: true, complejo: { activo: true } },
+    include: {
+      preciosEspeciales: { where: { activo: true } },
+      complejo: { select: { minAdvanceMinutesDefault: true } },
+    },
   })
   if (!cancha) {
     return NextResponse.json({ error: 'La cancha no existe' }, { status: 404 })
   }
 
-  if (turnoYaPaso(parsed.data.fecha, parsed.data.horaInicio)) {
-    return NextResponse.json({ error: 'Ese turno ya pasó' }, { status: 400 })
+  const minAdvanceMinutes = cancha.minAdvanceMinutes ?? cancha.complejo.minAdvanceMinutesDefault
+  if (isTooSoonToBook(parsed.data.fecha, parsed.data.horaInicio, minAdvanceMinutes)) {
+    if (minAdvanceMinutes === 0) {
+      return NextResponse.json({ error: 'Ese turno ya pasó' }, { status: 400 })
+    }
+    return NextResponse.json(
+      {
+        error: `Este turno se reserva con al menos ${formatAdvanceTime(minAdvanceMinutes)} de anticipación`,
+      },
+      { status: 400 },
+    )
   }
 
   // La grilla de turnos también se muestra en el cliente, pero acá hay que
   // recalcularla: un POST directo podría pedir un horario fuera del horario
   // de la cancha o pisado entre dos turnos.
   const slots = generateSlots(cancha.horaApertura, cancha.horaCierre, cancha.duracionTurnoMin)
-  if (!slots.includes(parsed.data.horaInicio)) {
+  const turnoPedido = slots.find((slot) => slot.horaInicio === parsed.data.horaInicio)
+  if (!turnoPedido) {
     return NextResponse.json(
       { error: 'Ese horario no es un turno de esta cancha' },
       { status: 400 },
@@ -39,32 +66,66 @@ export async function POST(request: Request) {
   }
 
   const fecha = new Date(parsed.data.fecha)
-  const horaFin = sumarMinutos(parsed.data.horaInicio, cancha.duracionTurnoMin)
+  const horaFin = turnoPedido.horaFin
 
-  const reservaExistente = await db.reserva.findUnique({
+  const bloqueosDelDia = await getBlocksOfDay(cancha.id, fecha)
+  if (isSlotBlocked(parsed.data.horaInicio, horaFin, bloqueosDelDia)) {
+    return NextResponse.json({ error: 'Ese horario está bloqueado' }, { status: 409 })
+  }
+
+  // Un jugador no puede estar en dos canchas a la vez: se busca otra reserva
+  // suya ese mismo día cuyo horario se cruce con el turno pedido.
+  const reservasDelJugador = await db.reserva.findMany({
+    where: { jugadorId: session.user.id, fecha, estado: { not: 'CANCELADA' } },
+  })
+  for (const otraReserva of reservasDelJugador) {
+    if (
+      horariosSeSuperponen(
+        parsed.data.horaInicio,
+        horaFin,
+        otraReserva.horaInicio,
+        otraReserva.horaFin,
+      )
+    ) {
+      return NextResponse.json(
+        { error: 'Ya tenés otra reserva que se superpone con ese horario' },
+        { status: 409 },
+      )
+    }
+  }
+
+  // El precio se calcula siempre acá, nunca se confía en lo que mande el
+  // cliente: precioBase puede tener un PrecioEspecial pisándolo. Queda
+  // congelado en la Reserva para siempre.
+  const precioCompleto = precioDelTurno(
+    cancha.precioBase,
+    cancha.preciosEspeciales,
+    diaSemanaDeReserva(fecha),
+    parsed.data.horaInicio,
+  )
+  const precioTurno = precioProporcional(
+    precioCompleto,
+    parsed.data.horaInicio,
+    horaFin,
+    cancha.duracionTurnoMin,
+  )
+
+  // Las canceladas no ocupan el turno: reservar uno cancelado crea una fila
+  // nueva y la cancelada queda en el historial de su jugador, con su pago.
+  const reservaActiva = await db.reserva.findFirst({
     where: {
-      canchaId_fecha_horaInicio: {
-        canchaId: cancha.id,
-        fecha,
-        horaInicio: parsed.data.horaInicio,
-      },
+      canchaId: cancha.id,
+      fecha,
+      horaInicio: parsed.data.horaInicio,
+      estado: { not: 'CANCELADA' },
     },
   })
-
-  if (reservaExistente && reservaExistente.estado !== 'CANCELADA') {
+  if (reservaActiva) {
     return NextResponse.json({ error: 'Ese horario ya fue reservado' }, { status: 409 })
   }
 
-  // Si la reserva anterior se canceló el turno está libre, pero el índice único
-  // no deja crear otra fila para la misma cancha/fecha/hora: se reusa esa.
-  if (reservaExistente) {
-    const reserva = await db.reserva.update({
-      where: { id: reservaExistente.id },
-      data: { jugadorId: session.user.id, horaFin, estado: 'CONFIRMADA' },
-    })
-    return NextResponse.json({ reserva }, { status: 201 })
-  }
-
+  // La reserva nace PENDIENTE (de seña): pasa a CONFIRMADA recién cuando el
+  // jugador paga la seña en POST /api/bookings/[id]/deposit.
   try {
     const reserva = await db.reserva.create({
       data: {
@@ -73,7 +134,8 @@ export async function POST(request: Request) {
         fecha,
         horaInicio: parsed.data.horaInicio,
         horaFin,
-        estado: 'CONFIRMADA',
+        estado: 'PENDIENTE',
+        precioTurno,
       },
     })
     return NextResponse.json({ reserva }, { status: 201 })

@@ -1,45 +1,52 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import { ArrowLeft, BadgeCheck } from 'lucide-react'
-import { db } from '@/lib/db'
-import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
-import { CourtSlotPicker } from '@/components/court-slot-picker'
+import { notFound, redirect } from 'next/navigation'
+import { auth } from '@/auth'
+import { ArrowLeft, BadgeCheck, MapPin, Phone } from 'lucide-react'
+import { getComplexDetail, filtersToQueryString } from '@/lib/court-search'
+import { searchCourtsSchema } from '@/lib/validations/court-search'
+import { CourtCard } from '@/components/court-card'
 import { ComplexGallery } from '@/components/complex-gallery'
 
 export default async function ComplejoDetallePage({
   params,
+  searchParams,
 }: PageProps<'/jugador/complejos/[id]'>) {
-  const { id } = await params
+  const session = await auth()
+  if (!session) redirect('/login')
 
-  const complejo = await db.complejo.findFirst({
-    where: { id, activo: true },
-    include: {
-      canchas: { where: { activo: true }, orderBy: { nombre: 'asc' } },
-      imagenes: { where: { activo: true }, orderBy: { orden: 'asc' } },
-    },
-  })
+  const { id } = await params
+  const filtros = searchCourtsSchema.parse(await searchParams)
+
+  const complejo = await getComplexDetail(id, filtros, session.user.id)
   if (!complejo) notFound()
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
+    <main className="mx-auto w-full max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <Link
-        href="/jugador/canchas"
-        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1.5 text-sm font-medium"
+        href={`/jugador/canchas${filtersToQueryString(filtros)}`}
+        className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"
       >
         <ArrowLeft className="size-3.5" />
         Volver a búsqueda de complejos
       </Link>
 
-      <div className="mb-7">
-        <div className="flex items-center gap-2">
+      <div className="mb-5">
+        <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-3xl font-semibold">{complejo.nombre}</h1>
           <span className="bg-primary/15 text-primary inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium">
             <BadgeCheck className="size-3.5" />
             Verificado
           </span>
         </div>
-        <p className="text-muted-foreground mt-1 text-sm">
-          {complejo.direccion} · {complejo.zona} · Contacto: {complejo.contacto}
+        <p className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <span className="flex items-center gap-1.5">
+            <MapPin className="size-3.5 shrink-0" />
+            {complejo.direccion} · {complejo.zona}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Phone className="size-3.5 shrink-0" />
+            {complejo.contacto}
+          </span>
         </p>
       </div>
 
@@ -52,41 +59,9 @@ export default async function ComplejoDetallePage({
           Este complejo todavía no cargó canchas.
         </p>
       ) : (
-        <div className="mt-6 space-y-5">
+        <div className="mt-6 grid gap-5 lg:grid-cols-2">
           {complejo.canchas.map((cancha) => (
-            <div key={cancha.id} className="border-border bg-card rounded-2xl border p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold">{cancha.nombre}</span>
-                    <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
-                      {deporteLabels[cancha.deporte]}
-                    </span>
-                    <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
-                      {superficieLabels[cancha.tipoSuperficie]}
-                    </span>
-                  </div>
-                  <span className="text-muted-foreground text-xs">
-                    Horario regular: {cancha.horaApertura} a {cancha.horaCierre} hs
-                  </span>
-                </div>
-                <div className="text-right">
-                  <div className="text-primary text-xl font-bold">
-                    {formatPrecio(cancha.precioBase.toString())}
-                  </div>
-                  <div className="text-muted-foreground text-xs">
-                    por turno de {cancha.duracionTurnoMin} min
-                  </div>
-                </div>
-              </div>
-
-              <CourtSlotPicker
-                courtId={cancha.id}
-                courtName={cancha.nombre}
-                courtSportLabel={deporteLabels[cancha.deporte]}
-                duracionTurnoMin={cancha.duracionTurnoMin}
-              />
-            </div>
+            <CourtCard key={cancha.id} cancha={cancha} fechaInicial={filtros.fecha} />
           ))}
         </div>
       )}

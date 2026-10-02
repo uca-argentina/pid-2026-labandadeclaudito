@@ -1,4 +1,5 @@
-import type { Deporte, EstadoReserva, TipoSuperficie } from '@/lib/generated/prisma/client'
+import type { Deporte, TipoSuperficie } from '@/lib/generated/prisma/client'
+import type { EstadoVisible } from '@/lib/estado-reserva'
 
 export const deporteLabels: Record<Deporte, string> = {
   FUTBOL_5: 'Fútbol 5',
@@ -6,6 +7,7 @@ export const deporteLabels: Record<Deporte, string> = {
   FUTBOL_11: 'Fútbol 11',
   TENIS: 'Tenis',
   PADEL: 'Pádel',
+  BASQUET: 'Básquet',
 }
 
 export const superficieLabels: Record<TipoSuperficie, string> = {
@@ -16,12 +18,26 @@ export const superficieLabels: Record<TipoSuperficie, string> = {
   POLVO_DE_LADRILLO: 'Polvo de ladrillo',
 }
 
-export const estadoReservaLabels: Record<EstadoReserva, string> = {
-  PENDIENTE: 'Pendiente',
+// Combinaciones deporte/superficie que tienen sentido en la realidad
+// (ej: fútbol nunca se juega en polvo de ladrillo, eso es de tenis; parquet
+// es solo de básquet, ni tenis ni pádel se juegan ahí).
+export const superficiesPorDeporte: Record<Deporte, TipoSuperficie[]> = {
+  FUTBOL_5: ['CESPED_SINTETICO', 'CESPED_NATURAL', 'CEMENTO'],
+  FUTBOL_7: ['CESPED_SINTETICO', 'CESPED_NATURAL', 'CEMENTO'],
+  FUTBOL_11: ['CESPED_SINTETICO', 'CESPED_NATURAL', 'CEMENTO'],
+  TENIS: ['POLVO_DE_LADRILLO', 'CESPED_NATURAL', 'CEMENTO'],
+  PADEL: ['CESPED_SINTETICO', 'CEMENTO'],
+  BASQUET: ['PARQUET', 'CEMENTO'],
+}
+
+export const estadoVisibleLabels: Record<EstadoVisible, string> = {
+  PENDIENTE: 'Pendiente de seña',
   CONFIRMADA: 'Confirmada',
-  CANCELADA: 'Cancelada',
+  EN_CURSO: 'En curso',
+  FINALIZADA: 'Finalizada',
+  ASISTIO: 'Asistió',
   NO_SHOW: 'No se presentó',
-  COMPLETADA: 'Completada',
+  CANCELADA: 'Cancelada',
 }
 
 export function formatPrecio(precio: number | string): string {

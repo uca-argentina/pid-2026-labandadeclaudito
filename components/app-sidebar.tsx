@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Building2, CalendarDays, Home, Search } from 'lucide-react'
+import { Building2, CalendarDays, Equal, Home, Search, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +16,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { SignOutButton } from '@/components/sign-out-button'
@@ -40,6 +42,22 @@ const navPorRol: Record<'JUGADOR' | 'DUENIO', ItemNav[]> = {
   ],
 }
 
+// Botón de la barra de arriba en mobile para abrir el sidebar (dos líneas)
+export function MobileMenuButton() {
+  const { setOpenMobile } = useSidebar()
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      aria-label="Abrir menú"
+      onClick={() => setOpenMobile(true)}
+    >
+      <Equal className="size-5" />
+    </Button>
+  )
+}
+
 function iniciales(nombre: string) {
   return nombre
     .split(' ')
@@ -59,20 +77,41 @@ export function AppSidebar({
   email: string
 }) {
   const pathname = usePathname()
+  // En mobile el sidebar es un panel encima de la página: lo cerramos al navegar
+  const { isMobile, setOpenMobile } = useSidebar()
   const items = navPorRol[rol]
   const home = rol === 'DUENIO' ? '/dueno' : '/jugador'
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="h-16 justify-center px-2 py-0">
-        {/* Sidebar abierto: logo a la izquierda y el botón de plegar a la derecha.
+        {/* Sidebar abierto: logo y nombre a la izquierda, y a la derecha el botón
+            de plegar (desktop) o una cruz para cerrar (mobile).
             pl-2 alinea el logo con los íconos del nav: el contenido de abajo
             suma el p-2 del SidebarContent, del SidebarGroup y del botón. */}
         <div className="flex items-center justify-between pl-2 group-data-[collapsible=icon]:hidden">
-          <Link href={home} className="flex items-center">
+          <Link
+            href={home}
+            className="flex items-center gap-2"
+            onClick={() => setOpenMobile(false)}
+          >
             <Logo className="size-8" />
+            <span className="font-brand text-xl font-extrabold tracking-tight">
+              Toca<span className="text-primary">Y</span>Juga
+            </span>
           </Link>
-          <SidebarTrigger />
+          {isMobile ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Cerrar menú"
+              onClick={() => setOpenMobile(false)}
+            >
+              <X />
+            </Button>
+          ) : (
+            <SidebarTrigger />
+          )}
         </div>
 
         {/* Sidebar plegado: se ve el logo, y al pasar el mouse por encima
@@ -95,7 +134,7 @@ export function AppSidebar({
               {items.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
-                    render={<Link href={item.href} />}
+                    render={<Link href={item.href} onClick={() => setOpenMobile(false)} />}
                     isActive={pathname === item.href}
                     tooltip={item.label}
                     className="h-10 text-base [&_svg]:size-5 group-data-[collapsible=icon]:p-1.5!"

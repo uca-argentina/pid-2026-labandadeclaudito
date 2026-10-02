@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ChangeEvent } from 'react'
+import { useState, type BaseSyntheticEvent, type ChangeEvent } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -10,6 +10,9 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { MinAdvanceInput } from '@/components/min-advance-input'
+import { ZonaSelect } from '@/components/zona-select'
+import { timeTextToMinutes } from '@/lib/time'
 import {
   complexImageSchema,
   createComplexSchema,
@@ -41,10 +44,21 @@ export function FormNuevoComplejo() {
   const [errorFotos, setErrorFotos] = useState('')
   const [subiendoFotos, setSubiendoFotos] = useState(false)
   const [fotosFallidas, setFotosFallidas] = useState(0)
+  const [errorAnticipacion, setErrorAnticipacion] = useState('')
 
   const { register, handleSubmit, formState } = useForm<CreateComplexInput>({
     resolver: zodResolver(createComplexSchema),
-    defaultValues: { nombre: '', direccion: '', zona: '', contacto: '' },
+    // minAdvanceMinutesDefault se carga con un TimeSelect que no maneja
+    // react-hook-form: se pasa a minutos en onSubmit.
+    defaultValues: {
+      nombre: '',
+      direccion: '',
+      zona: '',
+      contacto: '',
+      porcentajeSenaDefault: 30,
+      minAdvanceMinutesDefault: 180,
+      cancellationHours: 24,
+    },
   })
   const errores = formState.errors
   const hayErrores = Object.keys(errores).length > 0
@@ -80,13 +94,29 @@ export function FormNuevoComplejo() {
     setFotos(fotos.filter((_, i) => i !== indice))
   }
 
-  async function onSubmit(datos: CreateComplexInput) {
+  async function onSubmit(datos: CreateComplexInput, event?: BaseSyntheticEvent) {
     setErrorServidor('')
+    setErrorAnticipacion('')
+
+    if (!(event?.target instanceof HTMLFormElement)) {
+      return
+    }
+    const form = new FormData(event.target)
+    const datosCompletos = {
+      ...datos,
+      // Campo vacío = sin anticipación (0)
+      minAdvanceMinutesDefault: timeTextToMinutes(form.get('minAdvance') as string) ?? 0,
+    }
+    const parsed = createComplexSchema.safeParse(datosCompletos)
+    if (!parsed.success) {
+      setErrorAnticipacion(parsed.error.issues[0].message)
+      return
+    }
 
     const res = await fetch('/api/complexes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(datos),
+      body: JSON.stringify(parsed.data),
     })
     const json = await res.json()
     if (!res.ok) {
@@ -211,15 +241,13 @@ export function FormNuevoComplejo() {
             <MensajeError mensaje={errores.direccion?.message} />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="zona">Zona *</Label>
-            <Input
+          <div className="space-y-2 sm:col-span-2">
+            <ZonaSelect
               id="zona"
-              placeholder="Ej: Villa Devoto, CABA"
+              defaultValue=""
               aria-invalid={errores.zona ? true : undefined}
               {...register('zona')}
             />
-            <p className="text-muted-foreground text-sm">Barrio o localidad.</p>
             <MensajeError mensaje={errores.zona?.message} />
           </div>
 
@@ -236,6 +264,50 @@ export function FormNuevoComplejo() {
               Lo usamos para que los jugadores te contacten por una reserva.
             </p>
             <MensajeError mensaje={errores.contacto?.message} />
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="porcentajeSenaDefault">Seña por defecto (%)</Label>
+            <Input
+              id="porcentajeSenaDefault"
+              type="number"
+              min={0}
+              max={100}
+              aria-invalid={errores.porcentajeSenaDefault ? true : undefined}
+              {...register('porcentajeSenaDefault', { valueAsNumber: true })}
+            />
+            <p className="text-muted-foreground text-sm">
+              Se cobra al reservar en todas tus canchas. Una cancha puede tener su propio % (se
+              configura al editarla).
+            </p>
+            <MensajeError mensaje={errores.porcentajeSenaDefault?.message} />
+          </div>
+
+          <div className="sm:col-span-2">
+            <MinAdvanceInput
+              name="minAdvance"
+              label="Anticipación mínima para reservar"
+              defaultMinutes={180}
+              help="Cuánto antes del turno se puede reservar como mínimo. 0 = hasta que empieza. Después cada cancha puede tener la suya."
+              error={errorAnticipacion}
+            />
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="cancellationHours">Cancelación con devolución (horas antes)</Label>
+            <Input
+              id="cancellationHours"
+              type="number"
+              min={4}
+              max={168}
+              aria-invalid={errores.cancellationHours ? true : undefined}
+              {...register('cancellationHours', { valueAsNumber: true })}
+            />
+            <p className="text-muted-foreground text-sm">
+              Si el jugador cancela con al menos estas horas de anticipación, se le devuelve la
+              seña. Aplica a todas tus canchas.
+            </p>
+            <MensajeError mensaje={errores.cancellationHours?.message} />
           </div>
         </CardContent>
       </Card>

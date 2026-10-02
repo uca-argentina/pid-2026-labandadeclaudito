@@ -13,9 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { TimeSelect } from '@/components/time-select'
 import type { Deporte, TipoSuperficie } from '@/lib/generated/prisma/client'
 import { createCourtSchema } from '@/lib/validations/court'
-import { deporteLabels, superficieLabels } from '@/lib/labels'
+import { deporteLabels, superficieLabels, superficiesPorDeporte } from '@/lib/labels'
+import { generateSlots } from '@/lib/time'
 
 const duracionOpciones: Record<string, string> = {
   '30': '30 minutos',
@@ -23,16 +25,6 @@ const duracionOpciones: Record<string, string> = {
   '60': '60 minutos (estándar)',
   '90': '90 minutos',
   '120': '120 minutos',
-}
-
-function contarTurnos(horaApertura: string, horaCierre: string, duracionTurnoMin: number): number {
-  const [ha, ma] = horaApertura.split(':').map(Number)
-  const [hc, mc] = horaCierre.split(':').map(Number)
-  const minutoInicio = ha * 60 + ma
-  const minutoCierre = hc * 60 + mc
-  if (!Number.isFinite(minutoInicio) || !Number.isFinite(minutoCierre) || duracionTurnoMin <= 0)
-    return 0
-  return Math.max(0, Math.floor((minutoCierre - minutoInicio) / duracionTurnoMin))
 }
 
 export function CourtBatchForm({ complejoId }: { complejoId: string }) {
@@ -46,7 +38,10 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
 
-  const turnosPorCancha = contarTurnos(horaApertura, horaCierre, Number(duracionTurnoMin))
+  // Mismo cálculo que hace el server al generar los turnos reales (lib/time.ts,
+  // generateSlots): así la vista previa nunca queda desincronizada de lo que
+  // en verdad se va a poder reservar.
+  const turnosPorCancha = generateSlots(horaApertura, horaCierre, Number(duracionTurnoMin)).length
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -95,8 +90,19 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Deporte</Label>
-            <Select value={deporte} onValueChange={(v) => setDeporte(v as typeof deporte)}>
-              <SelectTrigger className="w-full">
+            <Select
+              value={deporte}
+              onValueChange={(v) => {
+                const nuevoDeporte = v as typeof deporte
+                setDeporte(nuevoDeporte)
+                // Si la superficie elegida no tiene sentido para el nuevo deporte,
+                // se pasa a la primera que sí (ej: fútbol nunca en polvo de ladrillo)
+                if (!superficiesPorDeporte[nuevoDeporte].includes(tipoSuperficie)) {
+                  setTipoSuperficie(superficiesPorDeporte[nuevoDeporte][0])
+                }
+              }}
+            >
+              <SelectTrigger className="w-full" aria-label="Deporte">
                 <SelectValue>{(v: typeof deporte) => deporteLabels[v]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -112,16 +118,17 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
           <div className="space-y-2">
             <Label>Superficie</Label>
             <Select
+              key={deporte}
               value={tipoSuperficie}
               onValueChange={(v) => setTipoSuperficie(v as typeof tipoSuperficie)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" aria-label="Superficie">
                 <SelectValue>{(v: typeof tipoSuperficie) => superficieLabels[v]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(superficieLabels).map(([valor, label]) => (
+                {superficiesPorDeporte[deporte].map((valor) => (
                   <SelectItem key={valor} value={valor}>
-                    {label}
+                    {superficieLabels[valor]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -177,31 +184,19 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="horaApertura">Apertura</Label>
-            <Input
-              id="horaApertura"
-              name="horaApertura"
-              type="time"
-              value={horaApertura}
-              onChange={(e) => setHoraApertura(e.target.value)}
-            />
+            <Label>Apertura</Label>
+            <TimeSelect label="Apertura" value={horaApertura} onChange={setHoraApertura} />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="horaCierre">Cierre</Label>
-            <Input
-              id="horaCierre"
-              name="horaCierre"
-              type="time"
-              value={horaCierre}
-              onChange={(e) => setHoraCierre(e.target.value)}
-            />
+            <Label>Cierre</Label>
+            <TimeSelect label="Cierre" value={horaCierre} onChange={setHoraCierre} />
           </div>
 
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="duracionTurnoMin">Duración de turno</Label>
             <Select value={duracionTurnoMin} onValueChange={(v) => v && setDuracionTurnoMin(v)}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" aria-label="Duración de turno">
                 <SelectValue>{(v: string) => duracionOpciones[v]}</SelectValue>
               </SelectTrigger>
               <SelectContent>

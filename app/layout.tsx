@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Bricolage_Grotesque, Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
@@ -13,6 +13,12 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
+// Solo para el nombre "TocaYJuga" (clase font-brand)
+const bricolage = Bricolage_Grotesque({
+  variable: '--font-bricolage',
+  subsets: ['latin'],
+})
+
 export const metadata: Metadata = {
   title: 'TocaYJuga',
   description: 'Reservá canchas de fútbol de distintos complejos en un solo lugar.',
@@ -23,7 +29,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html
       lang="es"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

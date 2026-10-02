@@ -1,0 +1,2097 @@
+/*
+ * Animación del panel del login (components/login-hero/).
+ * FUERA DEL ALCANCE DEL PARCIAL.
+ *
+ * Qué cuenta: el dolor (llamar a cada complejo y que todos digan que no) y la
+ * solución, con DOS historias de grupos distintos: reservan fácil en la web
+ * app (la app sirve para cualquier deporte), pasa el tiempo hasta el partido,
+ * llegan y juegan. Las pantallas son las del front real (ver
+ * desktop-screens.tsx y mobile-screens.tsx).
+ *
+ * Cómo funciona el loop:
+ * - Cada elemento tiene UN @keyframes, todos con la misma duración (30 s),
+ *   la misma curva e `infinite`. Nunca se usa animation-delay: el momento en
+ *   que pasa cada cosa sale de los porcentajes (1 s del guion = 2,857 %).
+ * - Todo @keyframes deja el 100 % igual al 0 %, así el último cuadro es
+ *   idéntico al primero y no se nota el salto al reiniciar. Lo que se mueve
+ *   se reinicia mientras su escena está oculta.
+ * - Solo se animan transform y opacity.
+ * - Las leyendas de abajo ("Antes…", "Elegí deporte…") van dentro de cada
+ *   escena (SVG), así entran y salen exactamente con ella.
+ * - Los estilos base (fuera de los keyframes) son el cuadro estático que se ve
+ *   con prefers-reduced-motion: los 10 jugadores del fútbol en su lugar, con
+ *   el contador "10/10".
+ * - Las cuentas de tiempo de abajo son segundos de un guion de 35 s; el loop
+ *   real dura 30 s (--hero-duration), o sea corre 1,17 veces más rápido.
+ *
+ * Línea de tiempo:
+ *   0–2,8 s       dolor: tres complejos, cada uno contesta que no
+ *   2,8–13,9 s    grupo A, laptop: Filtros → Deporte (el desplegable pasa por
+ *                 todas las opciones, elige Fútbol 5) → Ver resultados →
+ *                 Reservar → horario → Reservar
+ *   13,9–16 s     ticket "Fútbol 5" con cuenta regresiva: "Faltan 2 días" → "¡Es hoy!"
+ *   16–19,9 s     llegan los 10 jugadores a Complejo Oeste, 5 contra 5, y gol
+ *   19,9–28,9 s   grupo B, celular: Deporte (la rueda pasa por todas las
+ *                 opciones, elige Pádel) → horario → Reservar
+ *   28,9–31 s     ticket "Pádel" con la misma cuenta regresiva
+ *   31–34,2 s     llegan los 4 jugadores a Club Palermo, 2 contra 2, y peloteo
+ *   34,2–35 s     el pádel se va y recién después vuelve la escena del dolor
+ *                (no se superponen; = cuadro de 0 s)
+ */
+
+.hero-stage {
+  --hero-duration: 30s;
+  --hero-easing: ease-in-out;
+}
+
+/* Por defecto los elementos animados escalan/rotan sobre su propio centro.
+   Solo los animados (clases que empiezan con hero-, no fill-hero-skin-*): si
+   se aplica a todos, pisa el centro de los transform="rotate(...)" fijos del
+   SVG. Va dentro de :where() para tener especificidad 0 y que las reglas de
+   cada elemento (pulgar, cursor, barra...) puedan cambiar el pivote. */
+:where(.hero-stage [class^='hero-'], .hero-stage [class*=' hero-']) {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* ---------- Cuadro estático (base) ---------- */
+
+.hero-pain,
+.hero-laptop,
+.hero-phone,
+.hero-time-a,
+.hero-time-b,
+.hero-padel,
+.hero-fgoal {
+  opacity: 0;
+}
+
+/* ---------- Escena 0: el dolor (0–2,8 s) ---------- */
+
+/* Se ve al arrancar el loop y también al final (el pádel funde a esta
+   escena), así que el cuadro de 35 s es igual al de 0 s. */
+.hero-pain {
+  animation: hero-pain var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pain {
+  0%,
+  8% {
+    opacity: 1;
+  }
+  9.143%,
+  98.857% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Cada complejo contesta que no, uno después del otro (0,4 / 1 / 1,6 s) */
+.hero-pain-busy-1 {
+  animation: hero-pain-busy-1 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pain-busy-1 {
+  0%,
+  1.143% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  2% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  2.571%,
+  9.429% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  9.714%,
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+.hero-pain-busy-2 {
+  animation: hero-pain-busy-2 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pain-busy-2 {
+  0%,
+  2.857% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  3.714% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  4.286%,
+  9.429% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  9.714%,
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+.hero-pain-busy-3 {
+  animation: hero-pain-busy-3 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pain-busy-3 {
+  0%,
+  4.571% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  5.429% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  6%,
+  9.429% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  9.714%,
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+/* El teléfono "suena" mientras llaman */
+.hero-pain-ring {
+  animation: hero-pain-ring var(--hero-duration) linear infinite;
+}
+@keyframes hero-pain-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  0.457% {
+    transform: rotate(-14deg);
+  }
+  0.914% {
+    transform: rotate(0deg);
+  }
+  1.371% {
+    transform: rotate(14deg);
+  }
+  1.829% {
+    transform: rotate(-14deg);
+  }
+  2.286% {
+    transform: rotate(14deg);
+  }
+  2.743% {
+    transform: rotate(-14deg);
+  }
+  3.2% {
+    transform: rotate(14deg);
+  }
+  3.657%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* ---------- Grupo A: laptop (2,8–13,9 s) ---------- */
+
+.hero-laptop {
+  animation: hero-laptop var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-laptop {
+  0%,
+  8% {
+    opacity: 0;
+  }
+  9.143%,
+  39.714% {
+    opacity: 1;
+  }
+  40.857%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Cursor: la punta del dibujo está en (0, 0) y se lo lleva con translate a
+   cada botón; el clic lo achica un instante. En el desplegable de Deporte
+   baja siguiendo cada opción, como cuando se las recorre con el mouse. */
+.hero-cursor {
+  transform-origin: 0 0;
+  animation: hero-cursor var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-cursor {
+  0%,
+  9.714% {
+    transform: translate(250px, 60px) scale(1);
+  }
+  11.429%,
+  11.714% {
+    transform: translate(147px, 64px) scale(1);
+  }
+  11.857% {
+    transform: translate(147px, 64px) scale(0.8);
+  }
+  12.143%,
+  13.143% {
+    transform: translate(147px, 64px) scale(1);
+  }
+  14.571%,
+  15% {
+    transform: translate(270px, 109px) scale(1);
+  }
+  15% {
+    transform: translate(270px, 109px) scale(0.8);
+  }
+  15.143% {
+    transform: translate(262px, 121.7px) scale(1);
+  }
+  15.286% {
+    transform: translate(270px, 109px) scale(1);
+  }
+  15.486% {
+    transform: translate(262px, 121.7px) scale(1);
+  }
+  16%,
+  16.343% {
+    transform: translate(262px, 129.1px) scale(1);
+  }
+  16.857%,
+  17.2% {
+    transform: translate(262px, 136.5px) scale(1);
+  }
+  17.714%,
+  18.057% {
+    transform: translate(262px, 143.9px) scale(1);
+  }
+  18.571%,
+  18.914% {
+    transform: translate(262px, 151.3px) scale(1);
+  }
+  19.429%,
+  19.771% {
+    transform: translate(262px, 158.7px) scale(1);
+  }
+  20.286%,
+  21.143% {
+    transform: translate(262px, 166.10000000000002px) scale(1);
+  }
+  22.857%,
+  23.286% {
+    transform: translate(262px, 129.1px) scale(1);
+  }
+  23.429% {
+    transform: translate(262px, 129.1px) scale(0.8);
+  }
+  23.714%,
+  24.571% {
+    transform: translate(262px, 129.1px) scale(1);
+  }
+  26.286%,
+  26.571% {
+    transform: translate(285px, 168px) scale(1);
+  }
+  26.714% {
+    transform: translate(285px, 168px) scale(0.8);
+  }
+  27%,
+  28.286% {
+    transform: translate(285px, 168px) scale(1);
+  }
+  30%,
+  30.286% {
+    transform: translate(293px, 119px) scale(1);
+  }
+  30.429% {
+    transform: translate(293px, 119px) scale(0.8);
+  }
+  30.714%,
+  31.714% {
+    transform: translate(293px, 119px) scale(1);
+  }
+  33.143%,
+  33.429% {
+    transform: translate(208px, 101px) scale(1);
+  }
+  33.571% {
+    transform: translate(208px, 101px) scale(0.8);
+  }
+  33.857%,
+  34.286% {
+    transform: translate(208px, 101px) scale(1);
+  }
+  35.714%,
+  36% {
+    transform: translate(298px, 159px) scale(1);
+  }
+  36.143% {
+    transform: translate(298px, 159px) scale(0.8);
+  }
+  36.429%,
+  40.857% {
+    transform: translate(298px, 159px) scale(1);
+  }
+  41.143%,
+  100% {
+    transform: translate(250px, 60px) scale(1);
+  }
+}
+
+/* El mouse y la mano acompañan el recorrido del cursor (a 0,1 de distancia).
+   La mano entra sola desde abajo hasta el mouse y vuelve a salir por abajo (a
+   0 s y 35 s el escritorio queda con el mouse solo). */
+.hero-mouse {
+  animation: hero-mouse var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-mouse {
+  0%,
+  9.714% {
+    transform: translate(-6.64px, -4.12px);
+  }
+  11.429%,
+  13.143% {
+    transform: translate(-16.94px, -3.72px);
+  }
+  14.571%,
+  15% {
+    transform: translate(-4.64px, 0.78px);
+  }
+  15.143%,
+  15.486% {
+    transform: translate(-5.44px, 2.05px);
+  }
+  16%,
+  16.343% {
+    transform: translate(-5.44px, 2.79px);
+  }
+  16.857%,
+  17.2% {
+    transform: translate(-5.44px, 3.53px);
+  }
+  17.714%,
+  18.057% {
+    transform: translate(-5.44px, 4.27px);
+  }
+  18.571%,
+  18.914% {
+    transform: translate(-5.44px, 5.01px);
+  }
+  19.429%,
+  19.771% {
+    transform: translate(-5.44px, 5.75px);
+  }
+  20.286%,
+  21.143% {
+    transform: translate(-5.44px, 6.49px);
+  }
+  22.857%,
+  24.571% {
+    transform: translate(-5.44px, 2.79px);
+  }
+  26.286%,
+  28.286% {
+    transform: translate(-3.14px, 6.68px);
+  }
+  30%,
+  31.714% {
+    transform: translate(-2.34px, 1.78px);
+  }
+  33.143%,
+  34.286% {
+    transform: translate(-10.84px, -0.02px);
+  }
+  35.714%,
+  40.857% {
+    transform: translate(-1.84px, 5.78px);
+  }
+  41.143%,
+  100% {
+    transform: translate(-6.64px, -4.12px);
+  }
+}
+
+.hero-laptop-hand {
+  animation: hero-laptop-hand var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-laptop-hand {
+  0%,
+  8.286% {
+    transform: translate(-6.64px, 95.88px);
+  }
+  9.714% {
+    transform: translate(-6.64px, -4.12px);
+  }
+  11.429%,
+  13.143% {
+    transform: translate(-16.94px, -3.72px);
+  }
+  14.571%,
+  15% {
+    transform: translate(-4.64px, 0.78px);
+  }
+  15.143%,
+  15.486% {
+    transform: translate(-5.44px, 2.05px);
+  }
+  16%,
+  16.343% {
+    transform: translate(-5.44px, 2.79px);
+  }
+  16.857%,
+  17.2% {
+    transform: translate(-5.44px, 3.53px);
+  }
+  17.714%,
+  18.057% {
+    transform: translate(-5.44px, 4.27px);
+  }
+  18.571%,
+  18.914% {
+    transform: translate(-5.44px, 5.01px);
+  }
+  19.429%,
+  19.771% {
+    transform: translate(-5.44px, 5.75px);
+  }
+  20.286%,
+  21.143% {
+    transform: translate(-5.44px, 6.49px);
+  }
+  22.857%,
+  24.571% {
+    transform: translate(-5.44px, 2.79px);
+  }
+  26.286%,
+  28.286% {
+    transform: translate(-3.14px, 6.68px);
+  }
+  30%,
+  31.714% {
+    transform: translate(-2.34px, 1.78px);
+  }
+  33.143%,
+  34.286% {
+    transform: translate(-10.84px, -0.02px);
+  }
+  35.714%,
+  40% {
+    transform: translate(-1.84px, 5.78px);
+  }
+  40.857% {
+    transform: translate(-1.84px, 105.78px);
+  }
+  41.143%,
+  100% {
+    transform: translate(-6.64px, 95.88px);
+  }
+}
+
+/* Clic: la punta del índice gira unos grados sobre su articulación del
+   medio (el SVG la deja en (0, 0)) y baja hacia el botón */
+.hero-index-finger {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: hero-index-finger var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-index-finger {
+  0%,
+  11.6% {
+    transform: rotate(0deg);
+  }
+  11.714%,
+  11.914% {
+    transform: rotate(-7deg);
+  }
+  12.086%,
+  14.743% {
+    transform: rotate(0deg);
+  }
+  14.857%,
+  15.057% {
+    transform: rotate(-7deg);
+  }
+  15.229%,
+  23.171% {
+    transform: rotate(0deg);
+  }
+  23.286%,
+  23.486% {
+    transform: rotate(-7deg);
+  }
+  23.657%,
+  26.457% {
+    transform: rotate(0deg);
+  }
+  26.571%,
+  26.771% {
+    transform: rotate(-7deg);
+  }
+  26.943%,
+  30.171% {
+    transform: rotate(0deg);
+  }
+  30.286%,
+  30.486% {
+    transform: rotate(-7deg);
+  }
+  30.657%,
+  33.314% {
+    transform: rotate(0deg);
+  }
+  33.429%,
+  33.629% {
+    transform: rotate(-7deg);
+  }
+  33.8%,
+  35.886% {
+    transform: rotate(0deg);
+  }
+  36%,
+  36.2% {
+    transform: rotate(-7deg);
+  }
+  36.371%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Pantalla de la laptop: lista → panel de Filtros → resultados → panel de reserva */
+.hero-d-list {
+  animation: hero-d-list var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-list {
+  0%,
+  27.143% {
+    opacity: 1;
+  }
+  28.286%,
+  41.143% {
+    opacity: 0;
+  }
+  41.429%,
+  100% {
+    opacity: 1;
+  }
+}
+
+.hero-d-detail {
+  animation: hero-d-detail var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-detail {
+  0%,
+  27.143% {
+    opacity: 0;
+  }
+  28.286%,
+  41.143% {
+    opacity: 1;
+  }
+  41.429%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-d-scrim1 {
+  animation: hero-d-scrim1 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-scrim1 {
+  0%,
+  12% {
+    opacity: 0;
+  }
+  13.143%,
+  26.857% {
+    opacity: 1;
+  }
+  28%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-d-sheet1 {
+  animation: hero-d-sheet1 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-sheet1 {
+  0%,
+  12% {
+    transform: translateX(160px);
+  }
+  13.143%,
+  26.857% {
+    transform: translateX(0);
+  }
+  28%,
+  100% {
+    transform: translateX(160px);
+  }
+}
+
+.hero-d-dd {
+  animation: hero-d-dd var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-dd {
+  0%,
+  14.857% {
+    opacity: 0;
+  }
+  15%,
+  23.286% {
+    opacity: 1;
+  }
+  23.571%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* La franja marcada del desplegable baja por las 7 opciones (Todos … Básquet) y
+   vuelve a Fútbol 5, que es la que se elige */
+.hero-d-hl {
+  animation: hero-d-hl var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-hl {
+  0% {
+    transform: translate(0px, 0px);
+  }
+  15.143%,
+  15.486% {
+    transform: translate(0px, 0px);
+  }
+  16%,
+  16.343% {
+    transform: translate(0px, 7.4px);
+  }
+  16.857%,
+  17.2% {
+    transform: translate(0px, 14.8px);
+  }
+  17.714%,
+  18.057% {
+    transform: translate(0px, 22.2px);
+  }
+  18.571%,
+  18.914% {
+    transform: translate(0px, 29.6px);
+  }
+  19.429%,
+  19.771% {
+    transform: translate(0px, 37px);
+  }
+  20.286%,
+  21.143% {
+    transform: translate(0px, 44.4px);
+  }
+  22.857%,
+  41.143% {
+    transform: translate(0px, 7.4px);
+  }
+  41.429%,
+  100% {
+    transform: translate(0px, 0px);
+  }
+}
+
+.hero-d-val-all {
+  animation: hero-d-val-all var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-val-all {
+  0%,
+  23.429% {
+    opacity: 1;
+  }
+  23.714%,
+  41.143% {
+    opacity: 0;
+  }
+  41.429%,
+  100% {
+    opacity: 1;
+  }
+}
+
+.hero-d-val-f5 {
+  animation: hero-d-val-f5 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-val-f5 {
+  0%,
+  23.429% {
+    opacity: 0;
+  }
+  23.714%,
+  41.143% {
+    opacity: 1;
+  }
+  41.429%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-d-surf {
+  animation: hero-d-surf var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-surf {
+  0%,
+  23.714% {
+    opacity: 0;
+  }
+  24.571%,
+  41.143% {
+    opacity: 1;
+  }
+  41.429%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-d-scrim2 {
+  animation: hero-d-scrim2 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-scrim2 {
+  0%,
+  30.571% {
+    opacity: 0;
+  }
+  31.714%,
+  41.143% {
+    opacity: 1;
+  }
+  41.429%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-d-sheet2 {
+  animation: hero-d-sheet2 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-sheet2 {
+  0%,
+  30.571% {
+    transform: translateX(160px);
+  }
+  31.714%,
+  41.143% {
+    transform: translateX(0);
+  }
+  41.429%,
+  100% {
+    transform: translateX(160px);
+  }
+}
+
+.hero-d-slot {
+  animation: hero-d-slot var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-slot {
+  0%,
+  33.429% {
+    opacity: 0;
+  }
+  33.714%,
+  41.143% {
+    opacity: 1;
+  }
+  41.429%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-d-summary {
+  animation: hero-d-summary var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-summary {
+  0%,
+  33.714% {
+    opacity: 0;
+  }
+  34.286%,
+  36% {
+    opacity: 1;
+  }
+  36.429%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-d-confirm {
+  animation: hero-d-confirm var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-d-confirm {
+  0%,
+  36.286% {
+    opacity: 0;
+  }
+  37.143%,
+  41.143% {
+    opacity: 1;
+  }
+  41.429%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- Tiempo: ticket A (13,9–16,4 s) ---------- */
+
+.hero-time-a {
+  animation: hero-time-a var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-time-a {
+  0%,
+  39.714% {
+    opacity: 0;
+  }
+  40.857%,
+  45.714% {
+    opacity: 1;
+  }
+  46.857%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* El ticket nace donde estaba el check de la reserva y se asienta */
+.hero-ticket-a {
+  animation: hero-ticket-a var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-ticket-a {
+  0%,
+  40.143% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  41.286%,
+  45.714% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  46.857%,
+  100% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+}
+
+/* Cuenta regresiva: "Faltan 2 días" cede el lugar a "¡Es hoy!" */
+.hero-days-a {
+  animation: hero-days-a var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-days-a {
+  0%,
+  41% {
+    opacity: 0;
+  }
+  41.429%,
+  43.286% {
+    opacity: 1;
+  }
+  43.714%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-today-a {
+  animation: hero-today-a var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-today-a {
+  0%,
+  43.571% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  44% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  44.429%,
+  45.714% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  46.857%,
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* La barra se llena de izquierda a derecha: el tiempo que pasa */
+.hero-bar-a {
+  transform-origin: left center;
+  animation: hero-bar-a var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-bar-a {
+  0%,
+  41.143% {
+    transform: scaleX(0.02);
+  }
+  43.714%,
+  45.714% {
+    transform: scaleX(1);
+  }
+  47%,
+  100% {
+    transform: scaleX(0.02);
+  }
+}
+
+/* El logo late una vez cuando llega el día */
+.hero-logo-a {
+  animation: hero-logo-a var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-logo-a {
+  0%,
+  43.571% {
+    transform: scale(1);
+  }
+  44.143% {
+    transform: scale(1.25);
+  }
+  44.714%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ---------- Grupo A llega y juega: fútbol 5 (16–19,9 s) ---------- */
+
+.hero-football {
+  animation: hero-football var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-football {
+  0%,
+  45.714% {
+    opacity: 0;
+  }
+  46.857%,
+  56.857% {
+    opacity: 1;
+  }
+  58%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* El cartel del complejo baja desde arriba */
+.hero-fbanner {
+  animation: hero-fbanner var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fbanner {
+  0%,
+  45.857% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+  46.714%,
+  56.857% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  58%,
+  100% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}
+
+/* Los 10 jugadores entran corriendo de a uno (el rojo por la izquierda, el
+   azul por la derecha) a su posición. Empiezan cada 0,06 s uno después del
+   otro y tardan 0,55 s: el último llega a los 17,4 s. */
+.hero-fplayer-1 {
+  animation: hero-fplayer-1 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fplayer-1 {
+  0%,
+  46.286% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+  46.571% {
+    opacity: 1;
+    transform: translateX(-150px);
+  }
+  47.857%,
+  58% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  58.286%,
+  100% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+}
+
+.hero-fplayer-2 {
+  animation: hero-fplayer-2 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fplayer-2 {
+  0%,
+  46.457% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+  46.743% {
+    opacity: 1;
+    transform: translateX(-150px);
+  }
+  48.029%,
+  58% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  58.286%,
+  100% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+}
+
+.hero-fplayer-3 {
+  animation: hero-fplayer-3 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fplayer-3 {
+  0%,
+  46.629% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+  46.914% {
+    opacity: 1;
+    transform: translateX(-150px);
+  }
+  48.2%,
+  58% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  58.286%,
+  100% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+}
+
+.hero-fplayer-4 {
+  animation: hero-fplayer-4 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fplayer-4 {
+  0%,
+  46.8% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+  47.086% {
+    opacity: 1;
+    transform: translateX(-150px);
+  }
+  48.371%,
+  58% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  58.286%,
+  100% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+}
+
+.hero-fplayer-5 {
+  animation: hero-fplayer-5 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fplayer-5 {
+  0%,
+  46.971% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+  47.257% {
+    opacity: 1;
+    transform: translateX(-150px);
+  }
+  48.543%,
+  58% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  58.286%,
+  100% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+}
+
+.hero-fplayer-6 {
+  animation: hero-fplayer-6 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fplayer-6 {
+  0%,
+  47.143% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+  47.429% {
+    opacity: 1;
+    transform: translateX(150px);
+  }
+  48.714%,
+  58% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  58.286%,
+  100% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+}
+
+.hero-fplayer-7 {
+  animation: hero-fplayer-7 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fplayer-7 {
+  0%,
+  47.314% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+  47.6% {
+    opacity: 1;
+    transform: translateX(150px);
+  }
+  48.886%,
+  58% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  58.286%,
+  100% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+}
+
+.hero-fplayer-8 {
+  animation: hero-fplayer-8 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fplayer-8 {
+  0%,
+  47.486% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+  47.771% {
+    opacity: 1;
+    transform: translateX(150px);
+  }
+  49.057%,
+  58% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  58.286%,
+  100% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+}
+
+.hero-fplayer-9 {
+  animation: hero-fplayer-9 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fplayer-9 {
+  0%,
+  47.657% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+  47.943% {
+    opacity: 1;
+    transform: translateX(150px);
+  }
+  49.229%,
+  58% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  58.286%,
+  100% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+}
+
+.hero-fplayer-10 {
+  animation: hero-fplayer-10 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fplayer-10 {
+  0%,
+  47.829% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+  48.114% {
+    opacity: 1;
+    transform: translateX(150px);
+  }
+  49.4%,
+  58% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  58.286%,
+  100% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+}
+
+/* Contador "¡Llegaron todos! 10/10" */
+.hero-fcount {
+  animation: hero-fcount var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fcount {
+  0%,
+  49.714% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  50.429%,
+  56.857% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  58%,
+  100% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+/* Pelota: sale del medio, pasa entre los delanteros del equipo rojo y remata
+   al arco derecho. Los translate son relativos al centro (200, 150): los
+   delanteros están en (175, 125) y (175, 175). Vuelve al medio con la
+   escena oculta. */
+.hero-fball {
+  animation: hero-fball var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fball {
+  0%,
+  50.857% {
+    transform: translate(0, 0);
+  }
+  51.571%,
+  52% {
+    transform: translate(-25px, -25px);
+  }
+  52.857%,
+  53.286% {
+    transform: translate(-25px, 25px);
+  }
+  54.143%,
+  54.571% {
+    transform: translate(30px, 15px);
+  }
+  55.286%,
+  58% {
+    transform: translate(113px, 0);
+  }
+  58.286%,
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* Gol: el arco destella y el equipo rojo festeja */
+.hero-fgoal {
+  animation: hero-fgoal var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fgoal {
+  0%,
+  55.286% {
+    opacity: 0;
+  }
+  55.571% {
+    opacity: 1;
+  }
+  56.143%,
+  57.714% {
+    opacity: 0.5;
+  }
+  58%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-fcheer {
+  animation: hero-fcheer var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-fcheer {
+  0%,
+  55.571% {
+    transform: scale(1);
+  }
+  55.857% {
+    transform: scale(1.3);
+  }
+  56.286% {
+    transform: scale(1);
+  }
+  56.571% {
+    transform: scale(1.2);
+  }
+  57%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ---------- Grupo B: celular (19,9–28,9 s) ---------- */
+
+.hero-phone {
+  animation: hero-phone var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-phone {
+  0%,
+  56.857% {
+    opacity: 0;
+  }
+  58%,
+  82.571% {
+    opacity: 1;
+  }
+  83.714%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Mano y celular suben juntos desde abajo */
+.hero-phone-hand {
+  animation: hero-phone-hand var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-phone-hand {
+  0%,
+  57% {
+    transform: translateY(50px);
+  }
+  58.571%,
+  82.571% {
+    transform: translateY(0);
+  }
+  83.714%,
+  100% {
+    transform: translateY(50px);
+  }
+}
+
+/* Touch: la punta del pulgar gira hacia abajo sobre el centro del nudillo
+   (ver el corte en phone-scene.tsx) como una articulación, aprieta, se queda
+   un instante (sale la onda) y vuelve a su lugar. Son 4 toques, siempre en el
+   mismo punto: el select, la opción Pádel, el horario y "Reservar". */
+.hero-thumb {
+  transform-box: view-box;
+  transform-origin: 250.5px 199px;
+  animation: hero-thumb var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-thumb {
+  0%,
+  59.657% {
+    transform: rotate(0deg);
+  }
+  60%,
+  60.429% {
+    transform: rotate(-8deg);
+  }
+  60.857%,
+  70.229% {
+    transform: rotate(0deg);
+  }
+  70.571%,
+  71% {
+    transform: rotate(-8deg);
+  }
+  71.429%,
+  75.657% {
+    transform: rotate(0deg);
+  }
+  76%,
+  76.429% {
+    transform: rotate(-8deg);
+  }
+  76.857%,
+  79.371% {
+    transform: rotate(0deg);
+  }
+  79.714%,
+  80.143% {
+    transform: rotate(-8deg);
+  }
+  80.571%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.hero-ripple {
+  animation: hero-ripple var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-ripple {
+  0%,
+  59.971% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.4);
+  }
+  60.714% {
+    opacity: 0.9;
+    transform: scale(1.7);
+  }
+  61.429% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+  61.457%,
+  70.543% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  70.571% {
+    opacity: 1;
+    transform: scale(0.4);
+  }
+  71.286% {
+    opacity: 0.9;
+    transform: scale(1.7);
+  }
+  72% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+  72.029%,
+  75.971% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  76% {
+    opacity: 1;
+    transform: scale(0.4);
+  }
+  76.714% {
+    opacity: 0.9;
+    transform: scale(1.7);
+  }
+  77.429% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+  77.457%,
+  79.686% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  79.714% {
+    opacity: 1;
+    transform: scale(0.4);
+  }
+  80.429% {
+    opacity: 0.9;
+    transform: scale(1.7);
+  }
+  81.143% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+  81.171%,
+  100% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+/* Pantalla del celular: panel de Filtros → rueda de Deporte → panel de reserva */
+.hero-m-popup {
+  animation: hero-m-popup var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-m-popup {
+  0%,
+  60% {
+    opacity: 0;
+  }
+  60.286%,
+  70.571% {
+    opacity: 1;
+  }
+  70.857%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* La rueda gira por las 7 opciones (Todos … Básquet) y vuelve a Pádel, que
+   queda en la franja del medio, justo bajo el pulgar */
+.hero-m-wheel {
+  animation: hero-m-wheel var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-m-wheel {
+  0% {
+    transform: translate(0px, 0px);
+  }
+  61.143%,
+  61.571% {
+    transform: translate(0px, -0px);
+  }
+  62.143%,
+  62.571% {
+    transform: translate(0px, -11.5px);
+  }
+  63.143%,
+  63.571% {
+    transform: translate(0px, -23px);
+  }
+  64.143%,
+  64.571% {
+    transform: translate(0px, -34.5px);
+  }
+  65.143%,
+  65.571% {
+    transform: translate(0px, -46px);
+  }
+  66.143%,
+  66.571% {
+    transform: translate(0px, -57.5px);
+  }
+  67.143%,
+  68.286% {
+    transform: translate(0px, -69px);
+  }
+  70%,
+  84% {
+    transform: translate(0px, -57.5px);
+  }
+  84.286%,
+  100% {
+    transform: translate(0px, 0px);
+  }
+}
+
+.hero-m-val-all {
+  animation: hero-m-val-all var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-m-val-all {
+  0%,
+  70.857% {
+    opacity: 1;
+  }
+  71.143%,
+  84% {
+    opacity: 0;
+  }
+  84.286%,
+  100% {
+    opacity: 1;
+  }
+}
+
+.hero-m-val-pad {
+  animation: hero-m-val-pad var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-m-val-pad {
+  0%,
+  70.857% {
+    opacity: 0;
+  }
+  71.143%,
+  84% {
+    opacity: 1;
+  }
+  84.286%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-m-surf {
+  animation: hero-m-surf var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-m-surf {
+  0%,
+  71% {
+    opacity: 0;
+  }
+  72%,
+  84% {
+    opacity: 1;
+  }
+  84.286%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-m-sheet2 {
+  animation: hero-m-sheet2 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-m-sheet2 {
+  0%,
+  72.857% {
+    opacity: 0;
+  }
+  74.286%,
+  84% {
+    opacity: 1;
+  }
+  84.286%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* El panel se desplaza hacia arriba para que "Reservar" quede bajo el pulgar */
+.hero-m-scroll {
+  animation: hero-m-scroll var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-m-scroll {
+  0%,
+  76.857% {
+    transform: translate(0px, 0px);
+  }
+  78.857%,
+  84% {
+    transform: translate(0px, -68px);
+  }
+  84.286%,
+  100% {
+    transform: translate(0px, 0px);
+  }
+}
+
+.hero-m-slot {
+  animation: hero-m-slot var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-m-slot {
+  0%,
+  76% {
+    opacity: 0;
+  }
+  76.143%,
+  84% {
+    opacity: 1;
+  }
+  84.286%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-m-summary {
+  animation: hero-m-summary var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-m-summary {
+  0%,
+  76.286% {
+    opacity: 0;
+  }
+  76.714%,
+  79.857% {
+    opacity: 1;
+  }
+  80.143%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-m-confirm {
+  animation: hero-m-confirm var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-m-confirm {
+  0%,
+  79.857% {
+    opacity: 0;
+  }
+  80.571%,
+  84% {
+    opacity: 1;
+  }
+  84.286%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- Tiempo: ticket B (28,9–31,4 s) ---------- */
+
+.hero-time-b {
+  animation: hero-time-b var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-time-b {
+  0%,
+  82.571% {
+    opacity: 0;
+  }
+  83.714%,
+  88.571% {
+    opacity: 1;
+  }
+  89.714%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* El ticket nace donde estaba el check de la reserva y se asienta */
+.hero-ticket-b {
+  animation: hero-ticket-b var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-ticket-b {
+  0%,
+  83% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  84.143%,
+  88.571% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  89.714%,
+  100% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+}
+
+/* Cuenta regresiva: "Faltan 2 días" cede el lugar a "¡Es hoy!" */
+.hero-days-b {
+  animation: hero-days-b var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-days-b {
+  0%,
+  83.857% {
+    opacity: 0;
+  }
+  84.286%,
+  86.143% {
+    opacity: 1;
+  }
+  86.571%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-today-b {
+  animation: hero-today-b var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-today-b {
+  0%,
+  86.429% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  86.857% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  87.286%,
+  88.571% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  89.714%,
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* La barra se llena de izquierda a derecha: el tiempo que pasa */
+.hero-bar-b {
+  transform-origin: left center;
+  animation: hero-bar-b var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-bar-b {
+  0%,
+  84% {
+    transform: scaleX(0.02);
+  }
+  86.571%,
+  88.571% {
+    transform: scaleX(1);
+  }
+  89.857%,
+  100% {
+    transform: scaleX(0.02);
+  }
+}
+
+/* El logo late una vez cuando llega el día */
+.hero-logo-b {
+  animation: hero-logo-b var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-logo-b {
+  0%,
+  86.429% {
+    transform: scale(1);
+  }
+  87% {
+    transform: scale(1.25);
+  }
+  87.571%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ---------- Grupo B llega y juega: pádel 2 contra 2 (31–34,4 s) ---------- */
+
+.hero-padel {
+  animation: hero-padel var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-padel {
+  0%,
+  88.571% {
+    opacity: 0;
+  }
+  89.714%,
+  97.714% {
+    opacity: 1;
+  }
+  98.857%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.hero-pbanner {
+  animation: hero-pbanner var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pbanner {
+  0%,
+  88.714% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+  89.571%,
+  97.714% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  98.857%,
+  100% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}
+
+/* Los 4 jugadores entran de a uno (rojos por la izquierda, azules por la derecha) */
+.hero-pplayer-1 {
+  animation: hero-pplayer-1 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pplayer-1 {
+  0%,
+  89.143% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+  89.429% {
+    opacity: 1;
+    transform: translateX(-150px);
+  }
+  90.571%,
+  97.714% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  98.857%,
+  100% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+}
+
+.hero-pplayer-2 {
+  animation: hero-pplayer-2 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pplayer-2 {
+  0%,
+  89.371% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+  89.657% {
+    opacity: 1;
+    transform: translateX(-150px);
+  }
+  90.8%,
+  97.714% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  98.857%,
+  100% {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+}
+
+.hero-pplayer-3 {
+  animation: hero-pplayer-3 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pplayer-3 {
+  0%,
+  89.6% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+  89.886% {
+    opacity: 1;
+    transform: translateX(150px);
+  }
+  91.029%,
+  97.714% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  98.857%,
+  100% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+}
+
+.hero-pplayer-4 {
+  animation: hero-pplayer-4 var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pplayer-4 {
+  0%,
+  89.829% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+  90.114% {
+    opacity: 1;
+    transform: translateX(150px);
+  }
+  91.257%,
+  97.714% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  98.857%,
+  100% {
+    opacity: 0;
+    transform: translateX(150px);
+  }
+}
+
+.hero-pcount {
+  animation: hero-pcount var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pcount {
+  0%,
+  91.429% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  91.714% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  92.143%,
+  97.714% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  98.857%,
+  100% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+/* Peloteo de ida y vuelta entre los dos lados de la red */
+.hero-pball {
+  animation: hero-pball var(--hero-duration) var(--hero-easing) infinite;
+}
+@keyframes hero-pball {
+  0%,
+  92.286% {
+    transform: translate(-70px, -38px);
+  }
+  93.571% {
+    transform: translate(70px, 38px);
+  }
+  94.857% {
+    transform: translate(-70px, 38px);
+  }
+  96.143% {
+    transform: translate(70px, -38px);
+  }
+  97.429%,
+  100% {
+    transform: translate(-70px, -38px);
+  }
+}
+
+/* ---------- Pausa y atención al formulario ---------- */
+
+/* El botón "Pausar animación" es un checkbox (#hero-pause) con su label:
+   funciona sin JavaScript y con teclado. */
+body:has(#hero-pause:checked) .hero-stage * {
+  animation-play-state: paused;
+}
+
+/* Mientras se escribe en un campo la animación se frena y se atenúa para no
+   competir con el formulario. */
+.hero-frame {
+  transition: opacity 0.3s;
+}
+body:has(input:not(#hero-pause):focus) .hero-stage * {
+  animation-play-state: paused;
+}
+body:has(input:not(#hero-pause):focus) .hero-frame {
+  opacity: 0.45;
+}
+
+#hero-pause:checked ~ label .hero-pause-on,
+#hero-pause:not(:checked) ~ label .hero-pause-off {
+  display: none;
+}
+
+/* ---------- Movimiento reducido: cuadro estático ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-stage,
+  .hero-stage * {
+    animation: none;
+  }
+  .hero-pause-control {
+    display: none;
+  }
+}

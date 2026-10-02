@@ -49,10 +49,16 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
 
   // Baja lógica en cadena, todo o nada: si algo falla no queda a medias.
   // Las fotos siguen en Vercel Blob, así el complejo se podría reactivar.
+  // Estas cancelaciones las provoca el dueño, no el jugador: la seña se
+  // devuelve siempre, sin mirar la política de horas.
   await db.$transaction([
     db.reserva.updateMany({
       where: { id: { in: idsDeReservas } },
       data: { estado: 'CANCELADA' },
+    }),
+    db.pago.updateMany({
+      where: { reservaId: { in: idsDeReservas } },
+      data: { devuelto: true },
     }),
     db.cancha.updateMany({ where: { complejoId: id }, data: { activo: false } }),
     db.imagenComplejo.updateMany({ where: { complejoId: id }, data: { activo: false } }),

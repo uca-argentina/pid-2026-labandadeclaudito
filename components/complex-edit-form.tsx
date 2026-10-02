@@ -7,7 +7,10 @@ import { AlertCircle, Loader2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { MinAdvanceInput } from '@/components/min-advance-input'
+import { ZonaSelect } from '@/components/zona-select'
 import { createComplexSchema } from '@/lib/validations/complex'
+import { timeTextToMinutes } from '@/lib/time'
 
 type ComplejoAEditar = {
   id: string
@@ -15,6 +18,9 @@ type ComplejoAEditar = {
   direccion: string
   zona: string
   contacto: string
+  porcentajeSenaDefault: number
+  minAdvanceMinutesDefault: number
+  cancellationHours: number
 }
 
 const claseInputConError = 'border-destructive ring-destructive/20 ring-3'
@@ -48,6 +54,10 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
       direccion: form.get('direccion'),
       zona: form.get('zona'),
       contacto: form.get('contacto'),
+      porcentajeSenaDefault: Number(form.get('porcentajeSenaDefault')),
+      // Campo vacío en el complejo = sin anticipación (0)
+      minAdvanceMinutesDefault: timeTextToMinutes(form.get('minAdvance') as string) ?? 0,
+      cancellationHours: Number(form.get('cancellationHours')),
     }
 
     const parsed = createComplexSchema.safeParse(datos)
@@ -108,12 +118,10 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
           <ErrorDeCampo mensaje={fieldErrors.direccion} />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="zona">Zona</Label>
-          <Input
+        <div className="space-y-2 sm:col-span-2">
+          <ZonaSelect
             id="zona"
             name="zona"
-            placeholder="Ej: Villa Devoto, CABA"
             defaultValue={complejo.zona}
             aria-invalid={!!fieldErrors.zona}
             className={fieldErrors.zona ? claseInputConError : undefined}
@@ -133,6 +141,52 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
             className={fieldErrors.contacto ? claseInputConError : undefined}
           />
           <ErrorDeCampo mensaje={fieldErrors.contacto} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="porcentajeSenaDefault">Seña por defecto (%)</Label>
+          <Input
+            id="porcentajeSenaDefault"
+            name="porcentajeSenaDefault"
+            type="number"
+            min={0}
+            max={100}
+            defaultValue={complejo.porcentajeSenaDefault}
+            aria-invalid={!!fieldErrors.porcentajeSenaDefault}
+            className={fieldErrors.porcentajeSenaDefault ? claseInputConError : undefined}
+          />
+          <p className="text-muted-foreground text-xs">
+            Se cobra al reservar en todas tus canchas. Una cancha puede tener su propio % (se
+            configura al editarla).
+          </p>
+          <ErrorDeCampo mensaje={fieldErrors.porcentajeSenaDefault} />
+        </div>
+
+        <MinAdvanceInput
+          name="minAdvance"
+          label="Anticipación mínima para reservar"
+          defaultMinutes={complejo.minAdvanceMinutesDefault}
+          help="Cuánto antes del turno se puede reservar como mínimo. 0 = hasta que empieza. Una cancha puede tener la suya (se configura al editarla)."
+          error={fieldErrors.minAdvanceMinutesDefault}
+        />
+
+        <div className="space-y-2">
+          <Label htmlFor="cancellationHours">Cancelación con devolución (horas antes)</Label>
+          <Input
+            id="cancellationHours"
+            name="cancellationHours"
+            type="number"
+            min={4}
+            max={168}
+            defaultValue={complejo.cancellationHours}
+            aria-invalid={!!fieldErrors.cancellationHours}
+            className={fieldErrors.cancellationHours ? claseInputConError : undefined}
+          />
+          <p className="text-muted-foreground text-xs">
+            Si el jugador cancela con al menos estas horas de anticipación, se le devuelve la seña.
+            Aplica a todas tus canchas.
+          </p>
+          <ErrorDeCampo mensaje={fieldErrors.cancellationHours} />
         </div>
       </div>
 

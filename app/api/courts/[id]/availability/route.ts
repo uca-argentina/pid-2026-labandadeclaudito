@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { getAvailableSlots } from '@/lib/availability'
+import { esDiaReal } from '@/lib/time'
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
@@ -9,13 +10,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   const { searchParams } = new URL(request.url)
   const fecha = searchParams.get('fecha')
-  if (!fecha || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+  if (!fecha || !esDiaReal(fecha)) {
     return NextResponse.json({ error: 'Fecha inválida, formato YYYY-MM-DD' }, { status: 400 })
   }
 
-  const slots = await getAvailableSlots(id, new Date(fecha))
-  if (!slots) {
+  // El dueño también ve la grilla, pero solo al jugador se le marcan los
+  // turnos que se cruzan con sus otras reservas.
+  const jugadorId = session.user.rol === 'JUGADOR' ? session.user.id : undefined
+  const disponibilidad = await getAvailableSlots(id, new Date(fecha), jugadorId)
+  if (!disponibilidad) {
     return NextResponse.json({ error: 'Cancha no encontrada' }, { status: 404 })
   }
-  return NextResponse.json({ slots }, { status: 200 })
+  return NextResponse.json(disponibilidad, { status: 200 })
 }

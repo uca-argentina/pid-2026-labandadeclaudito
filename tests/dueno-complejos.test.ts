@@ -6,11 +6,15 @@ import { POST as subirFoto } from '@/app/api/complexes/[id]/images/route'
 import { DELETE as quitarFoto } from '@/app/api/complexes/[id]/images/[imageId]/route'
 import { POST as crearCanchas } from '@/app/api/complexes/[id]/courts/route'
 import { PATCH as editarCancha } from '@/app/api/courts/[id]/route'
+import { POST as crearPrecio } from '@/app/api/courts/[id]/prices/route'
+import { POST as crearBloqueo } from '@/app/api/courts/[id]/blocks/route'
 import { db } from '@/lib/db'
 import {
   archivoImagen,
   conParams,
+  crearComplejoConCanchas,
   crearUsuario,
+  diaEnNDias,
   datosDeCanchas,
   datosDeComplejo,
   imagenRequest,
@@ -82,13 +86,16 @@ describe('Edición de complejo (PATCH /api/complexes/[id])', () => {
   test('el dueño edita sus datos', async () => {
     loginComo(duenio)
     const res = await editarComplejo(
-      jsonRequest('PATCH', { ...datosDeComplejo, zona: 'Zona editada' }),
+      // 'Tigre' tiene que ser una zona distinta de la original ('Palermo') y
+      // válida (de la lista fija de lib/zonas.ts), para probar que el cambio
+      // se guarda de verdad.
+      jsonRequest('PATCH', { ...datosDeComplejo, zona: 'Tigre' }),
       conParams({ id: complejoId }),
     )
     expect(res.status).toBe(200)
 
     const complejo = await db.complejo.findUnique({ where: { id: complejoId } })
-    expect(complejo?.zona).toBe('Zona editada')
+    expect(complejo?.zona).toBe('Tigre')
   })
 
   test('otro dueño no puede editarlo (404)', async () => {
@@ -240,6 +247,8 @@ describe('Canchas del complejo', () => {
       horaApertura: '09:00',
       horaCierre: '13:00',
       duracionTurnoMin: 60,
+      porcentajeSena: null,
+      minAdvanceMinutes: null,
     }
 
     loginComo(otroDuenio)
@@ -259,5 +268,77 @@ describe('Canchas del complejo', () => {
     const editada = await db.cancha.findUnique({ where: { id: cancha!.id } })
     expect(editada?.nombre).toBe('Cancha editada')
     expect(Number(editada?.precioBase)).toBe(20000)
+  })
+})
+
+describe('Franjas dentro del horario de la cancha', () => {
+  // Cancha de 08 a 12 hs
+  let canchaId: string
+
+  beforeAll(async () => {
+    const { cancha1 } = await crearComplejoConCanchas(duenio.id)
+    canchaId = cancha1.id
+  })
+
+  async function precio(horaInicio: string | null, horaFin: string | null) {
+    loginComo(duenio)
+    return crearPrecio(
+      jsonRequest('POST', { diaSemana: 1, horaInicio, horaFin, precio: 12000 }),
+      conParams({ id: canchaId }),
+    )
+  }
+
+  test('un precio especial fuera del horario es rechazado (400)', async () => {
+    expect((await precio('06:00', '08:00')).status).toBe(400)
+    expect((await precio('11:00', '13:00')).status).toBe(400)
+  })
+
+  test('adentro del horario o sin franja se acepta (201)', async () => {
+    expect((await precio('08:00', '10:00')).status).toBe(201)
+    expect((await precio(null, null)).status).toBe(201)
+  })
+
+  test('al achicar el horario se eliminan los precios y bloqueos que quedan afuera', async () => {
+    // Bloqueo de 10 a 12: queda afuera si la cancha pasa a cerrar a las 11
+    loginComo(duenio)
+    const bloqueo = await crearBloqueo(
+      jsonRequest('POST', {
+        startDate: diaEnNDias(1),
+        endDate: diaEnNDias(1),
+        startTime: '10:00',
+        endTime: '12:00',
+      }),
+      conParams({ id: canchaId }),
+    )
+    expect(bloqueo.status).toBe(201)
+    const precioAfuera = await precio('10:00', '12:00')
+    expect(precioAfuera.status).toBe(201)
+
+    const res = await editarCancha(
+      jsonRequest('PATCH', {
+        nombre: 'Cancha 1',
+        deporte: 'FUTBOL_5',
+        tipoSuperficie: 'CESPED_SINTETICO',
+        precioBase: 10000,
+        horaApertura: '08:00',
+        horaCierre: '11:00',
+        duracionTurnoMin: 60,
+        porcentajeSena: null,
+        minAdvanceMinutes: null,
+      }),
+      conParams({ id: canchaId }),
+    )
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json.preciosEliminados).toBe(1)
+    expect(json.bloqueosEliminados).toBe(1)
+
+    // Quedan los que siguen adentro: el de 08 a 10 y el de todo el día
+    const preciosActivos = await db.precioEspecial.findMany({
+      where: { canchaId, activo: true },
+      orderBy: { horaInicio: 'asc' },
+    })
+    expect(preciosActivos.map((p) => p.horaInicio)).toEqual(['08:00', null])
+    expect(await db.block.count({ where: { courtId: canchaId } })).toBe(0)
   })
 })

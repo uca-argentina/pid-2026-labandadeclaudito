@@ -54,8 +54,12 @@ export function imagenRequest(archivo: File) {
   return new Request('http://localhost/test', { method: 'POST', body: formData })
 }
 
+// Arranca con la firma de un PNG: el endpoint mira los primeros bytes
+// (esImagenReal), no alcanza con el type.
+const FIRMA_PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+
 export function archivoImagen(tipo = 'image/png') {
-  return new File(['contenido de prueba'], 'foto.png', { type: tipo })
+  return new File([FIRMA_PNG, 'contenido de prueba'], 'foto.png', { type: tipo })
 }
 
 // En Next 16 los params de un endpoint llegan como promesa
@@ -69,6 +73,10 @@ function sumarDias(dias: number) {
   return fecha.toISOString().slice(0, 10)
 }
 
+export function diaEnNDias(dias: number) {
+  return sumarDias(dias)
+}
+
 export function diaDeManiana() {
   return sumarDias(1)
 }
@@ -80,8 +88,13 @@ export function diaDeAyer() {
 export const datosDeComplejo = {
   nombre: '[TEST] Complejo de prueba',
   direccion: 'Calle Falsa 123',
-  zona: 'Zona de test',
+  // Tiene que ser una zona de la lista fija (lib/zonas.ts): createComplexSchema
+  // ya no acepta texto libre.
+  zona: 'Palermo',
   contacto: '11 4589-2231',
+  porcentajeSenaDefault: 30,
+  minAdvanceMinutesDefault: 0,
+  cancellationHours: 24,
 }
 
 export const datosDeCanchas = {
@@ -154,6 +167,7 @@ export async function limpiarDatosDeTest() {
   await db.reserva.deleteMany({
     where: { OR: [{ jugadorId: { in: idsDeUsuarios } }, { canchaId: { in: idsDeCanchas } }] },
   })
+  await db.block.deleteMany({ where: { courtId: { in: idsDeCanchas } } })
   await db.imagenComplejo.deleteMany({ where: { complejoId: { in: idsDeComplejos } } })
   await db.cancha.deleteMany({ where: { id: { in: idsDeCanchas } } })
   await db.complejo.deleteMany({ where: { id: { in: idsDeComplejos } } })

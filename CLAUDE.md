@@ -135,16 +135,17 @@ app/                        RUTAS (URL) + UI
                             nada de header ni sidebar (cada grupo pone el suyo)
 
   (public)/                 grupo — NO agrega segmento a la URL. Páginas sin
-                            login: trae el SiteHeader (logo + toggle de tema)
-    layout.tsx                monta <SiteHeader /> + <main>
+                            login: trae el toggle de tema arriba a la derecha
+    layout.tsx                monta <ThemeToggle /> + <main>
     page.tsx                  landing /
     estilo/page.tsx           /estilo — referencia visual
     (auth)/                   grupo anidado — tampoco agrega segmento
+      layout.tsx              split screen: <LoginHero /> (solo desktop) + formulario
       login/page.tsx          /login — formulario (fetch al endpoint de Auth.js)
       register/page.tsx       /register — formulario (fetch a /api/users)
 
   (dashboard)/              grupo — NO agrega segmento a la URL. Páginas con
-                            sesión: trae el sidebar en vez del SiteHeader
+                            sesión: trae el sidebar en vez del toggle suelto
     layout.tsx                lee la sesión (auth()), redirige a /login si no
                               hay, monta <AppSidebar rol={...} /> + contenido
     jugador/                  carpeta real (SÍ agrega /jugador a la URL)
@@ -192,7 +193,7 @@ components/
                             alert-dialog, avatar, badge, button, card, input,
                             label, radio-group, select, separator, sheet,
                             sidebar, skeleton, table, toggle, toggle-group, tooltip
-  site-header.tsx           header de las páginas públicas (logo + tema)
+  logo.tsx                  logo real de TocaYJuga (PNG claro/oscuro)
   app-sidebar.tsx           sidebar de las páginas con sesión — nav por rol,
                             perfil (nombre/email/avatar) y cerrar sesión abajo
   sign-out-button.tsx       botón de logout, reusado en el sidebar
@@ -205,6 +206,11 @@ components/
   delete-complex-dialog.tsx, delete-complex-image-dialog.tsx, delete-court-dialog.tsx
                             confirmación de baja lógica
   cancel-booking-button.tsx cancelar una reserva
+  login-hero/               animación decorativa del login/registro (SVG + CSS).
+                            FUERA DEL ALCANCE DEL PARCIAL: acá se relaja la regla
+                            "Código simple y entendible" (código limpio y comentado,
+                            pero sin el test de "reescribir de memoria"). Desde
+                            afuera solo se importa <LoginHero />.
   <propios>.tsx             el resto de nuestros componentes
 
 lib/generated/prisma/       cliente Prisma generado (gitignored, no tocar)
@@ -317,8 +323,9 @@ algo, mirar esa página, no adivinar.
   todo en `app/layout.tsx` (`attribute="class"`, sigue el tema del sistema por
   default). El botón está en `components/theme-toggle.tsx` — cambia con clases
   `dark:` de Tailwind, no con JS condicional, para no pelear con SSR.
-- **Header**: `components/site-header.tsx` — logo + toggle de tema, sticky
-  arriba de todo. Solo en páginas públicas (`app/(public)/layout.tsx`).
+- **Logo**: `components/logo.tsx` (dos PNG, claro y oscuro). Las páginas
+  públicas (`app/(public)/layout.tsx`) no tienen header: solo el toggle de
+  tema arriba a la derecha.
 - **Sidebar**: `components/app-sidebar.tsx` — solo en páginas con sesión
   (`app/(dashboard)/layout.tsx`). Plegable a solo-íconos (shadcn `Sidebar`
   `collapsible="icon"`), nav según `rol` (array `navPorRol` adentro del
@@ -403,5 +410,3 @@ en `docs/`.
 `docs/` está en `.gitignore` (decisión 2026-09-24). No se usa para planes ni
 backlog de sprint — todo eso vive en Jira (tickets, y el detalle técnico en la
 descripción del epic/ticket correspondiente).
-
-- `branch_context.md` — contexto específico de la rama/fase actual. Crear uno por cada rama que no sea main, master, develop, dev o bugfix (está en .gitignore a propósito). Lo "core" del proyecto va en CLAUDE.md, no aquí.

@@ -14,8 +14,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DeleteCourtDialog } from '@/components/delete-court-dialog'
+import { MinAdvanceInput } from '@/components/min-advance-input'
+import { TimeSelect } from '@/components/time-select'
+import { timeTextToMinutes } from '@/lib/time'
 import { updateCourtSchema } from '@/lib/validations/court'
-import { deporteLabels, superficieLabels } from '@/lib/labels'
+import { deporteLabels, superficieLabels, superficiesPorDeporte } from '@/lib/labels'
 import type { Cancha } from '@/lib/generated/prisma/client'
 
 type CanchaConPrecioString = Omit<Cancha, 'precioBase'> & { precioBase: string }
@@ -30,9 +33,12 @@ export function CourtEditForm({
   const router = useRouter()
   const [deporte, setDeporte] = useState(cancha.deporte)
   const [tipoSuperficie, setTipoSuperficie] = useState(cancha.tipoSuperficie)
+  const [horaApertura, setHoraApertura] = useState(cancha.horaApertura)
+  const [horaCierre, setHoraCierre] = useState(cancha.horaCierre)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cargando, setCargando] = useState(false)
+  const [aviso, setAviso] = useState('')
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -40,14 +46,19 @@ export function CourtEditForm({
     setFieldErrors({})
 
     const form = new FormData(e.currentTarget)
+    const porcentajeSenaTexto = form.get('porcentajeSena') as string
     const datos = {
       nombre: form.get('nombre'),
       deporte,
       tipoSuperficie,
       precioBase: form.get('precioBase'),
-      horaApertura: form.get('horaApertura'),
-      horaCierre: form.get('horaCierre'),
+      horaApertura,
+      horaCierre,
       duracionTurnoMin: form.get('duracionTurnoMin'),
+      // Campo vacío = usar el % de seña por defecto del complejo, no uno propio
+      porcentajeSena: porcentajeSenaTexto === '' ? null : Number(porcentajeSenaTexto),
+      // Campo vacío = usar la anticipación mínima por defecto del complejo
+      minAdvanceMinutes: timeTextToMinutes(form.get('minAdvance') as string),
     }
 
     const parsed = updateCourtSchema.safeParse(datos)
@@ -67,12 +78,35 @@ export function CourtEditForm({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(parsed.data),
     })
-    if (res.ok) {
+    const json = await res.json()
+    if (!res.ok) {
+      setError(json.error)
+      setCargando(false)
+      return
+    }
+
+    // Si el horario nuevo dejó afuera precios o bloqueos, la API los eliminó:
+    // se avisa antes de volver al listado.
+    const partes: string[] = []
+    if (json.preciosEliminados > 0) {
+      partes.push(
+        json.preciosEliminados === 1
+          ? '1 precio especial'
+          : `${json.preciosEliminados} precios especiales`,
+      )
+    }
+    if (json.bloqueosEliminados > 0) {
+      partes.push(
+        json.bloqueosEliminados === 1 ? '1 bloqueo' : `${json.bloqueosEliminados} bloqueos`,
+      )
+    }
+    if (partes.length === 0) {
       router.push(`/dueno/complejos/${complejoId}/canchas`)
       return
     }
-    const json = await res.json()
-    setError(json.error)
+    setAviso(
+      `Cambios guardados. Con el horario nuevo se eliminaron ${partes.join(' y ')} que quedaban fuera del horario.`,
+    )
     setCargando(false)
   }
 
@@ -101,8 +135,19 @@ export function CourtEditForm({
 
           <div className="space-y-2">
             <Label>Deporte</Label>
-            <Select value={deporte} onValueChange={(v) => setDeporte(v as typeof deporte)}>
-              <SelectTrigger className="w-full">
+            <Select
+              value={deporte}
+              onValueChange={(v) => {
+                const nuevoDeporte = v as typeof deporte
+                setDeporte(nuevoDeporte)
+                // Si la superficie elegida no tiene sentido para el nuevo deporte,
+                // se pasa a la primera que sí (ej: fútbol nunca en polvo de ladrillo)
+                if (!superficiesPorDeporte[nuevoDeporte].includes(tipoSuperficie)) {
+                  setTipoSuperficie(superficiesPorDeporte[nuevoDeporte][0])
+                }
+              }}
+            >
+              <SelectTrigger className="w-full" aria-label="Deporte">
                 <SelectValue>{(v: typeof deporte) => deporteLabels[v]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -118,16 +163,17 @@ export function CourtEditForm({
           <div className="space-y-2">
             <Label>Superficie</Label>
             <Select
+              key={deporte}
               value={tipoSuperficie}
               onValueChange={(v) => setTipoSuperficie(v as typeof tipoSuperficie)}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" aria-label="Superficie">
                 <SelectValue>{(v: typeof tipoSuperficie) => superficieLabels[v]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(superficieLabels).map(([valor, label]) => (
+                {superficiesPorDeporte[deporte].map((valor) => (
                   <SelectItem key={valor} value={valor}>
-                    {label}
+                    {superficieLabels[valor]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -161,18 +207,13 @@ export function CourtEditForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="horaApertura">Apertura</Label>
-            <Input
-              id="horaApertura"
-              name="horaApertura"
-              type="time"
-              defaultValue={cancha.horaApertura}
-            />
+            <Label>Apertura</Label>
+            <TimeSelect label="Apertura" value={horaApertura} onChange={setHoraApertura} />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="horaCierre">Cierre</Label>
-            <Input id="horaCierre" name="horaCierre" type="time" defaultValue={cancha.horaCierre} />
+            <Label>Cierre</Label>
+            <TimeSelect label="Cierre" value={horaCierre} onChange={setHoraCierre} />
           </div>
 
           <div className="space-y-2">
@@ -186,6 +227,43 @@ export function CourtEditForm({
               defaultValue={cancha.duracionTurnoMin}
             />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="porcentajeSena">Seña propia (%)</Label>
+            <Input
+              id="porcentajeSena"
+              name="porcentajeSena"
+              type="number"
+              min={0}
+              max={100}
+              placeholder="Usa el % del complejo"
+              defaultValue={cancha.porcentajeSena ?? ''}
+              aria-invalid={!!fieldErrors.porcentajeSena}
+              className={
+                fieldErrors.porcentajeSena
+                  ? 'border-destructive ring-destructive/20 ring-3'
+                  : undefined
+              }
+            />
+            <p className="text-muted-foreground text-xs">
+              Vacío = usa el % de seña por defecto del complejo.
+            </p>
+            {fieldErrors.porcentajeSena && (
+              <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                <AlertCircle className="size-3.5" />
+                {fieldErrors.porcentajeSena}
+              </p>
+            )}
+          </div>
+
+          <MinAdvanceInput
+            name="minAdvance"
+            label="Anticipación mínima propia"
+            defaultMinutes={cancha.minAdvanceMinutes}
+            help="Vacío = usa la anticipación mínima por defecto del complejo."
+            error={fieldErrors.minAdvanceMinutes}
+            allowEmpty
+          />
         </div>
 
         <div className="flex justify-end gap-3">
@@ -203,6 +281,18 @@ export function CourtEditForm({
         </div>
 
         {error && <p className="text-destructive text-sm">{error}</p>}
+        {aviso && (
+          <div role="status" className="border-border space-y-3 rounded-lg border p-4 text-sm">
+            <p>{aviso}</p>
+            <Button
+              type="button"
+              size="sm"
+              render={<a href={`/dueno/complejos/${complejoId}/canchas`} />}
+            >
+              Volver a canchas
+            </Button>
+          </div>
+        )}
       </form>
 
       <div className="border-destructive/40 flex items-center justify-between gap-4 rounded-2xl border border-dashed p-5">

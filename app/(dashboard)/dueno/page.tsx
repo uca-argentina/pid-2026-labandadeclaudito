@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowRight, Building2, CalendarClock, LayoutGrid, Plus } from 'lucide-react'
+import { ArrowRight, Building2, CalendarClock, Clock, LayoutGrid, Plus, User } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { pendientesVencidas } from '@/lib/bookings'
 import { deporteLabels } from '@/lib/labels'
 import { diaDeHoy, diaDeReserva, formatearDia } from '@/lib/time'
 import { StatCard } from '@/components/stat-card'
@@ -26,6 +27,7 @@ export default async function DuenoHomePage() {
     where: {
       cancha: canchasDelDuenio,
       estado: { not: 'CANCELADA' },
+      NOT: pendientesVencidas(),
       fecha: { gte: desdeHoy },
     },
   })
@@ -34,6 +36,7 @@ export default async function DuenoHomePage() {
     where: {
       cancha: canchasDelDuenio,
       estado: { not: 'CANCELADA' },
+      NOT: pendientesVencidas(),
       fecha: { gte: desdeHoy },
     },
     include: { cancha: { include: { complejo: true } }, jugador: true },
@@ -42,7 +45,7 @@ export default async function DuenoHomePage() {
   })
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12">
+    <div className="mx-auto max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Hola, {session.user.name}</h1>
@@ -77,11 +80,11 @@ export default async function DuenoHomePage() {
         />
       </div>
 
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-5 flex items-center justify-between gap-4">
         <h2 className="text-xl font-semibold">Próximos turnos en tus canchas</h2>
         <Link
           href="/dueno/complejos"
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm font-medium"
+          className="text-muted-foreground hover:text-foreground inline-flex shrink-0 items-center gap-1.5 text-sm font-medium"
         >
           Mis complejos
           <ArrowRight className="size-3.5" />
@@ -110,13 +113,15 @@ export default async function DuenoHomePage() {
                     {deporteLabels[reserva.cancha.deporte]}
                   </span>
                 </div>
-                <p className="text-muted-foreground mt-1.5 text-sm">
+                <p className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-sm">
+                  <User className="size-3.5 shrink-0" />
                   {reserva.cancha.complejo.nombre} · Reservó {reserva.jugador.nombre}
                 </p>
               </div>
               <div className="text-right">
                 <p className="font-medium">{formatearDia(diaDeReserva(reserva.fecha))}</p>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground flex items-center justify-end gap-1.5 text-sm">
+                  <Clock className="size-3.5 shrink-0" />
                   {reserva.horaInicio} a {reserva.horaFin} hs
                 </p>
               </div>
