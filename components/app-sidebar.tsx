@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Building2, CalendarDays, Equal, Home, Search, X } from 'lucide-react'
+import { Building2, CalendarDays, ChartColumn, Equal, Home, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Sidebar,
@@ -39,6 +39,7 @@ const navPorRol: Record<'JUGADOR' | 'DUENIO', ItemNav[]> = {
     { href: '/dueno', label: 'Inicio', icon: Home },
     { href: '/dueno/complejos', label: 'Mis complejos', icon: Building2 },
     { href: '/dueno/reservas', label: 'Reservas', icon: CalendarDays },
+    { href: '/dueno/dashboard', label: 'Estadísticas', icon: ChartColumn },
   ],
 }
 
