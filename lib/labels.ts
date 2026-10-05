@@ -40,6 +40,17 @@ export const estadoVisibleLabels: Record<EstadoVisible, string> = {
   CANCELADA: 'Cancelada',
 }
 
+// El índice es el día de la semana de Date.getUTCDay(): 0 = domingo
+export const nombresDeDias = [
+  'Domingo',
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+]
+
 export function formatPrecio(precio: number | string): string {
   return `$${Number(precio).toLocaleString('es-AR')}`
 }
