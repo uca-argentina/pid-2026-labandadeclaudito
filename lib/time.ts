@@ -56,6 +56,14 @@ export function diaDeHoy(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: ZONA_ARGENTINA })
 }
 
+// Suma (o resta, con negativos) días a un día YYYY-MM-DD. Se hace en UTC para
+// que el cambio de horario o la zona del servidor no corran el día.
+export function sumarDias(dia: string, dias: number): string {
+  const fecha = new Date(`${dia}T00:00:00Z`)
+  fecha.setUTCDate(fecha.getUTCDate() + dias)
+  return fecha.toISOString().slice(0, 10)
+}
+
 // 0 (domingo) a 6 (sábado). Igual que diaDeReserva, se lee en UTC porque
 // @db.Date llega como medianoche UTC.
 export function diaSemanaDeReserva(fecha: Date): number {
