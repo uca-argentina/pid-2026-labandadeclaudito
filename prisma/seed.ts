@@ -43,7 +43,7 @@ async function crearUsuario(
   nombre: string,
   email: string,
   password: string,
-  rol: 'JUGADOR' | 'DUENIO',
+  rol: 'JUGADOR' | 'DUENIO' | 'ADMIN',
   dni: string,
   telefono: string,
 ) {
@@ -194,6 +194,17 @@ async function main() {
     'JUGADOR',
     '41222333',
     '11 6000-2222',
+  )
+
+  // Administrador de la plataforma: no se puede registrar desde el form,
+  // solo existe si lo crea el seed
+  await crearUsuario(
+    'Admin TocaYJuga',
+    'admin@tocayjuga.com',
+    'Admin1234',
+    'ADMIN',
+    '20000000',
+    '11 4000-0000',
   )
 
   // ----- Complejo 1: Palermo (admin@demo.com) -----

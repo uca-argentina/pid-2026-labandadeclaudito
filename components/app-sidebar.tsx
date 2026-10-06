@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Building2, CalendarDays, Equal, Home, Search, X } from 'lucide-react'
+import { homePorRol } from '@/lib/home-por-rol'
 import { Button } from '@/components/ui/button'
 import {
   Sidebar,
@@ -29,7 +30,7 @@ type ItemNav = {
   icon: typeof Home
 }
 
-const navPorRol: Record<'JUGADOR' | 'DUENIO', ItemNav[]> = {
+const navPorRol: Record<'JUGADOR' | 'DUENIO' | 'ADMIN', ItemNav[]> = {
   JUGADOR: [
     { href: '/jugador', label: 'Inicio', icon: Home },
     { href: '/jugador/canchas', label: 'Buscar canchas', icon: Search },
@@ -40,6 +41,8 @@ const navPorRol: Record<'JUGADOR' | 'DUENIO', ItemNav[]> = {
     { href: '/dueno/complejos', label: 'Mis complejos', icon: Building2 },
     { href: '/dueno/reservas', label: 'Reservas', icon: CalendarDays },
   ],
+  // ponytail: solo Inicio por ahora; usuarios, complejos y disputas suman su link en su tarjeta
+  ADMIN: [{ href: '/admin', label: 'Inicio', icon: Home }],
 }
 
 // Botón de la barra de arriba en mobile para abrir el sidebar (dos líneas)
@@ -72,7 +75,7 @@ export function AppSidebar({
   nombre,
   email,
 }: {
-  rol: 'JUGADOR' | 'DUENIO'
+  rol: 'JUGADOR' | 'DUENIO' | 'ADMIN'
   nombre: string
   email: string
 }) {
@@ -80,7 +83,7 @@ export function AppSidebar({
   // En mobile el sidebar es un panel encima de la página: lo cerramos al navegar
   const { isMobile, setOpenMobile } = useSidebar()
   const items = navPorRol[rol]
-  const home = rol === 'DUENIO' ? '/dueno' : '/jugador'
+  const home = homePorRol(rol)
 
   return (
     <Sidebar collapsible="icon">

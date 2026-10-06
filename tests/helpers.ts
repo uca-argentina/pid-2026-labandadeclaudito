@@ -11,7 +11,7 @@ type UsuarioDeTest = {
   id: string
   nombre: string
   email: string
-  rol: 'JUGADOR' | 'DUENIO'
+  rol: 'JUGADOR' | 'DUENIO' | 'ADMIN'
 }
 
 export function emailDeTest() {
@@ -43,7 +43,9 @@ export function sinSesion() {
 export function jsonRequest(method: string, body?: unknown) {
   return new Request('http://localhost/test', {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    // IP distinta por pedido: que los tests no choquen con el límite de
+    // registros por IP (lib/limite-intentos.ts)
+    headers: { 'Content-Type': 'application/json', 'x-forwarded-for': `test-${randomUUID()}` },
     body: body === undefined ? undefined : JSON.stringify(body),
   })
 }
@@ -143,6 +145,9 @@ export async function crearComplejoConCanchas(duenioId: string) {
 }
 
 export async function limpiarDatosDeTest() {
+  // Las IPs de test empiezan con "test-" (ver jsonRequest)
+  await db.intento.deleteMany({ where: { clave: { contains: 'test-' } } })
+
   const usuarios = await db.usuario.findMany({
     where: { email: { endsWith: DOMINIO_DE_TEST } },
   })

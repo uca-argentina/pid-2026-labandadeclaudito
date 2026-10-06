@@ -16,7 +16,8 @@ export default async function EditarBloqueoPage({
   if (!complejo) redirect('/dueno')
 
   const bloqueo = await db.block.findFirst({
-    where: { id: blockId, courtId },
+    // court.complejoId: que la cancha de la URL sea del complejo que ya validamos
+    where: { id: blockId, courtId, court: { complejoId: id } },
     include: { court: true },
   })
   if (!bloqueo) redirect(`/dueno/complejos/${id}/canchas/${courtId}/bloqueos`)

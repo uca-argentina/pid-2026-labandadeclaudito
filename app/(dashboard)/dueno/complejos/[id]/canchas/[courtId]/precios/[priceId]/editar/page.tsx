@@ -15,7 +15,8 @@ export default async function EditarPrecioPage({
   if (!complejo) redirect('/dueno')
 
   const precioEspecial = await db.precioEspecial.findFirst({
-    where: { id: priceId, canchaId: courtId, activo: true },
+    // cancha.complejoId: que la cancha de la URL sea del complejo que ya validamos
+    where: { id: priceId, canchaId: courtId, activo: true, cancha: { complejoId: id } },
     include: { cancha: true },
   })
   if (!precioEspecial) redirect(`/dueno/complejos/${id}/canchas/${courtId}/precios`)
