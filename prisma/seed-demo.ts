@@ -465,6 +465,30 @@ async function main() {
     idsDeJugadores.push(usuario.id)
   }
 
+  // El admin de la demo y dos cuentas suspendidas para mostrar /admin/usuarios.
+  // Las suspendidas no tienen complejos ni reservas.
+  await db.usuario.create({
+    data: { nombre: 'Admin TocaYJuga', email: 'admin@tocayjuga.com', passwordHash, rol: 'ADMIN' },
+  })
+  await db.usuario.create({
+    data: {
+      nombre: 'Pablo Suárez',
+      email: 'pablo.suarez@tocayjuga.com',
+      passwordHash,
+      rol: 'JUGADOR',
+      activo: false,
+    },
+  })
+  await db.usuario.create({
+    data: {
+      nombre: 'Carlos Vega',
+      email: 'carlos.vega@tocayjuga.com',
+      passwordHash,
+      rol: 'DUENIO',
+      activo: false,
+    },
+  })
+
   // ----- Complejos, canchas y precios nocturnos -----
   const canchas: CanchaCreada[] = []
   for (const complejo of COMPLEJOS) {
@@ -572,6 +596,7 @@ Seed de demo listo (se borró todo lo que había antes).
 
   DUEÑO     dueno@tocayjuga.com     Palermo, Núñez y Almagro
   JUGADOR   jugador@tocayjuga.com   historial de partidos y 3 turnos próximos
+  ADMIN     admin@tocayjuga.com     2 cuentas suspendidas en /admin/usuarios
 `)
 }
 

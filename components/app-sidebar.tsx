@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Building2, CalendarDays, Equal, Home, Search, X } from 'lucide-react'
+import { Building2, CalendarDays, Equal, Home, Search, Users, X } from 'lucide-react'
 import { homePorRol } from '@/lib/home-por-rol'
 import { Button } from '@/components/ui/button'
 import {
@@ -41,8 +41,11 @@ const navPorRol: Record<'JUGADOR' | 'DUENIO' | 'ADMIN', ItemNav[]> = {
     { href: '/dueno/complejos', label: 'Mis complejos', icon: Building2 },
     { href: '/dueno/reservas', label: 'Reservas', icon: CalendarDays },
   ],
-  // ponytail: solo Inicio por ahora; usuarios, complejos y disputas suman su link en su tarjeta
-  ADMIN: [{ href: '/admin', label: 'Inicio', icon: Home }],
+  // ponytail: complejos y disputas suman su link en su tarjeta
+  ADMIN: [
+    { href: '/admin', label: 'Inicio', icon: Home },
+    { href: '/admin/usuarios', label: 'Usuarios', icon: Users },
+  ],
 }
 
 // Botón de la barra de arriba en mobile para abrir el sidebar (dos líneas)

@@ -37,6 +37,11 @@ function LoginForm() {
       setCargando(false)
       return
     }
+    if (resultado?.code === 'cuenta_suspendida') {
+      setError('Tu cuenta está suspendida. Si creés que es un error, contactá a TocaYJuga.')
+      setCargando(false)
+      return
+    }
     if (resultado?.error) {
       setError('Email o contraseña incorrectos')
       setCargando(false)

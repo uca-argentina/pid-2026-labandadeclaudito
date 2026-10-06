@@ -13,9 +13,18 @@ export function pendientesVencidas(ahora: Date = new Date()) {
 // Reservas que todavía no se jugaron: son las que se cancelan al dar de baja
 // una cancha o un complejo. Las pasadas quedan como historial.
 export async function getUpcomingBookingIds(canchaIds: string[]) {
+  return proximasReservas({ canchaId: { in: canchaIds } })
+}
+
+// Lo mismo, pero las de un jugador: se cancelan al suspender su cuenta.
+export async function getUpcomingBookingIdsOfPlayer(jugadorId: string) {
+  return proximasReservas({ jugadorId })
+}
+
+async function proximasReservas(filtro: { canchaId?: { in: string[] }; jugadorId?: string }) {
   const reservas = await db.reserva.findMany({
     where: {
-      canchaId: { in: canchaIds },
+      ...filtro,
       estado: { in: ['PENDIENTE', 'CONFIRMADA'] },
       fecha: { gte: new Date(diaDeHoy()) },
       NOT: pendientesVencidas(),

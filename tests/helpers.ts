@@ -18,10 +18,10 @@ export function emailDeTest() {
   return `test-${randomUUID()}${DOMINIO_DE_TEST}`
 }
 
-export async function crearUsuario(rol: 'JUGADOR' | 'DUENIO') {
+export async function crearUsuario(rol: 'JUGADOR' | 'DUENIO' | 'ADMIN') {
   const usuario = await db.usuario.create({
     data: {
-      nombre: rol === 'DUENIO' ? 'Dueño de test' : 'Jugador de test',
+      nombre: `${rol} de test`,
       email: emailDeTest(),
       passwordHash: await hashPassword('password123'),
       rol,

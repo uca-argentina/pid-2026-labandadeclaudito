@@ -17,6 +17,10 @@ class DemasiadosIntentos extends CredentialsSignin {
   code = 'demasiados_intentos'
 }
 
+class CuentaSuspendida extends CredentialsSignin {
+  code = 'cuenta_suspendida'
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
@@ -40,8 +44,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const usuario = await db.usuario.findUnique({ where: { email } })
         let loginValido = false
-        // una cuenta suspendida no puede loguearse
-        if (usuario && usuario.activo) {
+        if (usuario) {
           loginValido = await verifyPassword(password, usuario.passwordHash)
         }
 
@@ -49,6 +52,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           await registrarIntento(claveEmail)
           await registrarIntento(claveIp)
           return null
+        }
+
+        // Recién con la contraseña correcta se avisa que está suspendida: así
+        // no se puede averiguar qué emails están suspendidos sin saber la clave.
+        if (!usuario.activo) {
+          throw new CuentaSuspendida()
         }
 
         await borrarIntentos(claveEmail)
