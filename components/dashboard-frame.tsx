@@ -5,21 +5,17 @@ import { useRouter } from 'next/navigation'
 import { deporteLabels } from '@/lib/labels'
 import { urlDelDashboard, type FiltrosDelDashboard } from '@/lib/dashboard'
 import type { Deporte } from '@/lib/generated/prisma/client'
-import { PeriodPicker } from '@/components/period-picker'
+import { claseSelectDeLaBarra, PeriodPicker } from '@/components/period-picker'
 import { SportIcon } from '@/components/sport-icon'
 
-// Mismo aspecto que el Input de shadcn (igual al de zona-filter.tsx)
-const selectClassName =
-  'border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 bg-card h-12 rounded-xl border px-3 text-base shadow-sm outline-none focus-visible:ring-3'
-
 const claseChip =
-  'inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-base font-medium whitespace-nowrap transition-colors'
+  'inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors'
 const claseChipActivo = `${claseChip} bg-acento text-acento-foreground border-acento shadow-sm`
 const claseChipInactivo = `${claseChip} bg-card border-border hover:bg-muted`
 
 // Lo que hace falta para el selector de período (lo calcula la página)
 export type DatosDelPeriodo = {
-  nombre: string
+  titulo: string
   rango: string
   esElActual: boolean
   fechaAnterior: string
@@ -55,42 +51,41 @@ export function DashboardFrame({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-background/85 border-border/60 -mx-6 space-y-3 border-b px-6 py-3 backdrop-blur-md md:sticky md:top-0 md:z-30">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-          {/* key: si el complejo cambia desde otro lado (el ranking "Por
-              complejo"), el select se vuelve a armar y muestra el nuevo */}
-          <select
-            key={filtros.complejoId ?? 'todos'}
-            aria-label="Complejo"
-            defaultValue={filtros.complejoId ?? ''}
-            // Otro complejo puede no tener el deporte elegido: vuelve a "Todos".
-            // El valor vacío es "Todos los complejos".
-            onChange={(e) =>
-              navegar({ ...filtros, complejoId: e.target.value || undefined, deporte: undefined })
-            }
-            className={`${selectClassName} w-full sm:w-auto`}
-          >
-            <option value="">Todos los complejos</option>
-            {complejos.map((complejo) => (
-              <option key={complejo.id} value={complejo.id}>
-                {complejo.nombre}
-              </option>
-            ))}
-          </select>
-
-          <PeriodPicker
-            vista={filtros.vista}
-            nombre={periodo.nombre}
-            rango={periodo.rango}
-            esElActual={periodo.esElActual}
-            alIrAlAnterior={() => navegar({ ...filtros, fecha: periodo.fechaAnterior })}
-            alIrAlSiguiente={() => navegar({ ...filtros, fecha: periodo.fechaSiguiente })}
-            alVolverAHoy={() => navegar({ ...filtros, fecha: undefined })}
-            // Se queda en la misma fecha: de "Hoy" a "Mes" muestra este mes
-            alCambiarLaVista={(vista) => navegar({ ...filtros, vista })}
-          />
-        </div>
+    <div className="space-y-5">
+      <div className="bg-background/85 -mx-6 space-y-2 px-6 py-2 backdrop-blur-md md:sticky md:top-0 md:z-30">
+        <PeriodPicker
+          vista={filtros.vista}
+          titulo={periodo.titulo}
+          rango={periodo.rango}
+          esElActual={periodo.esElActual}
+          alIrAlAnterior={() => navegar({ ...filtros, fecha: periodo.fechaAnterior })}
+          alIrAlSiguiente={() => navegar({ ...filtros, fecha: periodo.fechaSiguiente })}
+          alVolverAHoy={() => navegar({ ...filtros, fecha: undefined })}
+          // Se queda en la misma fecha: de "Día" a "Mes" muestra el mes de ese día
+          alCambiarLaVista={(vista) => navegar({ ...filtros, vista })}
+          selectorDeComplejo={
+            // key: si el complejo cambia desde otro lado (el ranking "Por
+            // complejo"), el select se vuelve a armar y muestra el nuevo
+            <select
+              key={filtros.complejoId ?? 'todos'}
+              aria-label="Complejo"
+              defaultValue={filtros.complejoId ?? ''}
+              // Otro complejo puede no tener el deporte elegido: vuelve a "Todos".
+              // El valor vacío es "Todos los complejos".
+              onChange={(e) =>
+                navegar({ ...filtros, complejoId: e.target.value || undefined, deporte: undefined })
+              }
+              className={`${claseSelectDeLaBarra} w-full sm:w-auto sm:max-w-56`}
+            >
+              <option value="">Todos los complejos</option>
+              {complejos.map((complejo) => (
+                <option key={complejo.id} value={complejo.id}>
+                  {complejo.nombre}
+                </option>
+              ))}
+            </select>
+          }
+        />
 
         {/* Con un solo deporte no hay nada que elegir */}
         {deportes.length > 1 && (
@@ -112,7 +107,7 @@ export function DashboardFrame({
                   onClick={() => navegar({ ...filtros, deporte: unDeporte })}
                   className={filtros.deporte === unDeporte ? claseChipActivo : claseChipInactivo}
                 >
-                  <SportIcon deporte={unDeporte} className="size-6" />
+                  <SportIcon deporte={unDeporte} className="size-5" />
                   {deporteLabels[unDeporte]}
                 </button>
               ))}

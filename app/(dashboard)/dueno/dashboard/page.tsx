@@ -24,8 +24,8 @@ import {
   nombreDelAnterior,
   nombreDelPeriodo,
   periodoQueContiene,
-  rangoDelPeriodo,
   rangosAComparar,
+  tituloDelPeriodo,
   type Periodo,
   type Vista,
 } from '@/lib/periodos'
@@ -334,8 +334,9 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
         deportes={deportes}
         filtros={filtrosValidos}
         periodo={{
-          nombre,
-          rango: rangoDelPeriodo(rangos.actual),
+          titulo: tituloDelPeriodo(fecha, vista),
+          // Solo en el período actual: aclara que se mide hasta hoy
+          rango: esElActual ? (vista === 'dia' ? 'Hoy' : `${nombre} · hasta hoy`) : '',
           esElActual,
           fechaAnterior: fechaDelPeriodoVecino(fecha, vista, -1),
           fechaSiguiente: fechaDelPeriodoVecino(fecha, vista, 1),
@@ -344,7 +345,7 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
         {/* El orden de un buen tablero: primero el panorama (ocupación y
             datos clave), después cuándo se juega (demanda) y al final el
             detalle (por complejo, por deporte) */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-5">
           <OccupancyHero
             alcance={elegido ? elegido.nombre : 'Todos los complejos'}
             periodo={nombre}

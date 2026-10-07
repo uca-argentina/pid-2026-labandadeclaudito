@@ -1,4 +1,9 @@
-import { nombresCortosDeDias, nombresCortosDeMeses, nombresDeMeses } from '@/lib/labels'
+import {
+  nombresCortosDeDias,
+  nombresCortosDeMeses,
+  nombresDeDias,
+  nombresDeMeses,
+} from '@/lib/labels'
 import { sumarDias } from '@/lib/time'
 
 // Períodos de calendario del dashboard del dueño: un día, una semana (de
@@ -99,15 +104,6 @@ export const comparacionDeLaVista: Record<Vista, string> = {
   mes: 'el mes anterior',
 }
 
-// Las fechas del período, cortas: "07/10/2026" si es un día, "05/10 al 11/10" si no
-export function rangoDelPeriodo(periodo: Periodo): string {
-  const [anio, mes, dia] = periodo.desde.split('-')
-  if (periodo.desde === periodo.hasta) return `${dia}/${mes}/${anio}`
-
-  const [, mesHasta, diaHasta] = periodo.hasta.split('-')
-  return `${dia}/${mes} al ${diaHasta}/${mesHasta}`
-}
-
 export const nombreDelAnterior: Record<Vista, string> = {
   dia: 'Día anterior',
   semana: 'Semana anterior',
@@ -137,4 +133,29 @@ export function rangosAComparar(
   }
 
   return { actual, anterior }
+}
+
+// El título del selector, con la fecha completa como en un calendario:
+// "Miércoles 7 de octubre", "5 – 11 de octubre de 2026", "Octubre de 2026"
+export function tituloDelPeriodo(fecha: string, vista: Vista): string {
+  const periodo = periodoQueContiene(fecha, vista)
+  const anio = periodo.desde.slice(0, 4)
+  const mesDesde = nombresDeMeses[Number(periodo.desde.slice(5, 7)) - 1].toLowerCase()
+
+  if (vista === 'dia') {
+    const dia = Number(fecha.slice(8, 10))
+    return `${nombresDeDias[diaSemanaDe(fecha)]} ${dia} de ${mesDesde}`
+  }
+
+  if (vista === 'semana') {
+    const diaDesde = Number(periodo.desde.slice(8, 10))
+    const diaHasta = Number(periodo.hasta.slice(8, 10))
+    // Si la semana cruza de un mes al otro se nombran los dos
+    if (periodo.desde.slice(5, 7) !== periodo.hasta.slice(5, 7)) {
+      return `${diaCorto(periodo.desde)} – ${diaCorto(periodo.hasta)} ${periodo.hasta.slice(0, 4)}`
+    }
+    return `${diaDesde} – ${diaHasta} de ${mesDesde} de ${anio}`
+  }
+
+  return `${nombresDeMeses[Number(periodo.desde.slice(5, 7)) - 1]} de ${anio}`
 }

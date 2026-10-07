@@ -6,8 +6,8 @@ import {
   fechaDelPeriodoVecino,
   nombreDelPeriodo,
   periodoQueContiene,
-  rangoDelPeriodo,
   rangosAComparar,
+  tituloDelPeriodo,
 } from './periodos'
 
 // 2026-10-07 es miércoles
@@ -87,16 +87,6 @@ describe('nombreDelPeriodo', () => {
   })
 })
 
-describe('rangoDelPeriodo', () => {
-  test('un día con su año', () => {
-    expect(rangoDelPeriodo({ desde: hoy, hasta: hoy })).toBe('07/10/2026')
-  })
-
-  test('varios días: desde y hasta', () => {
-    expect(rangoDelPeriodo({ desde: '2026-10-05', hasta: '2026-10-11' })).toBe('05/10 al 11/10')
-  })
-})
-
 describe('rangosAComparar', () => {
   test('un período que ya terminó se compara entero contra el anterior entero', () => {
     expect(rangosAComparar('2026-09-15', 'mes', hoy)).toEqual({
@@ -145,5 +135,23 @@ describe('diasDeLaSemanaDe', () => {
 
   test('un mes tiene los siete, sin repetir', () => {
     expect(diasDeLaSemanaDe({ desde: '2026-10-01', hasta: '2026-10-31' }).length).toBe(7)
+  })
+})
+
+describe('tituloDelPeriodo', () => {
+  test('día con su nombre', () => {
+    expect(tituloDelPeriodo(hoy, 'dia')).toBe('Miércoles 7 de octubre')
+  })
+
+  test('semana dentro de un mes', () => {
+    expect(tituloDelPeriodo(hoy, 'semana')).toBe('5 – 11 de octubre de 2026')
+  })
+
+  test('semana que cruza de un mes a otro', () => {
+    expect(tituloDelPeriodo('2026-10-01', 'semana')).toBe('28 sep – 4 oct 2026')
+  })
+
+  test('mes', () => {
+    expect(tituloDelPeriodo(hoy, 'mes')).toBe('Octubre de 2026')
   })
 })
