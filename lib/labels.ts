@@ -53,6 +53,36 @@ export const nombresDeDias = [
 
 export const nombresCortosDeDias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
+export const nombresDeMeses = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+]
+
+export const nombresCortosDeMeses = [
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
+]
+
 // Cuántos juegan por lado, para el cartel de la cancha ilustrada
 export const formatoDeJuego: Record<Deporte, string> = {
   FUTBOL_5: '5 vs 5',
