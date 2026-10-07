@@ -1,16 +1,57 @@
 'use client'
 
 import { useState } from 'react'
-import { ChartSpline, Grid3x3 } from 'lucide-react'
-import { horariosDistintos, reservasPorHorario, type CeldaDeDemanda } from '@/lib/dashboard'
+import { CalendarDays, ChartSpline, Grid3x3 } from 'lucide-react'
+import {
+  horariosDistintos,
+  reservasPorDia,
+  reservasPorHorario,
+  type CeldaDeDemanda,
+} from '@/lib/dashboard'
 import { DemandCurve } from '@/components/demand-curve'
 import { DemandHeatmap } from '@/components/demand-heatmap'
+import { WeekStrip } from '@/components/week-strip'
+
+type Vista = 'hora' | 'dia' | 'semana'
 
 const claseOpcion =
-  'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-base font-medium whitespace-nowrap transition-colors'
+  'inline-flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-1.5 text-base font-medium whitespace-nowrap transition-colors sm:flex-none'
 
-// Una sola tarjeta para la demanda, con dos vistas: la curva por hora (este
-// período contra el anterior) o el mapa de la semana (día × hora).
+function Opcion({
+  vista,
+  vistaActual,
+  elegir,
+  icono: Icono,
+  texto,
+}: {
+  vista: Vista
+  vistaActual: Vista
+  elegir: (vista: Vista) => void
+  icono: typeof ChartSpline
+  texto: string
+}) {
+  const activa = vista === vistaActual
+  return (
+    <button
+      type="button"
+      aria-pressed={activa}
+      onClick={() => elegir(vista)}
+      className={
+        activa
+          ? `${claseOpcion} bg-card shadow-sm`
+          : `${claseOpcion} text-muted-foreground hover:text-foreground`
+      }
+    >
+      <Icono className="hidden size-4 sm:block" />
+      {texto}
+    </button>
+  )
+}
+
+// Cuándo se llenan las canchas, en una sola tarjeta con tres vistas:
+// - por hora: la curva del día, este período contra el anterior
+// - por día: qué días de la semana se reserva más
+// - semana: el mapa día × hora, para encontrar huecos puntuales
 export function DemandPanel({
   demanda,
   demandaAnterior,
@@ -18,45 +59,45 @@ export function DemandPanel({
   demanda: CeldaDeDemanda[]
   demandaAnterior: CeldaDeDemanda[]
 }) {
-  const [vista, setVista] = useState<'curva' | 'mapa'>('curva')
+  const [vista, setVista] = useState<Vista>('hora')
 
   const horarios = horariosDistintos(demanda)
 
   return (
     <section className="border-border bg-card rounded-2xl border p-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-2xl font-semibold whitespace-nowrap">Demanda por horario</h2>
-        <div className="bg-muted inline-flex rounded-lg p-1" role="group" aria-label="Vista">
-          <button
-            type="button"
-            aria-pressed={vista === 'curva'}
-            onClick={() => setVista('curva')}
-            className={
-              vista === 'curva'
-                ? `${claseOpcion} bg-card shadow-sm`
-                : `${claseOpcion} text-muted-foreground hover:text-foreground`
-            }
-          >
-            <ChartSpline className="size-4" />
-            Por hora
-          </button>
-          <button
-            type="button"
-            aria-pressed={vista === 'mapa'}
-            onClick={() => setVista('mapa')}
-            className={
-              vista === 'mapa'
-                ? `${claseOpcion} bg-card shadow-sm`
-                : `${claseOpcion} text-muted-foreground hover:text-foreground`
-            }
-          >
-            <Grid3x3 className="size-4" />
-            Semana
-          </button>
+        <h2 className="text-2xl font-semibold whitespace-nowrap">Demanda</h2>
+        {/* En mobile ocupa todo el ancho y sin íconos, para que entren las tres */}
+        <div
+          className="bg-muted flex w-full rounded-lg p-1 sm:w-auto"
+          role="group"
+          aria-label="Vista"
+        >
+          <Opcion
+            vista="hora"
+            vistaActual={vista}
+            elegir={setVista}
+            icono={ChartSpline}
+            texto="Por hora"
+          />
+          <Opcion
+            vista="dia"
+            vistaActual={vista}
+            elegir={setVista}
+            icono={CalendarDays}
+            texto="Por día"
+          />
+          <Opcion
+            vista="semana"
+            vistaActual={vista}
+            elegir={setVista}
+            icono={Grid3x3}
+            texto="Semana"
+          />
         </div>
       </div>
 
-      {vista === 'curva' ? (
+      {vista === 'hora' && (
         <div className="space-y-4">
           <div className="text-muted-foreground flex flex-wrap gap-x-5 gap-y-1 text-sm">
             <span className="inline-flex items-center gap-2 whitespace-nowrap">
@@ -74,9 +115,9 @@ export function DemandPanel({
             anterior={reservasPorHorario(demandaAnterior, horarios)}
           />
         </div>
-      ) : (
-        <DemandHeatmap demanda={demanda} />
       )}
+      {vista === 'dia' && <WeekStrip totalesPorDia={reservasPorDia(demanda)} />}
+      {vista === 'semana' && <DemandHeatmap demanda={demanda} />}
     </section>
   )
 }
