@@ -52,18 +52,21 @@ function Opcion({
 // Cuándo se llenan las canchas, en una sola tarjeta con hasta tres vistas:
 // - por hora: la curva del día, este período contra el anterior
 // - por día: qué días de la semana se reserva más (desde una semana)
-// - semana: el mapa día × hora, para encontrar huecos puntuales (en un mes)
+// - mapa: día × hora con el número de reservas, para encontrar huecos puntuales
 // Mirando un solo día, las vistas por día no dicen nada: no se ofrecen.
 export function DemandPanel({
   demanda,
   demandaAnterior,
   vistasDisponibles,
   nombreDelAnterior,
+  diasDelPeriodo,
 }: {
   demanda: CeldaDeDemanda[]
   demandaAnterior: CeldaDeDemanda[]
   vistasDisponibles: VistaDeDemanda[]
   nombreDelAnterior: string
+  // Los días de la semana que tiene el período (para las filas del mapa)
+  diasDelPeriodo: number[]
 }) {
   const [vistaElegida, setVistaElegida] = useState<VistaDeDemanda>('hora')
   // Si se cambia a un período más corto, la vista elegida puede no estar más
@@ -103,7 +106,7 @@ export function DemandPanel({
                 vistaActual={vista}
                 elegir={setVistaElegida}
                 icono={Grid3x3}
-                texto="Semana"
+                texto="Mapa"
               />
             )}
           </div>
@@ -130,7 +133,7 @@ export function DemandPanel({
         </div>
       )}
       {vista === 'dia' && <WeekStrip totalesPorDia={reservasPorDia(demanda)} />}
-      {vista === 'semana' && <DemandHeatmap demanda={demanda} />}
+      {vista === 'semana' && <DemandHeatmap demanda={demanda} diasDelPeriodo={diasDelPeriodo} />}
     </section>
   )
 }

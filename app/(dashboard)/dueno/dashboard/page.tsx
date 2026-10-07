@@ -158,10 +158,9 @@ function metricasDe(
 }
 
 // Qué vistas de la demanda tienen sentido según el largo del período: con un
-// día solo "por hora"; desde dos días, "por día"; desde 4 semanas, el mapa.
+// día solo "por hora"; desde dos días, también por día y el mapa.
 function vistasDeDemanda(dias: number): VistaDeDemanda[] {
   if (dias === 1) return ['hora']
-  if (dias < 28) return ['hora', 'dia']
   return ['hora', 'dia', 'semana']
 }
 
@@ -331,7 +330,7 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
 
   return (
     // El tema pinta todo lo de adentro con los colores del deporte elegido
-    <div className={`${temaDelDeporte(deporte)} mx-auto w-full max-w-5xl px-6 pt-6 pb-12 md:pt-4`}>
+    <div className={`${temaDelDeporte(deporte)} mx-auto w-full max-w-5xl px-6 pt-6 pb-6 md:pt-4`}>
       <DashboardFrame
         complejos={complejos}
         filtros={filtrosValidos}
@@ -373,6 +372,7 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
             demandaAnterior={anteriores.demanda}
             vistasDisponibles={vistasDeDemanda(cantidadDeDias(rangos.actual))}
             nombreDelAnterior={periodo.nombreDelAnterior}
+            diasDelPeriodo={diasDeLaSemanaDe(rangos.actual)}
           />
 
           {filasPorComplejo.length > 1 && <ComplexBreakdown filas={filasPorComplejo} />}

@@ -8,6 +8,8 @@ import {
   horarioMasPedido,
   horariosDistintos,
   reservasEn,
+  reservasPorDia,
+  reservasPorHorario,
   type CeldaDeDemanda,
 } from '@/lib/dashboard'
 import { Button } from '@/components/ui/button'
@@ -27,19 +29,43 @@ function claseDeIntensidad(reservas: number, maximo: number): string {
   return 'bg-acento text-acento-foreground'
 }
 
+function maximoDe(valores: number[]): number {
+  let maximo = 0
+  for (const valor of valores) {
+    if (valor > maximo) maximo = valor
+  }
+  return maximo
+}
+
 function textoDeCelda(celda: CeldaDeDemanda): string {
   const palabra = celda.reservas === 1 ? 'reserva' : 'reservas'
   return `${nombresCortosDeDias[celda.diaSemana]} ${celda.horaInicio} · ${celda.reservas} ${palabra}`
 }
 
-// Mapa de calor día × hora. Pasar el mouse (o el foco de teclado) por una
-// celda resalta su día y su hora y muestra el detalle arriba.
-export function DemandHeatmap({ demanda }: { demanda: CeldaDeDemanda[] }) {
+// Mapa de calor día × hora con el número de reservas en cada celda, el total
+// de cada día a la derecha y el de cada hora abajo. Pasar el mouse (o el foco
+// de teclado) por una celda resalta su día, su hora y sus totales.
+// diasDelPeriodo: solo se muestran los días de la semana que tiene el período.
+export function DemandHeatmap({
+  demanda,
+  diasDelPeriodo,
+}: {
+  demanda: CeldaDeDemanda[]
+  diasDelPeriodo: number[]
+}) {
   const [celdaActiva, setCeldaActiva] = useState<CeldaDeDemanda | null>(null)
-  const [mostrarNumeros, setMostrarNumeros] = useState(false)
+  const [mostrarNumeros, setMostrarNumeros] = useState(true)
 
   const horarios = horariosDistintos(demanda)
   const estrella = horarioMasPedido(demanda)
+  const totalesPorDia = reservasPorDia(demanda)
+  const totalesPorHorario = reservasPorHorario(demanda, horarios)
+  const maximoPorDia = maximoDe(totalesPorDia)
+
+  const dias: number[] = []
+  for (const dia of ordenDeDias) {
+    if (diasDelPeriodo.includes(dia)) dias.push(dia)
+  }
 
   if (estrella === null) {
     return (
@@ -48,11 +74,11 @@ export function DemandHeatmap({ demanda }: { demanda: CeldaDeDemanda[] }) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         {/* La celda activa; si no hay ninguna, el horario pico */}
         <p
-          className="bg-muted inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-base font-medium whitespace-nowrap"
+          className="bg-muted inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap"
           aria-live="polite"
         >
           {celdaActiva === null && (
@@ -62,18 +88,19 @@ export function DemandHeatmap({ demanda }: { demanda: CeldaDeDemanda[] }) {
         </p>
         <Button
           variant="outline"
+          size="sm"
           aria-pressed={mostrarNumeros}
           onClick={() => setMostrarNumeros(!mostrarNumeros)}
         >
           <Hash className="size-4" />
-          {mostrarNumeros ? 'Ocultar números' : 'Ver números'}
+          {mostrarNumeros ? 'Solo colores' : 'Ver números'}
         </Button>
       </div>
 
-      {/* En pantallas chicas la tabla es más ancha que la tarjeta: scrollea
-          adentro. contain:inline-size hace que su ancho no estire la página. */}
-      <div className="overflow-x-auto pb-1 [contain:inline-size]">
-        <table className="mx-auto border-separate border-spacing-1 text-sm">
+      {/* Si no entra a lo ancho, scrollea adentro de la tarjeta (con una barra
+          fina) y no estira la página */}
+      <div className="overflow-x-auto pb-1 [contain:inline-size] [scrollbar-width:thin]">
+        <table className="mx-auto border-separate border-spacing-1 text-xs sm:text-sm">
           <thead>
             <tr>
               <th />
@@ -86,6 +113,7 @@ export function DemandHeatmap({ demanda }: { demanda: CeldaDeDemanda[] }) {
                   {franja.etiqueta}
                 </th>
               ))}
+              <th />
             </tr>
             <tr>
               <th className="sr-only">Día</th>
@@ -102,63 +130,106 @@ export function DemandHeatmap({ demanda }: { demanda: CeldaDeDemanda[] }) {
                   {horario.slice(0, 2)}
                 </th>
               ))}
+              <th className="text-muted-foreground pl-2 text-left font-medium">Total</th>
             </tr>
           </thead>
 
           <tbody>
-            {ordenDeDias.map((diaSemana, fila) => (
-              <tr key={diaSemana}>
-                <th
+            {dias.map((diaSemana, fila) => {
+              const esDiaActivo = celdaActiva?.diaSemana === diaSemana
+              const anchoDelTotal =
+                maximoPorDia === 0 ? 0 : (totalesPorDia[diaSemana] / maximoPorDia) * 100
+
+              return (
+                <tr key={diaSemana}>
+                  <th
+                    className={
+                      esDiaActivo
+                        ? 'text-foreground pr-1.5 text-left font-semibold'
+                        : 'text-muted-foreground pr-1.5 text-left font-medium'
+                    }
+                  >
+                    {nombresCortosDeDias[diaSemana]}
+                  </th>
+
+                  {horarios.map((horaInicio, columna) => {
+                    const celda = {
+                      diaSemana,
+                      horaInicio,
+                      reservas: reservasEn(demanda, diaSemana, horaInicio),
+                    }
+                    const esEstrella =
+                      diaSemana === estrella.diaSemana && horaInicio === estrella.horaInicio
+                    const esActiva = esDiaActivo && horaInicio === celdaActiva?.horaInicio
+
+                    return (
+                      <td key={horaInicio} className="p-0">
+                        <button
+                          type="button"
+                          aria-label={textoDeCelda(celda)}
+                          onMouseEnter={() => setCeldaActiva(celda)}
+                          onMouseLeave={() => setCeldaActiva(null)}
+                          onFocus={() => setCeldaActiva(celda)}
+                          onBlur={() => setCeldaActiva(null)}
+                          className={`flex size-8 items-center justify-center rounded-md font-semibold tabular-nums transition-[background-color,scale] duration-500 hover:scale-110 focus-visible:scale-110 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-50 fill-mode-backwards sm:size-10 ${claseDeIntensidad(celda.reservas, estrella.reservas)} ${esActiva || esEstrella ? 'ring-foreground ring-2' : ''}`}
+                          // Entran en ola: de izquierda a derecha y de arriba hacia abajo
+                          style={{
+                            animationDelay: `${columna * 25 + fila * 15}ms`,
+                            animationDuration: '400ms',
+                          }}
+                        >
+                          {mostrarNumeros && celda.reservas}
+                          {!mostrarNumeros && esEstrella && (
+                            <Flame className="size-4 motion-safe:animate-pulse" />
+                          )}
+                        </button>
+                      </td>
+                    )
+                  })}
+
+                  {/* Total del día, con una barrita */}
+                  <td className="pl-2">
+                    <div className="flex w-20 items-center gap-1.5 sm:w-28">
+                      <div className="bg-acento/10 h-2 flex-1 rounded-full">
+                        <div
+                          className={`h-full rounded-full transition-[width] duration-700 ${esDiaActivo ? 'bg-acento' : 'bg-acento/50'}`}
+                          style={{ width: `${anchoDelTotal}%` }}
+                        />
+                      </div>
+                      <span className="w-8 text-right font-semibold tabular-nums">
+                        {totalesPorDia[diaSemana]}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+
+          <tfoot>
+            <tr>
+              <th className="text-muted-foreground pr-1.5 text-left font-medium">Total</th>
+              {horarios.map((horario, columna) => (
+                <td
+                  key={horario}
                   className={
-                    celdaActiva?.diaSemana === diaSemana
-                      ? 'text-foreground pr-2 text-left font-semibold'
-                      : 'text-muted-foreground pr-2 text-left font-medium'
+                    celdaActiva?.horaInicio === horario
+                      ? 'text-foreground pt-1 text-center font-semibold tabular-nums'
+                      : 'text-muted-foreground pt-1 text-center font-medium tabular-nums'
                   }
                 >
-                  {nombresCortosDeDias[diaSemana]}
-                </th>
-
-                {horarios.map((horaInicio, columna) => {
-                  const celda = {
-                    diaSemana,
-                    horaInicio,
-                    reservas: reservasEn(demanda, diaSemana, horaInicio),
-                  }
-                  const esEstrella =
-                    diaSemana === estrella.diaSemana && horaInicio === estrella.horaInicio
-                  const esActiva =
-                    diaSemana === celdaActiva?.diaSemana && horaInicio === celdaActiva?.horaInicio
-
-                  return (
-                    <td key={horaInicio} className="p-0">
-                      <button
-                        type="button"
-                        aria-label={textoDeCelda(celda)}
-                        onMouseEnter={() => setCeldaActiva(celda)}
-                        onMouseLeave={() => setCeldaActiva(null)}
-                        onFocus={() => setCeldaActiva(celda)}
-                        onBlur={() => setCeldaActiva(null)}
-                        className={`flex size-10 items-center justify-center rounded-md font-medium transition-[background-color,scale] duration-500 hover:scale-110 focus-visible:scale-110 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-50 fill-mode-backwards ${claseDeIntensidad(celda.reservas, estrella.reservas)} ${esActiva ? 'ring-foreground ring-2' : ''}`}
-                        // Entran en ola: de izquierda a derecha y de arriba hacia abajo
-                        style={{
-                          animationDelay: `${columna * 25 + fila * 15}ms`,
-                          animationDuration: '400ms',
-                        }}
-                      >
-                        {mostrarNumeros && celda.reservas}
-                        {!mostrarNumeros && esEstrella && (
-                          <Flame className="size-4 motion-safe:animate-pulse" />
-                        )}
-                      </button>
-                    </td>
-                  )
-                })}
-              </tr>
-            ))}
-          </tbody>
+                  {totalesPorHorario[columna]}
+                </td>
+              ))}
+              <td />
+            </tr>
+          </tfoot>
         </table>
       </div>
 
+      <p className="text-muted-foreground text-center text-sm sm:hidden">
+        Deslizá para ver todas las horas →
+      </p>
       <div className="text-muted-foreground flex items-center justify-center gap-2 text-sm">
         Menos
         <span className="bg-muted size-4 rounded" />
