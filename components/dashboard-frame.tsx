@@ -4,7 +4,7 @@ import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { deporteLabels } from '@/lib/labels'
 import type { Deporte } from '@/lib/generated/prisma/client'
-import { SportBall } from '@/components/sport-ball'
+import { SportIcon } from '@/components/sport-icon'
 
 // Mismo aspecto que el Input de shadcn (igual al de zona-filter.tsx)
 const selectClassName =
@@ -29,7 +29,8 @@ export function DashboardFrame({
 }: {
   complejos: { id: string; nombre: string }[]
   deportes: Deporte[]
-  complejoId: string
+  // undefined = todos los complejos del dueño
+  complejoId: string | undefined
   dias: number
   deporte: Deporte | undefined
   children: React.ReactNode
@@ -37,9 +38,13 @@ export function DashboardFrame({
   const router = useRouter()
   const [cargando, startTransition] = useTransition()
 
-  function navegar(nuevoComplejoId: string, nuevosDias: number, nuevoDeporte: Deporte | undefined) {
+  function navegar(
+    nuevoComplejoId: string | undefined,
+    nuevosDias: number,
+    nuevoDeporte: Deporte | undefined,
+  ) {
     const params = new URLSearchParams()
-    params.set('complejoId', nuevoComplejoId)
+    if (nuevoComplejoId !== undefined) params.set('complejoId', nuevoComplejoId)
     params.set('dias', String(nuevosDias))
     if (nuevoDeporte !== undefined) params.set('deporte', nuevoDeporte)
 
@@ -50,14 +55,18 @@ export function DashboardFrame({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-3">
+      {/* En mobile cada select ocupa su fila, para que se lea el nombre entero */}
+      <div className="flex flex-col gap-3 sm:flex-row">
         <select
           aria-label="Complejo"
-          defaultValue={complejoId}
-          // Otro complejo puede no tener el deporte elegido: vuelve a "Todos"
-          onChange={(e) => navegar(e.target.value, dias, undefined)}
-          className={`${selectClassName} min-w-0 flex-1 sm:flex-none`}
+          defaultValue={complejoId ?? ''}
+          // Otro complejo puede no tener el deporte elegido: vuelve a "Todos".
+          // El valor vacío es "Todos tus complejos".
+          onChange={(e) => navegar(e.target.value || undefined, dias, undefined)}
+          className={`${selectClassName} w-full sm:w-auto`}
         >
+          {/* Con un solo complejo no hay nada que sumar */}
+          {complejos.length > 1 && <option value="">Todos tus complejos</option>}
           {complejos.map((complejo) => (
             <option key={complejo.id} value={complejo.id}>
               {complejo.nombre}
@@ -68,7 +77,7 @@ export function DashboardFrame({
           aria-label="Período"
           defaultValue={String(dias)}
           onChange={(e) => navegar(complejoId, Number(e.target.value), deporte)}
-          className={selectClassName}
+          className={`${selectClassName} w-full sm:w-auto`}
         >
           <option value="7">Últimos 7 días</option>
           <option value="30">Últimos 30 días</option>
@@ -96,7 +105,7 @@ export function DashboardFrame({
                 onClick={() => navegar(complejoId, dias, unDeporte)}
                 className={deporte === unDeporte ? claseChipActivo : claseChipInactivo}
               >
-                <SportBall deporte={unDeporte} className="size-5" />
+                <SportIcon deporte={unDeporte} className="size-6" />
                 {deporteLabels[unDeporte]}
               </button>
             ))}

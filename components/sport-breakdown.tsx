@@ -7,7 +7,7 @@ import { deporteLabels, formatPrecio } from '@/lib/labels'
 import { porcentaje, segmentosDeDona } from '@/lib/dashboard'
 import type { Deporte } from '@/lib/generated/prisma/client'
 import { ProgressRing } from '@/components/progress-ring'
-import { SportBall } from '@/components/sport-ball'
+import { SportIcon } from '@/components/sport-icon'
 
 // Un color fijo por deporte (tokens de globals.css): la parte de la dona y el
 // anillo de ocupación del mismo deporte usan el mismo. Las clases van
@@ -112,12 +112,16 @@ export function SportBreakdown({ filas }: { filas: FilaDeDeporte[] }) {
                     : 'group flex items-center gap-3 rounded-xl p-3 transition-colors sm:gap-4'
                 }
               >
-                <SportBall deporte={fila.deporte} className="size-8" />
+                <SportIcon deporte={fila.deporte} className="size-8" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-lg font-semibold">{deporteLabels[fila.deporte]}</p>
-                  <p className="text-muted-foreground truncate text-sm">
-                    {formatPrecio(fila.ingresos)} · {fila.turnosReservados.toLocaleString('es-AR')}{' '}
-                    turnos
+                  <p className="text-lg font-semibold whitespace-nowrap">
+                    {deporteLabels[fila.deporte]}
+                  </p>
+                  <p className="text-muted-foreground flex flex-wrap gap-x-2 text-sm">
+                    <span className="whitespace-nowrap">{formatPrecio(fila.ingresos)}</span>
+                    <span className="whitespace-nowrap">
+                      {fila.turnosReservados.toLocaleString('es-AR')} turnos
+                    </span>
                   </p>
                 </div>
                 <ProgressRing

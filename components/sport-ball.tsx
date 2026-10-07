@@ -1,9 +1,6 @@
-import { familiaDelDeporte } from '@/lib/dashboard'
-import type { Deporte } from '@/lib/generated/prisma/client'
-
 // Las pelotas de cada deporte, dibujadas con radio 10 y escaladas a r. Mismo
-// dibujo que las escenas del login. Se usan sueltas (SportBall, como ícono) o
-// adentro de la ilustración de la cancha (los <g> de abajo).
+// dibujo que las escenas del login. Son <g>: van adentro de un <svg> (la
+// ilustración de la cancha, los íconos de sport-icon.tsx).
 type Pelota = { x: number; y: number; r: number }
 
 export function PelotaDeFutbol({ x, y, r }: Pelota) {
@@ -46,18 +43,5 @@ export function PelotaDeBasquet({ x, y, r }: Pelota) {
         className="stroke-hero-ink fill-none"
       />
     </g>
-  )
-}
-
-// La pelota del deporte como ícono (chips, lista por deporte)
-export function SportBall({ deporte, className }: { deporte: Deporte; className: string }) {
-  const familia = familiaDelDeporte(deporte)
-
-  return (
-    <svg viewBox="-11 -11 22 22" aria-hidden="true" className={`shrink-0 ${className}`}>
-      {familia === 'futbol' && <PelotaDeFutbol x={0} y={0} r={10} />}
-      {(familia === 'tenis' || familia === 'padel') && <PelotaDeTenis x={0} y={0} r={10} />}
-      {familia === 'basquet' && <PelotaDeBasquet x={0} y={0} r={10} />}
-    </svg>
   )
 }
