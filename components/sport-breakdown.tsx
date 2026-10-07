@@ -61,8 +61,8 @@ export function SportBreakdown({ filas }: { filas: FilaDeDeporte[] }) {
     <section className={`${claseTarjetaDeDatos} p-4 sm:p-5`}>
       <h2 className="mb-4 text-xl font-semibold">Por deporte</h2>
 
-      <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-[auto_minmax(0,1fr)]">
-        <div className="relative mx-auto size-48 sm:size-52">
+      <div className="grid grid-cols-1 items-center gap-4 sm:gap-8 md:grid-cols-[auto_minmax(0,1fr)]">
+        <div className="relative mx-auto size-40 sm:size-52">
           <svg
             viewBox="0 0 120 120"
             aria-hidden="true"
@@ -150,11 +150,11 @@ export function SportBreakdown({ filas }: { filas: FilaDeDeporte[] }) {
                     onBlur={() => setDeporteActivo(null)}
                     className={
                       activa
-                        ? 'bg-muted group flex items-center gap-3 rounded-xl p-3 transition-colors sm:gap-4'
-                        : 'group flex items-center gap-3 rounded-xl p-3 transition-colors sm:gap-4'
+                        ? 'bg-muted group flex items-center gap-3 rounded-xl p-2 transition-colors sm:gap-4 sm:p-3'
+                        : 'group flex items-center gap-3 rounded-xl p-2 transition-colors sm:gap-4 sm:p-3'
                     }
                   >
-                    <span className="bg-background flex size-10 shrink-0 items-center justify-center rounded-xl shadow-sm">
+                    <span className="bg-background flex size-9 shrink-0 items-center justify-center rounded-xl shadow-sm sm:size-10">
                       <SportIcon deporte={fila.deporte} className="size-7" />
                     </span>
 
@@ -178,7 +178,7 @@ export function SportBreakdown({ filas }: { filas: FilaDeDeporte[] }) {
 
                     <ProgressRing
                       porcentaje={fila.porcentaje}
-                      className="size-12"
+                      className="size-11 sm:size-12"
                       claseFondo="stroke-muted"
                       claseRelleno={colorDelDeporte[fila.deporte].trazo}
                     >
