@@ -7,6 +7,63 @@ export type CeldaDeDemanda = { diaSemana: number; horaInicio: string; reservas: 
 
 export type Franja = { etiqueta: string; columnas: number; reservas: number }
 
+// Misma forma que MetricasComplejo de lib/metricas-complejo.ts (SCRUM-62):
+// lo que devuelve la métrica de un complejo (o de un deporte de un complejo)
+// en un período.
+export type MetricasDelPeriodo = {
+  ocupacion: { turnosReservados: number; turnosOfrecidos: number; porcentaje: number }
+  ingresos: number
+  cancelaciones: number
+  noShows: number
+  demanda: CeldaDeDemanda[]
+}
+
+// Junta las métricas de varios complejos (o deportes) en una sola: suma todo
+// y recalcula la ocupación con los totales (no se promedian porcentajes: un
+// complejo con 10 turnos no pesa lo mismo que uno con 1.000).
+export function sumarMetricas(lista: MetricasDelPeriodo[]): MetricasDelPeriodo {
+  let turnosReservados = 0
+  let turnosOfrecidos = 0
+  let ingresos = 0
+  let cancelaciones = 0
+  let noShows = 0
+  const demanda: CeldaDeDemanda[] = []
+
+  for (const metricas of lista) {
+    turnosReservados += metricas.ocupacion.turnosReservados
+    turnosOfrecidos += metricas.ocupacion.turnosOfrecidos
+    ingresos += metricas.ingresos
+    cancelaciones += metricas.cancelaciones
+    noShows += metricas.noShows
+
+    for (const celda of metricas.demanda) {
+      let existente: CeldaDeDemanda | undefined = undefined
+      for (const otra of demanda) {
+        if (otra.diaSemana === celda.diaSemana && otra.horaInicio === celda.horaInicio) {
+          existente = otra
+        }
+      }
+      if (existente === undefined) {
+        demanda.push({ ...celda })
+      } else {
+        existente.reservas += celda.reservas
+      }
+    }
+  }
+
+  return {
+    ocupacion: {
+      turnosReservados,
+      turnosOfrecidos,
+      porcentaje: porcentaje(turnosReservados, turnosOfrecidos),
+    },
+    ingresos,
+    cancelaciones,
+    noShows,
+    demanda,
+  }
+}
+
 // Cuánto cambió un valor respecto del período anterior, en %. null cuando el
 // anterior fue 0: no hay contra qué comparar (no se puede dividir por 0).
 export function variacionPorcentual(actual: number, anterior: number): number | null {

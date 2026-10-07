@@ -12,6 +12,7 @@ import {
   reservasPorDia,
   reservasPorHorario,
   segmentosDeDona,
+  sumarMetricas,
   temaDelDeporte,
   trazoDeLinea,
   variacionPorcentual,
@@ -186,5 +187,51 @@ describe('segmentosDeDona', () => {
       { largo: 0, inicio: 0 },
       { largo: 98, inicio: 0 },
     ])
+  })
+})
+
+describe('sumarMetricas', () => {
+  const complejoChico = {
+    ocupacion: { turnosReservados: 1, turnosOfrecidos: 10, porcentaje: 10 },
+    ingresos: 500,
+    cancelaciones: 1,
+    noShows: 0,
+    demanda: [{ diaSemana: 1, horaInicio: '20:00', reservas: 1 }],
+  }
+  const complejoGrande = {
+    ocupacion: { turnosReservados: 90, turnosOfrecidos: 100, porcentaje: 90 },
+    ingresos: 45000,
+    cancelaciones: 3,
+    noShows: 2,
+    demanda: [
+      { diaSemana: 1, horaInicio: '20:00', reservas: 50 },
+      { diaSemana: 6, horaInicio: '10:00', reservas: 40 },
+    ],
+  }
+
+  test('suma los totales y recalcula la ocupación con ellos (no promedia %)', () => {
+    const total = sumarMetricas([complejoChico, complejoGrande])
+    // 91 de 110 = 83%, no el promedio de 10% y 90% (50%)
+    expect(total.ocupacion).toEqual({ turnosReservados: 91, turnosOfrecidos: 110, porcentaje: 83 })
+    expect(total.ingresos).toBe(45500)
+    expect(total.cancelaciones).toBe(4)
+    expect(total.noShows).toBe(2)
+  })
+
+  test('junta la demanda del mismo día y hora', () => {
+    const total = sumarMetricas([complejoChico, complejoGrande])
+    expect(total.demanda).toEqual([
+      { diaSemana: 1, horaInicio: '20:00', reservas: 51 },
+      { diaSemana: 6, horaInicio: '10:00', reservas: 40 },
+    ])
+  })
+
+  test('no modifica las métricas que recibe', () => {
+    sumarMetricas([complejoChico, complejoGrande])
+    expect(complejoChico.demanda[0].reservas).toBe(1)
+  })
+
+  test('sin nada para sumar da todo en 0', () => {
+    expect(sumarMetricas([]).ocupacion.porcentaje).toBe(0)
   })
 })
