@@ -14,7 +14,7 @@ export default async function NuevaCanchaPage({
   if (!complejo) redirect('/dueno')
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pt-6 pb-12 md:pt-4">
+    <main className="max-w-2xl px-6 pt-6 pb-12 md:pt-4">
       <h1 className="text-3xl font-semibold">Nueva cancha</h1>
       <p className="text-muted-foreground mt-1 text-sm">{complejo.nombre}</p>
       <div className="mt-6">

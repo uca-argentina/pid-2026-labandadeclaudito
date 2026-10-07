@@ -16,6 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { CourtRowActions } from '@/components/court-row-actions'
+import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
 
 export default async function ListadoCanchasPage({
   params,
@@ -33,7 +34,7 @@ export default async function ListadoCanchasPage({
   })
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+    <main className="w-full max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <Link
         href={`/dueno/complejos/${id}`}
         className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"
@@ -107,10 +108,8 @@ export default async function ListadoCanchasPage({
                 {canchas.map((cancha) => (
                   <TableRow key={cancha.id}>
                     <TableCell className="whitespace-normal">
-                      <span className="block font-semibold">{cancha.nombre}</span>
-                      <span className="text-muted-foreground text-sm">
-                        {deporteLabels[cancha.deporte]}
-                      </span>
+                      <span className="mb-1 block font-semibold">{cancha.nombre}</span>
+                      <EtiquetaDeporte deporte={cancha.deporte} />
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">{superficieLabels[cancha.tipoSuperficie]}</Badge>

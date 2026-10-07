@@ -16,8 +16,7 @@ import {
 } from '@/components/ui/select'
 import { finDeFranjaPorDefecto, franjaDentroDelHorario, mensajeFueraDelHorario } from '@/lib/time'
 import { createPriceSchema } from '@/lib/validations/price'
-
-const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+import { nombresDeDias } from '@/lib/labels'
 
 const TODOS_LOS_DIAS = 'todos'
 
@@ -121,12 +120,12 @@ export function PriceForm({
         <Select value={diaSemana} onValueChange={(v) => v && setDiaSemana(v)}>
           <SelectTrigger className="w-full" aria-label="Día">
             <SelectValue>
-              {(v: string) => (v === TODOS_LOS_DIAS ? 'Todos los días' : diasSemana[Number(v)])}
+              {(v: string) => (v === TODOS_LOS_DIAS ? 'Todos los días' : nombresDeDias[Number(v)])}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={TODOS_LOS_DIAS}>Todos los días</SelectItem>
-            {diasSemana.map((nombre, indice) => (
+            {nombresDeDias.map((nombre, indice) => (
               <SelectItem key={indice} value={String(indice)}>
                 {nombre}
               </SelectItem>

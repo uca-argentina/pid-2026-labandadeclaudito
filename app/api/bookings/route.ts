@@ -30,7 +30,11 @@ export async function POST(request: Request) {
   await db.reserva.deleteMany({ where: pendientesVencidas() })
 
   const cancha = await db.cancha.findFirst({
-    where: { id: parsed.data.canchaId, activo: true, complejo: { activo: true } },
+    where: {
+      id: parsed.data.canchaId,
+      activo: true,
+      complejo: { activo: true, duenio: { activo: true } },
+    },
     include: {
       preciosEspeciales: { where: { activo: true } },
       complejo: { select: { minAdvanceMinutesDefault: true } },

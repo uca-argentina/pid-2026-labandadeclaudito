@@ -1,9 +1,4 @@
-import {
-  nombresCortosDeDias,
-  nombresCortosDeMeses,
-  nombresDeDias,
-  nombresDeMeses,
-} from '@/lib/labels'
+import { nombresCortosDeDias, mesesCortos, nombresDeDias, nombresDeMeses } from '@/lib/labels'
 import { sumarDias } from '@/lib/time'
 
 // Períodos de calendario del dashboard del dueño: un día, una semana (de
@@ -74,7 +69,7 @@ export function cantidadDeDias(periodo: Periodo): number {
 
 function diaCorto(dia: string): string {
   const numero = Number(dia.slice(8, 10))
-  const mes = nombresCortosDeMeses[Number(dia.slice(5, 7)) - 1]
+  const mes = mesesCortos[Number(dia.slice(5, 7)) - 1]
   return `${numero} ${mes}`
 }
 
@@ -209,7 +204,7 @@ export function tituloDelRango(rango: Periodo): string {
     return `${diaCorto(rango.desde)} ${anioDesde} – ${diaCorto(rango.hasta)} ${anioHasta}`
   }
   if (rango.desde.slice(5, 7) === rango.hasta.slice(5, 7)) {
-    const mes = nombresCortosDeMeses[Number(rango.desde.slice(5, 7)) - 1]
+    const mes = mesesCortos[Number(rango.desde.slice(5, 7)) - 1]
     return `${Number(rango.desde.slice(8, 10))} – ${Number(rango.hasta.slice(8, 10))} ${mes} ${anioHasta}`
   }
   return `${diaCorto(rango.desde)} – ${diaCorto(rango.hasta)} ${anioHasta}`

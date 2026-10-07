@@ -1,24 +1,65 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { CalendarCheck, Clock, Hourglass, MapPin, Wallet } from 'lucide-react'
+import {
+  CalendarCheck,
+  CalendarDays,
+  CircleDot,
+  Clock,
+  Hourglass,
+  LandPlot,
+  MapPin,
+  Wallet,
+} from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { pendientesVencidas } from '@/lib/bookings'
-import { deporteLabels, formatPrecio } from '@/lib/labels'
+import type { Prisma } from '@/lib/generated/prisma/client'
+import { dondeHistorial, dondeProximas } from '@/lib/bookings'
+import { formatPrecio } from '@/lib/labels'
 import { montoDelHistorial } from '@/lib/historial'
-import { estadoDeReserva, venceLaSena } from '@/lib/estado-reserva'
+import { venceLaSena } from '@/lib/estado-reserva'
+import { calcularPagina } from '@/lib/paginacion'
 import { diaDeReserva, formatearDia, momentoActual, refundsDeposit, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { CancelBookingButton } from '@/components/cancel-booking-button'
-import { CollapsibleSection } from '@/components/collapsible-section'
+import { CeldaCancha, CeldaMonto } from '@/components/celdas-reserva'
+import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
+import { FechaDelTurno } from '@/components/fecha-del-turno'
+import { TituloConIcono } from '@/components/titulo-con-icono'
+import { Paginacion } from '@/components/paginacion'
+import {
+  leerVista,
+  PestaniasDeReservas,
+  urlDeReservas,
+  type VistaDeReservas,
+} from '@/components/pestanias-reservas'
 import { PayDepositButton } from '@/components/pay-deposit-button'
 import { RefreshWhenDepositExpires } from '@/components/refresh-when-deposit-expires'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
-async function getReservas(jugadorId: string) {
+// Próximas se muestran como tarjetas (tienen acciones: pagar, cancelar).
+// Historial y canceladas, como tabla: son solo para consultar.
+const TARJETAS_POR_PAGINA = 12
+const FILAS_POR_PAGINA = 20
+
+async function getReservas(
+  where: Prisma.ReservaWhereInput,
+  orden: 'asc' | 'desc',
+  skip: number,
+  take: number,
+) {
   return db.reserva.findMany({
-    where: { jugadorId, NOT: pendientesVencidas() },
+    where,
     include: { cancha: { include: { complejo: true } }, pago: true },
-    orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
+    orderBy: [{ fecha: orden }, { horaInicio: orden }],
+    skip,
+    take,
   })
 }
 
@@ -30,33 +71,64 @@ const tonos = {
   peligro: 'text-destructive',
 }
 
-export default async function MisReservasPage() {
+export default async function MisReservasPage({ searchParams }: PageProps<'/jugador/reservas'>) {
   const session = await auth()
   if (!session) redirect('/login')
+  const jugadorId = session.user.id
 
-  const reservas = await getReservas(session.user.id)
+  // ?vista=historial|canceladas elige la pestaña (sin vista = próximas)
+  // ?pagina=2 elige la página dentro de esa pestaña
+  const { vista: vistaPedida, pagina } = await searchParams
+  const vista = leerVista(vistaPedida)
+
+  // Qué es "próxima" o "historial" lo decide la base (ver dondeProximas),
+  // así cuenta y pagina sin traer todas las reservas.
   const ahora = momentoActual()
-
-  // Próximas: las que todavía se van a jugar (la que está en curso también),
-  // de la más cercana a la más lejana. Historial: las que ya pasaron.
-  // Canceladas: aparte, con o sin seña devuelta. Estas dos, de la más
-  // reciente a la más vieja.
-  const esProxima = (r: Reserva) => {
-    const dia = diaDeReserva(r.fecha)
-    const visible = estadoDeReserva(
-      { estado: r.estado, asistio: r.asistio, dia, horaInicio: r.horaInicio, horaFin: r.horaFin },
-      ahora,
-    )
-    if (visible === 'CONFIRMADA' || visible === 'EN_CURSO') return true
-    // Una pendiente que nunca se pagó deja de ser próxima cuando empieza el turno.
-    return visible === 'PENDIENTE' && !turnoYaPaso(dia, r.horaInicio)
+  const dondePorVista: Record<VistaDeReservas, Prisma.ReservaWhereInput> = {
+    proximas: { jugadorId, ...dondeProximas(ahora) },
+    historial: { jugadorId, ...dondeHistorial(ahora) },
+    canceladas: { jugadorId, estado: 'CANCELADA' },
   }
-  const proximas = reservas.filter(esProxima).reverse()
-  const historial = reservas.filter((r) => !esProxima(r) && r.estado !== 'CANCELADA')
-  const canceladas = reservas.filter((r) => r.estado === 'CANCELADA')
+
+  const [totalProximas, totalHistorial, totalCanceladas] = await Promise.all([
+    db.reserva.count({ where: dondePorVista.proximas }),
+    db.reserva.count({ where: dondePorVista.historial }),
+    db.reserva.count({ where: dondePorVista.canceladas }),
+  ])
+  const totales = {
+    proximas: totalProximas,
+    historial: totalHistorial,
+    canceladas: totalCanceladas,
+  }
+
+  const porPagina = vista === 'proximas' ? TARJETAS_POR_PAGINA : FILAS_POR_PAGINA
+  const { paginaActual, totalPaginas, skip } = calcularPagina(pagina, totales[vista], porPagina)
+
+  // Próximas: de la más cercana a la más lejana.
+  // Historial y canceladas: de la más reciente a la más vieja.
+  const reservas = await getReservas(
+    dondePorVista[vista],
+    vista === 'proximas' ? 'asc' : 'desc',
+    skip,
+    porPagina,
+  )
+
+  const paginacion = (
+    <Paginacion
+      paginaActual={paginaActual}
+      totalPaginas={totalPaginas}
+      desde={skip + 1}
+      hasta={skip + reservas.length}
+      total={totales[vista]}
+      urlAnterior={urlDeReservas('/jugador/reservas', vista, paginaActual - 1)}
+      urlSiguiente={urlDeReservas('/jugador/reservas', vista, paginaActual + 1)}
+    />
+  )
+
+  const noReservoNunca = totalProximas + totalHistorial + totalCanceladas === 0
 
   return (
-    <main className="mx-auto max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+    <main className="max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <div className="mb-6">
         <h1 className="text-3xl font-semibold">Mis reservas</h1>
         <p className="text-muted-foreground mt-1 text-sm">
@@ -64,7 +136,7 @@ export default async function MisReservasPage() {
         </p>
       </div>
 
-      {reservas.length === 0 ? (
+      {noReservoNunca ? (
         <div className="border-border bg-card rounded-2xl border p-8 text-center">
           <CalendarCheck className="text-muted-foreground mx-auto mb-3 size-8" />
           <p className="text-muted-foreground text-sm">Todavía no reservaste ninguna cancha.</p>
@@ -76,34 +148,114 @@ export default async function MisReservasPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-8">
-          {proximas.length > 0 && (
-            <section className="space-y-4">
-              <h2 className="text-muted-foreground text-sm font-medium">Próximos</h2>
+        <>
+          <PestaniasDeReservas ruta="/jugador/reservas" vista={vista} totales={totales} />
+
+          {reservas.length === 0 && (
+            <p className="text-muted-foreground text-sm">
+              {vista === 'proximas' && 'No tenés turnos próximos.'}
+              {vista === 'historial' && 'Todavía no jugaste ningún turno.'}
+              {vista === 'canceladas' && 'No tenés reservas canceladas.'}
+            </p>
+          )}
+
+          {reservas.length > 0 && vista === 'proximas' && (
+            <>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {proximas.map((reserva) => (
+                {reservas.map((reserva) => (
                   <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
                 ))}
               </div>
-            </section>
+              {/* Con una sola página de tarjetas no hace falta el pie */}
+              {totalPaginas > 1 && (
+                <div className="border-border bg-card mt-4 overflow-hidden rounded-2xl border">
+                  {paginacion}
+                </div>
+              )}
+            </>
           )}
-          {historial.length > 0 && (
-            <CollapsibleSection title="Historial" /* count={historial.length} */>
-              {historial.map((reserva) => (
-                <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
-              ))}
-            </CollapsibleSection>
+
+          {reservas.length > 0 && vista !== 'proximas' && (
+            <div className="border-border bg-card overflow-hidden rounded-2xl border shadow-sm">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="pl-4">
+                      <TituloConIcono icono={CalendarDays}>Turno</TituloConIcono>
+                    </TableHead>
+                    <TableHead className="hidden sm:table-cell">
+                      <TituloConIcono icono={LandPlot}>Cancha</TituloConIcono>
+                    </TableHead>
+                    <TableHead>
+                      <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
+                    </TableHead>
+                    <TableHead className="hidden pr-4 sm:table-cell">
+                      <TituloConIcono icono={Wallet}>Monto</TituloConIcono>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reservas.map((reserva) => (
+                    <FilaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
+                  ))}
+                </TableBody>
+              </Table>
+              {paginacion}
+            </div>
           )}
-          {canceladas.length > 0 && (
-            <CollapsibleSection title="Canceladas" /* count={canceladas.length} */>
-              {canceladas.map((reserva) => (
-                <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
-              ))}
-            </CollapsibleSection>
-          )}
-        </div>
+        </>
       )}
     </main>
+  )
+}
+
+// Una fila de la tabla de historial o canceladas: solo para consultar
+function FilaReserva({
+  reserva,
+  ahora,
+}: {
+  reserva: Reserva
+  ahora: { dia: string; hora: string }
+}) {
+  const dia = diaDeReserva(reserva.fecha)
+  const monto = montoDelHistorial(
+    {
+      estado: reserva.estado,
+      asistio: reserva.asistio,
+      precioTurno: reserva.precioTurno.toString(),
+      pago: reserva.pago && { ...reserva.pago, monto: reserva.pago.monto.toString() },
+    },
+    turnoYaPaso(dia, reserva.horaInicio),
+    'JUGADOR',
+  )
+
+  return (
+    <TableRow>
+      <TableCell className="pl-4">
+        <FechaDelTurno dia={dia} horaInicio={reserva.horaInicio} horaFin={reserva.horaFin} />
+      </TableCell>
+      {/* En celular no entra: se ven el turno y el estado */}
+      <TableCell className="hidden sm:table-cell">
+        <CeldaCancha
+          nombre={reserva.cancha.nombre}
+          deporte={reserva.cancha.deporte}
+          complejo={reserva.cancha.complejo.nombre}
+        />
+      </TableCell>
+      <TableCell>
+        <BookingStatusBadge
+          estado={reserva.estado}
+          asistio={reserva.asistio}
+          dia={dia}
+          horaInicio={reserva.horaInicio}
+          horaFin={reserva.horaFin}
+          ahoraInicial={ahora}
+        />
+      </TableCell>
+      <TableCell className="hidden pr-4 sm:table-cell">
+        <CeldaMonto monto={monto} />
+      </TableCell>
+    </TableRow>
   )
 }
 
@@ -162,9 +314,7 @@ function TarjetaReserva({
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-lg font-bold">{reserva.cancha.nombre}</span>
-        <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
-          {deporteLabels[reserva.cancha.deporte]}
-        </span>
+        <EtiquetaDeporte deporte={reserva.cancha.deporte} />
         <BookingStatusBadge
           estado={reserva.estado}
           asistio={reserva.asistio}

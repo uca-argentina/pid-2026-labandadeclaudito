@@ -68,21 +68,6 @@ export const nombresDeMeses = [
   'Diciembre',
 ]
 
-export const nombresCortosDeMeses = [
-  'ene',
-  'feb',
-  'mar',
-  'abr',
-  'may',
-  'jun',
-  'jul',
-  'ago',
-  'sep',
-  'oct',
-  'nov',
-  'dic',
-]
-
 // Cuántos juegan por lado, para el cartel de la cancha ilustrada
 export const formatoDeJuego: Record<Deporte, string> = {
   FUTBOL_5: '5 vs 5',
@@ -96,3 +81,18 @@ export const formatoDeJuego: Record<Deporte, string> = {
 export function formatPrecio(precio: number | string): string {
   return `$${Number(precio).toLocaleString('es-AR')}`
 }
+
+export const mesesCortos = [
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
+]

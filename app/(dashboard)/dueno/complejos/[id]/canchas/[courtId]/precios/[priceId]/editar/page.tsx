@@ -15,13 +15,14 @@ export default async function EditarPrecioPage({
   if (!complejo) redirect('/dueno')
 
   const precioEspecial = await db.precioEspecial.findFirst({
-    where: { id: priceId, canchaId: courtId, activo: true },
+    // cancha.complejoId: que la cancha de la URL sea del complejo que ya validamos
+    where: { id: priceId, canchaId: courtId, activo: true, cancha: { complejoId: id } },
     include: { cancha: true },
   })
   if (!precioEspecial) redirect(`/dueno/complejos/${id}/canchas/${courtId}/precios`)
 
   return (
-    <main className="mx-auto max-w-2xl px-6 pt-6 pb-12 md:pt-4">
+    <main className="max-w-2xl px-6 pt-6 pb-12 md:pt-4">
       <h1 className="text-3xl font-semibold">Editar precio especial</h1>
       <div className="mt-6">
         <PriceForm

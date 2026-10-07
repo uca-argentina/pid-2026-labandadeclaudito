@@ -99,7 +99,7 @@ export async function getAvailableSlots(
   minAdvanceMinutes: number
 } | null> {
   const cancha = await db.cancha.findFirst({
-    where: { id: canchaId, activo: true, complejo: { activo: true } },
+    where: { id: canchaId, activo: true, complejo: { activo: true, duenio: { activo: true } } },
     include: {
       complejo: { select: { porcentajeSenaDefault: true, minAdvanceMinutesDefault: true } },
       preciosEspeciales: { where: { activo: true } },

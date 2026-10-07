@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function CrearComplejoPage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 pt-6 pb-12 md:pt-4">
+    <main className="max-w-3xl px-6 pt-6 pb-12 md:pt-4">
       <Link
         href="/dueno/complejos"
         className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"

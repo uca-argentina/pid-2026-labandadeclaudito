@@ -13,6 +13,7 @@ datasource db {
 enum Rol {
   JUGADOR
   DUENIO
+  ADMIN
 }
 
 enum Deporte {
@@ -201,4 +202,14 @@ model Pago {
   createdAt         DateTime @default(now())
 
   reserva Reserva @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+}
+
+// Un intento de login fallido o un registro, para limitar abuso por fuerza
+// bruta (ver lib/limite-intentos.ts). clave = "login:<email>:<ip>", etc.
+model Intento {
+  id        String   @id @default(cuid())
+  clave     String
+  createdAt DateTime @default(now())
+
+  @@index([clave, createdAt])
 }

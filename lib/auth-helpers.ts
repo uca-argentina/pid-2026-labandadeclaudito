@@ -1,6 +1,6 @@
 import { auth } from '@/auth'
 
-export async function requireRole(rol: 'JUGADOR' | 'DUENIO') {
+export async function requireRole(rol: 'JUGADOR' | 'DUENIO' | 'ADMIN') {
   const session = await auth()
 
   if (!session) {

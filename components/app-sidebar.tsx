@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Building2, CalendarDays, ChartColumn, Equal, Home, Search, X } from 'lucide-react'
+import { Building2, CalendarDays, ChartColumn, Equal, Home, Search, Users, X } from 'lucide-react'
+import { homePorRol } from '@/lib/home-por-rol'
 import { Button } from '@/components/ui/button'
 import {
   Sidebar,
@@ -19,6 +20,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { iniciales } from '@/lib/iniciales'
 import { SignOutButton } from '@/components/sign-out-button'
 import { Logo } from '@/components/logo'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -29,7 +31,7 @@ type ItemNav = {
   icon: typeof Home
 }
 
-const navPorRol: Record<'JUGADOR' | 'DUENIO', ItemNav[]> = {
+const navPorRol: Record<'JUGADOR' | 'DUENIO' | 'ADMIN', ItemNav[]> = {
   JUGADOR: [
     { href: '/jugador', label: 'Inicio', icon: Home },
     { href: '/jugador/canchas', label: 'Buscar canchas', icon: Search },
@@ -40,6 +42,11 @@ const navPorRol: Record<'JUGADOR' | 'DUENIO', ItemNav[]> = {
     { href: '/dueno/complejos', label: 'Mis complejos', icon: Building2 },
     { href: '/dueno/reservas', label: 'Reservas', icon: CalendarDays },
     { href: '/dueno/dashboard', label: 'Estadísticas', icon: ChartColumn },
+  ],
+  // ponytail: complejos y disputas suman su link en su tarjeta
+  ADMIN: [
+    { href: '/admin', label: 'Inicio', icon: Home },
+    { href: '/admin/usuarios', label: 'Usuarios', icon: Users },
   ],
 }
 
@@ -59,21 +66,12 @@ export function MobileMenuButton() {
   )
 }
 
-function iniciales(nombre: string) {
-  return nombre
-    .split(' ')
-    .map((palabra) => palabra[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}
-
 export function AppSidebar({
   rol,
   nombre,
   email,
 }: {
-  rol: 'JUGADOR' | 'DUENIO'
+  rol: 'JUGADOR' | 'DUENIO' | 'ADMIN'
   nombre: string
   email: string
 }) {
@@ -81,7 +79,7 @@ export function AppSidebar({
   // En mobile el sidebar es un panel encima de la página: lo cerramos al navegar
   const { isMobile, setOpenMobile } = useSidebar()
   const items = navPorRol[rol]
-  const home = rol === 'DUENIO' ? '/dueno' : '/jugador'
+  const home = homePorRol(rol)
 
   return (
     <Sidebar collapsible="icon">

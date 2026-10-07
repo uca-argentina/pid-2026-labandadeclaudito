@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Logo } from '@/components/logo'
+import { homePorRol } from '@/lib/home-por-rol'
 
 function LoginForm() {
   const router = useRouter()
@@ -31,6 +32,16 @@ function LoginForm() {
       redirect: false,
     })
 
+    if (resultado?.code === 'demasiados_intentos') {
+      setError('Demasiados intentos fallidos. Esperá 15 minutos y probá de nuevo.')
+      setCargando(false)
+      return
+    }
+    if (resultado?.code === 'cuenta_suspendida') {
+      setError('Tu cuenta está suspendida. Si creés que es un error, contactá a TocaYJuga.')
+      setCargando(false)
+      return
+    }
     if (resultado?.error) {
       setError('Email o contraseña incorrectos')
       setCargando(false)
@@ -38,7 +49,7 @@ function LoginForm() {
     }
 
     const session = await getSession()
-    router.push(session?.user.rol === 'DUENIO' ? '/dueno' : '/jugador')
+    router.push(session ? homePorRol(session.user.rol) : '/login')
     router.refresh()
   }
 
