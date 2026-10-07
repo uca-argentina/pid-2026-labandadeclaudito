@@ -303,4 +303,10 @@ describe('urlDelDashboard', () => {
       urlDelDashboard({ complejoId: 'abc', vista: 'mes', fecha: '2026-09-01', deporte: 'PADEL' }),
     ).toBe('/dueno/dashboard?complejoId=abc&vista=mes&fecha=2026-09-01&deporte=PADEL')
   })
+
+  test('un rango lleva desde y hasta', () => {
+    expect(urlDelDashboard({ vista: 'rango', desde: '2026-09-01', hasta: '2026-10-07' })).toBe(
+      '/dueno/dashboard?vista=rango&desde=2026-09-01&hasta=2026-10-07',
+    )
+  })
 })

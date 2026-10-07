@@ -1,5 +1,4 @@
-import { Building2 } from 'lucide-react'
-import { deporteLabels, formatoDeJuego } from '@/lib/labels'
+import { formatoDeJuego } from '@/lib/labels'
 import type { Deporte } from '@/lib/generated/prisma/client'
 import { AnimatedNumber } from '@/components/animated-number'
 import { CourtIllustration } from '@/components/court-illustration'
@@ -9,13 +8,13 @@ import { SportIcon } from '@/components/sport-icon'
 import { VariationBadge } from '@/components/variation-badge'
 
 // El bloque principal: un degradé del color del deporte con los datos en
-// tarjetas sólidas encima. Lo primero que ve el dueño es la ocupación (la
+// tarjetas sólidas encima. Arriba, las pestañas para elegir el deporte (es lo
+// que cambia este bloque). Lo primero que ve el dueño es la ocupación (la
 // métrica que dice si las canchas trabajan). Al lado:
 // - sin deporte elegido: los datos clave (resumen)
 // - con un deporte: su cancha ilustrada; los datos clave van abajo del bloque
 export function OccupancyHero({
-  alcance,
-  periodo,
+  pestanas,
   comparacion,
   porcentaje,
   turnosReservados,
@@ -24,8 +23,8 @@ export function OccupancyHero({
   deporte,
   resumen,
 }: {
-  alcance: string
-  periodo: string
+  // null cuando hay un solo deporte: no hay nada que elegir
+  pestanas: React.ReactNode
   comparacion: string
   porcentaje: number
   turnosReservados: number
@@ -40,22 +39,19 @@ export function OccupancyHero({
       <div className="bg-hero-line/20 pointer-events-none absolute -top-32 -left-24 size-96 rounded-full blur-3xl" />
       <div className="bg-tema-desde pointer-events-none absolute -right-20 -bottom-40 size-112 rounded-full opacity-70 blur-3xl" />
 
-      {/* El resumen necesita más ancho que la cancha para no cortar los montos:
-          va en dos columnas recién desde lg */}
-      <div className="relative grid grid-cols-1 items-center gap-4 p-4 sm:p-5 lg:grid-cols-2">
-        <div className="space-y-3">
-          <p className="bg-hero-line/15 inline-flex max-w-full items-center gap-2 rounded-xl px-2.5 py-1 text-sm font-medium">
-            {deporte ? (
-              <SportIcon deporte={deporte} className="size-5" />
-            ) : (
-              <Building2 className="size-4 shrink-0" />
-            )}
-            {/* Si no entra, baja de línea (no se corta) */}
-            <span>
-              {alcance} · {deporte ? deporteLabels[deporte] : 'Todos los deportes'} · {periodo}
-            </span>
-          </p>
+      <div className="relative space-y-4 p-4 sm:p-5">
+        {pestanas}
 
+        {/* En dos columnas recién desde xl: antes no entran montos grandes
+            (un rango largo llega a 8 cifras) sin cortarse. La cancha, que no
+            tiene montos, ya entra desde lg. */}
+        <div
+          className={
+            deporte === undefined
+              ? 'grid grid-cols-1 items-center gap-4 xl:grid-cols-2'
+              : 'grid grid-cols-1 items-center gap-4 lg:grid-cols-2'
+          }
+        >
           <div className={`${claseTarjetaDeDatos} flex items-center gap-4 p-4`}>
             <ProgressRing
               porcentaje={porcentaje}
@@ -88,22 +84,22 @@ export function OccupancyHero({
               </div>
             </div>
           </div>
-        </div>
 
-        {deporte === undefined ? (
-          resumen
-        ) : (
-          // En mobile la cancha va arriba de los números
-          <div className="relative order-first mx-auto w-full max-w-60 sm:max-w-sm lg:order-0 lg:max-w-md">
-            <CourtIllustration deporte={deporte} />
-            <p
-              className={`${claseTarjetaDeDatos} absolute right-2 bottom-0 inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold whitespace-nowrap`}
-            >
-              <SportIcon deporte={deporte} className="size-5" />
-              {formatoDeJuego[deporte]}
-            </p>
-          </div>
-        )}
+          {deporte === undefined ? (
+            resumen
+          ) : (
+            // En mobile la cancha va arriba de los números
+            <div className="relative order-first mx-auto w-full max-w-60 sm:max-w-sm lg:order-0 lg:max-w-md">
+              <CourtIllustration deporte={deporte} />
+              <p
+                className={`${claseTarjetaDeDatos} absolute right-2 bottom-0 inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold whitespace-nowrap`}
+              >
+                <SportIcon deporte={deporte} className="size-5" />
+                {formatoDeJuego[deporte]}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   )

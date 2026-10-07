@@ -7,6 +7,8 @@ describe('dashboardFiltersSchema', () => {
       complejoId: undefined,
       vista: 'dia',
       fecha: undefined,
+      desde: undefined,
+      hasta: undefined,
       deporte: undefined,
     })
   })
@@ -14,7 +16,14 @@ describe('dashboardFiltersSchema', () => {
   test('acepta una semana con fecha y complejo', () => {
     expect(
       dashboardFiltersSchema.parse({ complejoId: 'abc', vista: 'semana', fecha: '2026-10-07' }),
-    ).toEqual({ complejoId: 'abc', vista: 'semana', fecha: '2026-10-07', deporte: undefined })
+    ).toEqual({
+      complejoId: 'abc',
+      vista: 'semana',
+      fecha: '2026-10-07',
+      desde: undefined,
+      hasta: undefined,
+      deporte: undefined,
+    })
   })
 
   test('una vista que no existe vuelve a día', () => {
@@ -42,5 +51,20 @@ describe('dashboardFiltersSchema', () => {
 
   test('un deporte que no existe es como no filtrar (todos)', () => {
     expect(dashboardFiltersSchema.parse({ deporte: 'HOCKEY' }).deporte).toBeUndefined()
+  })
+
+  test('acepta un rango con desde y hasta', () => {
+    const filtros = dashboardFiltersSchema.parse({
+      vista: 'rango',
+      desde: '2026-09-01',
+      hasta: '2026-10-07',
+    })
+    expect(filtros.vista).toBe('rango')
+    expect(filtros.desde).toBe('2026-09-01')
+    expect(filtros.hasta).toBe('2026-10-07')
+  })
+
+  test('fechas del rango inválidas se ignoran', () => {
+    expect(dashboardFiltersSchema.parse({ vista: 'rango', desde: 'x' }).desde).toBeUndefined()
   })
 })

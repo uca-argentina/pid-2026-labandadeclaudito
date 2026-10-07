@@ -1,5 +1,5 @@
 import type { Deporte } from '@/lib/generated/prisma/client'
-import type { Vista } from '@/lib/periodos'
+import type { VistaDelSelector } from '@/lib/periodos'
 
 // Cuentas que hace la pantalla del dashboard del dueño con lo que ya devuelve
 // metricasDelComplejo (lib/metricas-complejo.ts). No consultan la DB.
@@ -310,8 +310,11 @@ export function segmentosDeDona(
 
 export type FiltrosDelDashboard = {
   complejoId?: string
-  vista: Vista
+  vista: VistaDelSelector
   fecha?: string
+  // Solo con vista 'rango'
+  desde?: string
+  hasta?: string
   deporte?: Deporte
 }
 
@@ -322,6 +325,8 @@ export function urlDelDashboard(filtros: FiltrosDelDashboard): string {
   if (filtros.complejoId !== undefined) params.set('complejoId', filtros.complejoId)
   params.set('vista', filtros.vista)
   if (filtros.fecha !== undefined) params.set('fecha', filtros.fecha)
+  if (filtros.desde !== undefined) params.set('desde', filtros.desde)
+  if (filtros.hasta !== undefined) params.set('hasta', filtros.hasta)
   if (filtros.deporte !== undefined) params.set('deporte', filtros.deporte)
   return `/dueno/dashboard?${params.toString()}`
 }

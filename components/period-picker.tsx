@@ -1,43 +1,45 @@
 'use client'
 
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import type { Vista } from '@/lib/periodos'
+import type { VistaDelSelector } from '@/lib/periodos'
 
 const claseFlecha =
   'text-muted-foreground hover:bg-muted hover:text-foreground flex size-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:pointer-events-none disabled:opacity-30'
 
-// Mismo aspecto que los demás selects de la barra
-export const claseSelectDeLaBarra =
+// Mismo aspecto para los selects y campos de la barra
+export const claseCampoDeLaBarra =
   'border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 bg-card h-9 min-w-0 rounded-full border px-3 text-sm font-medium outline-none focus-visible:ring-3'
 
-// Barra de filtros de una sola fila, como la de un calendario:
-// [Hoy] ‹ ›  Octubre de 2026            [complejo ▾] [Mes ▾]
-// Las flechas van al período anterior o al siguiente; no se puede pasar del
-// actual (no hay datos del futuro). selectorDeComplejo va a la derecha, junto
-// al de día/semana/mes.
+// Barra del tiempo, de una sola fila como la de un calendario:
+// [Hoy] ‹ ›  Octubre de 2026                    [Mes ▾]
+// Con "Rango" aparecen dos fechas (desde y hasta) y las flechas corren el
+// rango por su largo. No se puede pasar de hoy: no hay datos del futuro.
 export function PeriodPicker({
   vista,
   titulo,
-  rango,
+  subtitulo,
   esElActual,
-  selectorDeComplejo,
+  rango,
   alIrAlAnterior,
   alIrAlSiguiente,
   alVolverAHoy,
   alCambiarLaVista,
+  alCambiarElRango,
 }: {
-  vista: Vista
+  vista: VistaDelSelector
   titulo: string
-  rango: string
+  subtitulo: string
   esElActual: boolean
-  selectorDeComplejo: React.ReactNode
+  // Solo con vista 'rango'; hoy es el máximo que se puede elegir
+  rango: { desde: string; hasta: string; hoy: string } | null
   alIrAlAnterior: () => void
   alIrAlSiguiente: () => void
   alVolverAHoy: () => void
-  alCambiarLaVista: (vista: Vista) => void
+  alCambiarLaVista: (vista: VistaDelSelector) => void
+  alCambiarElRango: (desde: string, hasta: string) => void
 }) {
   return (
-    <div className="border-border bg-card flex flex-wrap items-center gap-x-2 gap-y-2 rounded-2xl border p-2 shadow-sm">
+    <div className="border-border bg-card flex flex-wrap items-center gap-2 rounded-2xl border p-2 shadow-sm">
       <button
         type="button"
         onClick={alVolverAHoy}
@@ -71,22 +73,54 @@ export function PeriodPicker({
 
       <div className="min-w-0 flex-1 px-1" aria-live="polite">
         <p className="text-base leading-tight font-semibold sm:text-lg">{titulo}</p>
-        {rango !== '' && <p className="text-muted-foreground text-sm leading-tight">{rango}</p>}
+        {subtitulo !== '' && (
+          <p className="text-muted-foreground text-sm leading-tight">{subtitulo}</p>
+        )}
       </div>
 
       {/* En mobile bajan a su propia fila, a todo el ancho */}
-      <div className="flex w-full gap-2 sm:w-auto">
-        <div className="min-w-0 flex-1 sm:flex-none">{selectorDeComplejo}</div>
+      <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:flex-nowrap">
+        {rango && (
+          // key: si el rango cambia con las flechas, los campos se vuelven a armar
+          <div
+            key={`${rango.desde}-${rango.hasta}`}
+            className="flex w-full min-w-0 items-center gap-1.5 sm:w-auto"
+          >
+            <input
+              type="date"
+              aria-label="Desde"
+              defaultValue={rango.desde}
+              max={rango.hasta}
+              onChange={(e) => {
+                if (e.target.value !== '') alCambiarElRango(e.target.value, rango.hasta)
+              }}
+              className={`${claseCampoDeLaBarra} flex-1`}
+            />
+            <span className="text-muted-foreground text-sm">a</span>
+            <input
+              type="date"
+              aria-label="Hasta"
+              defaultValue={rango.hasta}
+              min={rango.desde}
+              max={rango.hoy}
+              onChange={(e) => {
+                if (e.target.value !== '') alCambiarElRango(rango.desde, e.target.value)
+              }}
+              className={`${claseCampoDeLaBarra} flex-1`}
+            />
+          </div>
+        )}
         <select
           key={vista}
           aria-label="Ver por"
           defaultValue={vista}
-          onChange={(e) => alCambiarLaVista(e.target.value as Vista)}
-          className={`${claseSelectDeLaBarra} shrink-0`}
+          onChange={(e) => alCambiarLaVista(e.target.value as VistaDelSelector)}
+          className={`${claseCampoDeLaBarra} w-full shrink-0 sm:w-auto`}
         >
           <option value="dia">Día</option>
           <option value="semana">Semana</option>
           <option value="mes">Mes</option>
+          <option value="rango">Rango</option>
         </select>
       </div>
     </div>

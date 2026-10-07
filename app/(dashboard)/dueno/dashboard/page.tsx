@@ -13,21 +13,16 @@ import {
   urlDelDashboard,
   variacionPorcentual,
   type CeldaDeDemanda,
+  type FiltrosDelDashboard,
   type MetricasDelPeriodo,
 } from '@/lib/dashboard'
 import {
   cantidadDeDias,
-  comparacionDeLaVista,
   diaSemanaDe,
   diasDeLaSemanaDe,
-  fechaDelPeriodoVecino,
-  nombreDelAnterior,
-  nombreDelPeriodo,
-  periodoQueContiene,
-  rangosAComparar,
-  tituloDelPeriodo,
+  periodoElegido,
   type Periodo,
-  type Vista,
+  type VistaDelSelector,
 } from '@/lib/periodos'
 import { dashboardFiltersSchema } from '@/lib/validations/dashboard'
 import type { Deporte } from '@/lib/generated/prisma/client'
@@ -37,7 +32,7 @@ import { DemandPanel, type VistaDeDemanda } from '@/components/demand-panel'
 import { KpiTiles } from '@/components/kpi-tiles'
 import { OccupancyHero } from '@/components/occupancy-hero'
 import { SportBreakdown, type FilaDeDeporte } from '@/components/sport-breakdown'
-import { Badge } from '@/components/ui/badge'
+import { SportTabs, type PestanaDeDeporte } from '@/components/sport-tabs'
 import { Button } from '@/components/ui/button'
 
 // ---------- Datos de ejemplo (hasta que entre SCRUM-62) ----------
@@ -162,11 +157,12 @@ function metricasDe(
   return sumarMetricas(partes)
 }
 
-// Qué vistas de la demanda tienen sentido según el largo del período
-const vistasDeDemanda: Record<Vista, VistaDeDemanda[]> = {
-  dia: ['hora'],
-  semana: ['hora', 'dia'],
-  mes: ['hora', 'dia', 'semana'],
+// Qué vistas de la demanda tienen sentido según el largo del período: con un
+// día solo "por hora"; desde dos días, "por día"; desde 4 semanas, el mapa.
+function vistasDeDemanda(dias: number): VistaDeDemanda[] {
+  if (dias === 1) return ['hora']
+  if (dias < 28) return ['hora', 'dia']
+  return ['hora', 'dia', 'semana']
 }
 
 export default async function DashboardDuenioPage({ searchParams }: PageProps<'/dueno/dashboard'>) {
@@ -200,16 +196,11 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
   }
 
   // ---- Período ----
-  // Sin fecha se ve el período de hoy. No hay datos del futuro: una fecha
-  // posterior al período de hoy también muestra el de hoy.
+  // Qué se mide, contra qué se compara y a dónde lleva cada botón del selector
   const vista = filtros.vista
   const hoy = diaDeHoy()
-  let fecha = filtros.fecha ?? hoy
-  if (periodoQueContiene(fecha, vista).desde > periodoQueContiene(hoy, vista).desde) {
-    fecha = hoy
-  }
-  const esElActual = periodoQueContiene(fecha, vista).desde === periodoQueContiene(hoy, vista).desde
-  const rangos = rangosAComparar(fecha, vista, hoy)
+  const periodo = periodoElegido(vista, filtros, hoy)
+  const rangos = { actual: periodo.actual, anterior: periodo.anterior }
 
   // ---- Complejos y deportes ----
   // Se arranca viendo todos los complejos. El elegido tiene que estar en la
@@ -257,12 +248,32 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
     deporte = filtros.deporte
   }
 
-  // Los filtros ya validados. La fecha va en la URL solo si no es el período de hoy.
-  const filtrosValidos = {
-    complejoId: elegido?.id,
-    vista,
-    fecha: esElActual ? undefined : fecha,
-    deporte,
+  // Los filtros ya validados, y los de cada botón del selector de tiempo
+  const alcance = { complejoId: elegido?.id, deporte }
+  const filtrosValidos: FiltrosDelDashboard = { ...alcance, vista, ...periodo.fechasActuales }
+  const filtrosPorVista: Record<VistaDelSelector, FiltrosDelDashboard> = {
+    dia: { ...alcance, vista: 'dia', ...periodo.fechasPorVista.dia },
+    semana: { ...alcance, vista: 'semana', ...periodo.fechasPorVista.semana },
+    mes: { ...alcance, vista: 'mes', ...periodo.fechasPorVista.mes },
+    rango: { ...alcance, vista: 'rango', ...periodo.fechasPorVista.rango },
+  }
+
+  // Pestañas de deporte del bloque principal (con un solo deporte no hay nada
+  // que elegir)
+  const pestanas: PestanaDeDeporte[] = []
+  if (deportes.length > 1) {
+    pestanas.push({
+      deporte: undefined,
+      href: urlDelDashboard({ ...filtrosValidos, deporte: undefined }),
+      activa: deporte === undefined,
+    })
+    for (const unDeporte of deportes) {
+      pestanas.push({
+        deporte: unDeporte,
+        href: urlDelDashboard({ ...filtrosValidos, deporte: unDeporte }),
+        activa: deporte === unDeporte,
+      })
+    }
   }
 
   // ---- Métricas ----
@@ -317,29 +328,22 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
     horarioAImpulsar: horarioMenosPedido(metricas.demanda, diasDeLaSemanaDe(rangos.actual)),
     hrefParaImpulsar: elegido ? `/dueno/complejos/${elegido.id}` : '/dueno/complejos',
   }
-  const nombre = nombreDelPeriodo(fecha, vista, hoy)
 
   return (
     // El tema pinta todo lo de adentro con los colores del deporte elegido
-    <div
-      className={`${temaDelDeporte(deporte)} mx-auto w-full max-w-5xl space-y-4 px-6 pt-6 pb-12 md:pt-4`}
-    >
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-3xl font-semibold">Estadísticas</h1>
-        <Badge variant="outline">Datos de ejemplo</Badge>
-      </div>
-
+    <div className={`${temaDelDeporte(deporte)} mx-auto w-full max-w-5xl px-6 pt-6 pb-12 md:pt-4`}>
       <DashboardFrame
         complejos={complejos}
-        deportes={deportes}
         filtros={filtrosValidos}
         periodo={{
-          titulo: tituloDelPeriodo(fecha, vista),
-          // Solo en el período actual: aclara que se mide hasta hoy
-          rango: esElActual ? (vista === 'dia' ? 'Hoy' : `${nombre} · hasta hoy`) : '',
-          esElActual,
-          fechaAnterior: fechaDelPeriodoVecino(fecha, vista, -1),
-          fechaSiguiente: fechaDelPeriodoVecino(fecha, vista, 1),
+          titulo: periodo.titulo,
+          subtitulo: periodo.subtitulo,
+          esElActual: periodo.esElActual,
+          rango: vista === 'rango' ? { ...periodo.actual, hoy } : null,
+          anterior: { ...alcance, vista, ...periodo.fechasAnterior },
+          siguiente: { ...alcance, vista, ...periodo.fechasSiguiente },
+          hoy: { ...alcance, vista, ...periodo.fechasDeHoy },
+          porVista: filtrosPorVista,
         }}
       >
         {/* El orden de un buen tablero: primero el panorama (ocupación y
@@ -347,9 +351,8 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
             detalle (por complejo, por deporte) */}
         <div className="space-y-4 sm:space-y-5">
           <OccupancyHero
-            alcance={elegido ? elegido.nombre : 'Todos los complejos'}
-            periodo={nombre}
-            comparacion={comparacionDeLaVista[vista]}
+            pestanas={pestanas.length > 0 ? <SportTabs pestanas={pestanas} /> : null}
+            comparacion={periodo.comparacion}
             porcentaje={metricas.ocupacion.porcentaje}
             turnosReservados={turnosReservados}
             turnosOfrecidos={turnosOfrecidos}
@@ -368,8 +371,8 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
           <DemandPanel
             demanda={metricas.demanda}
             demandaAnterior={anteriores.demanda}
-            vistasDisponibles={vistasDeDemanda[vista]}
-            nombreDelAnterior={nombreDelAnterior[vista]}
+            vistasDisponibles={vistasDeDemanda(cantidadDeDias(rangos.actual))}
+            nombreDelAnterior={periodo.nombreDelAnterior}
           />
 
           {filasPorComplejo.length > 1 && <ComplexBreakdown filas={filasPorComplejo} />}
