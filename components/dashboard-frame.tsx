@@ -51,7 +51,7 @@ export function DashboardFrame({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <h1 className="text-3xl font-semibold">Estadísticas</h1>
         {/* Selector de complejo con forma de botón: un select común con el
             ícono y la flecha dibujados encima */}
@@ -83,7 +83,7 @@ export function DashboardFrame({
         <Badge variant="outline">Datos de ejemplo</Badge>
       </div>
 
-      <div className="bg-background/85 -mx-6 px-6 py-2 backdrop-blur-md md:sticky md:top-0 md:z-30">
+      <div className="bg-background/85 relative -mx-6 px-6 py-2 backdrop-blur-md md:sticky md:top-0 md:z-30">
         <PeriodPicker
           vista={filtros.vista}
           titulo={periodo.titulo}
@@ -96,6 +96,12 @@ export function DashboardFrame({
           alCambiarLaVista={(vista) => navegar(periodo.porVista[vista])}
           alCambiarElRango={(desde, hasta) => navegar({ ...filtros, vista: 'rango', desde, hasta })}
         />
+        {/* Mientras llegan los datos nuevos, una línea que corre por debajo */}
+        {cargando && (
+          <div className="absolute inset-x-6 bottom-0 h-0.5 overflow-hidden rounded-full">
+            <div className="bg-acento h-full w-2/5 rounded-full motion-safe:animate-cargando" />
+          </div>
+        )}
       </div>
 
       <div

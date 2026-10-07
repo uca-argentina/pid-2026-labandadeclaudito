@@ -99,6 +99,18 @@
     }
   }
 
+  /* Barra de carga del dashboard: una franja que recorre el ancho mientras
+     llegan los datos de un filtro nuevo */
+  --animate-cargando: cargando 1.1s ease-in-out infinite;
+  @keyframes cargando {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(250%);
+    }
+  }
+
   /* Las que siguen se repiten siempre: le dan vida a la ilustración */
   --animate-flotar: flotar 6s ease-in-out infinite;
   @keyframes flotar {

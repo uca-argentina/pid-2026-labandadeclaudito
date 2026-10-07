@@ -11,7 +11,12 @@ import { VariationBadge } from '@/components/variation-badge'
 // "bloque": adentro del bloque principal, de a dos. "fila": abajo, los cuatro
 // en una fila.
 
-const claseTarjeta = `${claseTarjetaDeDatos} p-3 sm:p-4`
+// Cada tarjeta entra con un fundido y un leve zoom, una detrás de otra
+const claseTarjeta = `${claseTarjetaDeDatos} p-3 sm:p-4 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 fill-mode-backwards`
+
+function retraso(orden: number) {
+  return { animationDelay: `${150 + orden * 80}ms`, animationDuration: '450ms' }
+}
 
 function Encabezado({ icono: Icono, texto }: { icono: typeof Wallet; texto: string }) {
   return (
@@ -51,7 +56,7 @@ export function KpiTiles({
 
   return (
     <div className={`grid gap-2 sm:gap-3 ${columnas}`}>
-      <div className={claseTarjeta}>
+      <div className={claseTarjeta} style={retraso(0)}>
         <Encabezado icono={Wallet} texto="Ingresos" />
         <p className="mt-2 truncate text-xl font-semibold tracking-tight sm:text-2xl">
           <AnimatedNumber valor={ingresos} tipo="precio" />
@@ -61,7 +66,7 @@ export function KpiTiles({
         </div>
       </div>
 
-      <div className={claseTarjeta}>
+      <div className={claseTarjeta} style={retraso(1)}>
         <Encabezado icono={Ban} texto="Turnos perdidos" />
         <p className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
           <AnimatedNumber valor={cancelaciones + noShows} />
@@ -81,7 +86,7 @@ export function KpiTiles({
         </div>
       </div>
 
-      <div className={claseTarjeta}>
+      <div className={claseTarjeta} style={retraso(2)}>
         <Encabezado icono={Flame} texto="Horario pico" />
         <p className="mt-2 text-xl font-semibold tracking-tight whitespace-nowrap sm:text-2xl">
           {horarioPico
@@ -99,6 +104,7 @@ export function KpiTiles({
         href={hrefParaImpulsar}
         title="El horario con menos reservas: un precio especial más bajo puede llenarlo"
         className={`${claseTarjeta} ${claseTarjetaInteractiva} group`}
+        style={retraso(3)}
       >
         <div className="flex items-center justify-between gap-2">
           <Encabezado icono={Lightbulb} texto="A impulsar" />

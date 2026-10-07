@@ -4,13 +4,13 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { VistaDelSelector } from '@/lib/periodos'
 
 const claseFlecha =
-  'text-muted-foreground hover:bg-muted hover:text-foreground flex size-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:pointer-events-none disabled:opacity-30'
+  'text-muted-foreground hover:bg-muted hover:text-foreground flex size-9 shrink-0 items-center justify-center rounded-full transition-all active:scale-90 disabled:pointer-events-none disabled:opacity-30'
 
 const claseFecha =
   'border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 bg-card h-9 min-w-0 flex-1 rounded-full border px-3 text-sm font-medium outline-none focus-visible:ring-3'
 
 const claseOpcion =
-  'h-7 flex-1 rounded-full px-3 text-sm font-medium whitespace-nowrap transition-colors'
+  'h-7 flex-1 rounded-full px-3 text-sm font-medium whitespace-nowrap transition-all duration-200 active:scale-95'
 
 const vistas: { vista: VistaDelSelector; nombre: string }[] = [
   { vista: 'dia', nombre: 'Día' },
@@ -59,8 +59,8 @@ export function PeriodPicker({
         onClick={alVolverAHoy}
         className={
           esElActual
-            ? 'border-acento/40 text-acento order-5 h-9 shrink-0 rounded-full border px-4 text-sm font-semibold sm:order-1'
-            : 'border-border hover:bg-muted order-5 h-9 shrink-0 rounded-full border px-4 text-sm font-semibold transition-colors sm:order-1'
+            ? 'border-acento/40 text-acento order-5 h-9 shrink-0 rounded-full border px-4 text-sm font-semibold transition-all active:scale-95 sm:order-1'
+            : 'border-border hover:bg-muted order-5 h-9 shrink-0 rounded-full border px-4 text-sm font-semibold transition-all active:scale-95 sm:order-1'
         }
       >
         Hoy
@@ -83,8 +83,11 @@ export function PeriodPicker({
         <ChevronRight className="size-5" />
       </button>
 
+      {/* key: al cambiar de período el título se vuelve a armar y aparece
+          con un fundido */}
       <div
-        className="order-2 min-w-0 flex-1 px-1 text-center sm:order-4 sm:text-left"
+        key={titulo}
+        className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 order-2 min-w-0 flex-1 px-1 text-center duration-300 sm:order-4 sm:text-left"
         aria-live="polite"
       >
         <p className="text-base leading-tight font-semibold sm:text-lg">{titulo}</p>

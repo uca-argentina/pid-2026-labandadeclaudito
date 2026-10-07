@@ -12,7 +12,7 @@ export type PestanaDeDeporte = {
 }
 
 const clasePestana =
-  'inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors'
+  'inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold whitespace-nowrap transition-all duration-200 active:scale-95'
 
 // Pestañas de deporte arriba del bloque principal: el deporte elegido cambia
 // los colores y la cancha del bloque, por eso se eligen ahí mismo.

@@ -29,7 +29,7 @@ export function ComplexBreakdown({ filas }: { filas: FilaDeComplejo[] }) {
             <Link
               href={fila.href}
               scroll={false}
-              className="border-border bg-background/60 hover:bg-muted hover:border-acento/30 group flex h-full items-center gap-3 rounded-xl border p-3 transition-colors"
+              className="border-border bg-background/60 hover:bg-muted hover:border-acento/30 group flex h-full items-center gap-3 rounded-xl border p-3 transition-all active:scale-[0.98]"
             >
               <span
                 className={

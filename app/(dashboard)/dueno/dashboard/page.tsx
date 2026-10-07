@@ -29,6 +29,7 @@ import type { Deporte } from '@/lib/generated/prisma/client'
 import { ComplexBreakdown, type FilaDeComplejo } from '@/components/complex-breakdown'
 import { DashboardFrame } from '@/components/dashboard-frame'
 import { DemandPanel, type VistaDeDemanda } from '@/components/demand-panel'
+import { FadeIn } from '@/components/fade-in'
 import { KpiTiles } from '@/components/kpi-tiles'
 import { OccupancyHero } from '@/components/occupancy-hero'
 import { SportBreakdown, type FilaDeDeporte } from '@/components/sport-breakdown'
@@ -347,37 +348,53 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
       >
         {/* El orden de un buen tablero: primero el panorama (ocupación y
             datos clave), después cuándo se juega (demanda) y al final el
-            detalle (por complejo, por deporte) */}
+            detalle (por complejo, por deporte). Al cargar entran de a una. */}
         <div className="space-y-4 sm:space-y-5">
-          <OccupancyHero
-            pestanas={pestanas.length > 0 ? <SportTabs pestanas={pestanas} /> : null}
-            comparacion={periodo.comparacion}
-            porcentaje={metricas.ocupacion.porcentaje}
-            turnosReservados={turnosReservados}
-            turnosOfrecidos={turnosOfrecidos}
-            variacionTurnos={variacionPorcentual(
-              turnosReservados,
-              anteriores.ocupacion.turnosReservados,
-            )}
-            deporte={deporte}
-            resumen={<KpiTiles variante="bloque" {...datosClave} />}
-          />
+          <FadeIn orden={0}>
+            <OccupancyHero
+              pestanas={pestanas.length > 0 ? <SportTabs pestanas={pestanas} /> : null}
+              comparacion={periodo.comparacion}
+              porcentaje={metricas.ocupacion.porcentaje}
+              turnosReservados={turnosReservados}
+              turnosOfrecidos={turnosOfrecidos}
+              variacionTurnos={variacionPorcentual(
+                turnosReservados,
+                anteriores.ocupacion.turnosReservados,
+              )}
+              deporte={deporte}
+              resumen={<KpiTiles variante="bloque" {...datosClave} />}
+            />
+          </FadeIn>
 
           {/* Con un deporte elegido, la cancha ocupa el lugar de los datos
               clave en el bloque principal: van acá abajo */}
-          {deporte !== undefined && <KpiTiles variante="fila" {...datosClave} />}
+          {deporte !== undefined && (
+            <FadeIn orden={1}>
+              <KpiTiles variante="fila" {...datosClave} />
+            </FadeIn>
+          )}
 
-          <DemandPanel
-            demanda={metricas.demanda}
-            demandaAnterior={anteriores.demanda}
-            vistasDisponibles={vistasDeDemanda(cantidadDeDias(rangos.actual))}
-            nombreDelAnterior={periodo.nombreDelAnterior}
-            diasDelPeriodo={diasDeLaSemanaDe(rangos.actual)}
-          />
+          <FadeIn orden={2}>
+            <DemandPanel
+              demanda={metricas.demanda}
+              demandaAnterior={anteriores.demanda}
+              vistasDisponibles={vistasDeDemanda(cantidadDeDias(rangos.actual))}
+              nombreDelAnterior={periodo.nombreDelAnterior}
+              diasDelPeriodo={diasDeLaSemanaDe(rangos.actual)}
+            />
+          </FadeIn>
 
-          {filasPorComplejo.length > 1 && <ComplexBreakdown filas={filasPorComplejo} />}
+          {filasPorComplejo.length > 1 && (
+            <FadeIn orden={3}>
+              <ComplexBreakdown filas={filasPorComplejo} />
+            </FadeIn>
+          )}
 
-          {filasPorDeporte.length > 0 && <SportBreakdown filas={filasPorDeporte} />}
+          {filasPorDeporte.length > 0 && (
+            <FadeIn orden={4}>
+              <SportBreakdown filas={filasPorDeporte} />
+            </FadeIn>
+          )}
         </div>
       </DashboardFrame>
     </div>

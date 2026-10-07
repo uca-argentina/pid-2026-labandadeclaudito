@@ -150,8 +150,8 @@ export function SportBreakdown({ filas }: { filas: FilaDeDeporte[] }) {
                     onBlur={() => setDeporteActivo(null)}
                     className={
                       activa
-                        ? 'bg-muted group flex items-center gap-3 rounded-xl p-2 transition-colors sm:gap-4 sm:p-3'
-                        : 'group flex items-center gap-3 rounded-xl p-2 transition-colors sm:gap-4 sm:p-3'
+                        ? 'bg-muted group flex items-center gap-3 rounded-xl p-2 transition-all active:scale-[0.98] sm:gap-4 sm:p-3'
+                        : 'group flex items-center gap-3 rounded-xl p-2 transition-all active:scale-[0.98] sm:gap-4 sm:p-3'
                     }
                   >
                     <span className="bg-background flex size-9 shrink-0 items-center justify-center rounded-xl shadow-sm sm:size-10">

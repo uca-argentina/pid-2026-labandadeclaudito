@@ -16,7 +16,7 @@ import { WeekStrip } from '@/components/week-strip'
 export type VistaDeDemanda = 'hora' | 'dia' | 'semana'
 
 const claseOpcion =
-  'inline-flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-1.5 text-base font-medium whitespace-nowrap transition-colors sm:flex-none'
+  'inline-flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-1.5 text-base font-medium whitespace-nowrap transition-all duration-200 active:scale-95 sm:flex-none'
 
 function Opcion({
   vista,
@@ -113,27 +113,33 @@ export function DemandPanel({
         )}
       </div>
 
-      {vista === 'hora' && (
-        <div className="space-y-4">
-          <div className="text-muted-foreground flex flex-wrap gap-x-5 gap-y-1 text-sm">
-            <span className="inline-flex items-center gap-2 whitespace-nowrap">
-              <span className="bg-acento h-1 w-5 rounded-full" />
-              Este período
-            </span>
-            <span className="inline-flex items-center gap-2 whitespace-nowrap">
-              <span className="bg-muted-foreground/60 h-0.5 w-5 rounded-full" />
-              {nombreDelAnterior}
-            </span>
+      {/* key: al cambiar de vista, lo nuevo aparece con un fundido */}
+      <div
+        key={vista}
+        className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 duration-300"
+      >
+        {vista === 'hora' && (
+          <div className="space-y-4">
+            <div className="text-muted-foreground flex flex-wrap gap-x-5 gap-y-1 text-sm">
+              <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                <span className="bg-acento h-1 w-5 rounded-full" />
+                Este período
+              </span>
+              <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                <span className="bg-muted-foreground/60 h-0.5 w-5 rounded-full" />
+                {nombreDelAnterior}
+              </span>
+            </div>
+            <DemandCurve
+              horarios={horarios}
+              actual={reservasPorHorario(demanda, horarios)}
+              anterior={reservasPorHorario(demandaAnterior, horarios)}
+            />
           </div>
-          <DemandCurve
-            horarios={horarios}
-            actual={reservasPorHorario(demanda, horarios)}
-            anterior={reservasPorHorario(demandaAnterior, horarios)}
-          />
-        </div>
-      )}
-      {vista === 'dia' && <WeekStrip totalesPorDia={reservasPorDia(demanda)} />}
-      {vista === 'semana' && <DemandHeatmap demanda={demanda} diasDelPeriodo={diasDelPeriodo} />}
+        )}
+        {vista === 'dia' && <WeekStrip totalesPorDia={reservasPorDia(demanda)} />}
+        {vista === 'semana' && <DemandHeatmap demanda={demanda} diasDelPeriodo={diasDelPeriodo} />}
+      </div>
     </section>
   )
 }
