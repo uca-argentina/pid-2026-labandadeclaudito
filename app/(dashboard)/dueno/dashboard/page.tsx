@@ -3,25 +3,22 @@ import { redirect } from 'next/navigation'
 import { Building2 } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { diaDeHoy, sumarDias } from '@/lib/time'
+import { diaDeHoy } from '@/lib/time'
+import { metricasDelComplejo } from '@/lib/metricas-complejo'
 import {
   horarioMasPedido,
   horarioMenosPedido,
-  porcentaje,
   sumarMetricas,
   temaDelDeporte,
   urlDelDashboard,
   variacionPorcentual,
-  type CeldaDeDemanda,
   type FiltrosDelDashboard,
   type MetricasDelPeriodo,
 } from '@/lib/dashboard'
 import {
   cantidadDeDias,
-  diaSemanaDe,
   diasDeLaSemanaDe,
   periodoElegido,
-  type Periodo,
   type VistaDelSelector,
 } from '@/lib/periodos'
 import { dashboardFiltersSchema } from '@/lib/validations/dashboard'
@@ -36,124 +33,27 @@ import { SportBreakdown, type FilaDeDeporte } from '@/components/sport-breakdown
 import { SportTabs, type PestanaDeDeporte } from '@/components/sport-tabs'
 import { Button } from '@/components/ui/button'
 
-// ---------- Datos de ejemplo (hasta que entre SCRUM-62) ----------
-// Cuando entre lib/metricas-complejo.ts, metricasDePrueba se reemplaza por
-// await metricasDelComplejo(complejo.id, periodo.desde, periodo.hasta, deporte).
-// OJO: el parámetro deporte hay que pedírselo a Franco.
-
-// Qué tan bien le va a cada deporte (0 a 1) y cuánto se cobra de seña
-const ocupacionDePrueba: Record<Deporte, number> = {
-  FUTBOL_5: 0.85,
-  FUTBOL_7: 0.7,
-  FUTBOL_11: 0.45,
-  TENIS: 0.55,
-  PADEL: 0.95,
-  BASQUET: 0.4,
-}
-const senaDePrueba: Record<Deporte, number> = {
-  FUTBOL_5: 4500,
-  FUTBOL_7: 6000,
-  FUTBOL_11: 9000,
-  TENIS: 3000,
-  PADEL: 3500,
-  BASQUET: 4000,
+// Métricas de una cancha en el período actual y en el anterior (para comparar)
+type MetricasDeCancha = {
+  complejoId: string
+  deporte: Deporte
+  actual: MetricasDelPeriodo
+  anterior: MetricasDelPeriodo
 }
 
-// Cuánto se pide un horario (más de noche y el fin de semana; el tenis
-// también a la mañana; martes a la mañana vacío)
-function pesoDelHorario(deporte: Deporte, diaSemana: number, hora: number): number {
-  if (diaSemana === 2 && hora < 12) return 0
-  let peso = 1
-  if (hora >= 18) peso += 3
-  if (hora >= 20 && hora <= 22) peso += 2
-  if (diaSemana === 5 || diaSemana === 6) peso += 2
-  if (deporte === 'TENIS' && hora < 12) peso += 3
-  return peso
-}
-
-// Métricas de un deporte de un complejo en un período. Cada período rinde un
-// poco distinto (según sus fechas), así al cambiar de período cambian los números.
-function metricasDePrueba(
-  periodo: Periodo,
-  indiceDelComplejo: number,
-  deporte: Deporte,
-): MetricasDelPeriodo {
-  const dias = cantidadDeDias(periodo)
-  const rindeElComplejo = Math.max(1 - indiceDelComplejo * 0.18, 0.4)
-  const rindeElPeriodo =
-    0.8 +
-    ((Number(periodo.desde.slice(8, 10)) * 7 + Number(periodo.desde.slice(5, 7)) * 3) % 10) * 0.03
-  const turnosOfrecidos = 15 * dias
-  const turnosReservados = Math.round(
-    turnosOfrecidos * ocupacionDePrueba[deporte] * rindeElComplejo * rindeElPeriodo * 0.8,
-  )
-
-  // Cuánto pesa cada día de la semana × hora en el período (un día que se
-  // repite, como los lunes de un mes, pesa más)
-  const pesos: number[][] = []
-  for (let diaSemana = 0; diaSemana < 7; diaSemana++) {
-    pesos.push([])
-    for (let hora = 9; hora <= 23; hora++) pesos[diaSemana].push(0)
-  }
-  let pesoTotal = 0
-  for (let i = 0; i < dias; i++) {
-    const diaSemana = diaSemanaDe(sumarDias(periodo.desde, i))
-    for (let hora = 9; hora <= 23; hora++) {
-      const peso = pesoDelHorario(deporte, diaSemana, hora)
-      pesos[diaSemana][hora - 9] += peso
-      pesoTotal += peso
-    }
-  }
-
-  // Las reservas se reparten según esos pesos. Se redondea lo acumulado (no
-  // cada celda) para que la suma dé exacto el total. Solo aparecen los días
-  // de la semana que tiene el período.
-  const demanda: CeldaDeDemanda[] = []
-  let pesoAcumulado = 0
-  for (let diaSemana = 0; diaSemana < 7; diaSemana++) {
-    for (let hora = 9; hora <= 23; hora++) {
-      const peso = pesos[diaSemana][hora - 9]
-      if (peso === 0) continue
-      const antes = Math.round((turnosReservados * pesoAcumulado) / pesoTotal)
-      pesoAcumulado += peso
-      const despues = Math.round((turnosReservados * pesoAcumulado) / pesoTotal)
-      demanda.push({
-        diaSemana,
-        horaInicio: `${String(hora).padStart(2, '0')}:00`,
-        reservas: despues - antes,
-      })
-    }
-  }
-
-  return {
-    ocupacion: {
-      turnosReservados,
-      turnosOfrecidos,
-      porcentaje: porcentaje(turnosReservados, turnosOfrecidos),
-    },
-    ingresos: turnosReservados * senaDePrueba[deporte],
-    cancelaciones: Math.round(turnosReservados * 0.05),
-    noShows: Math.round(turnosReservados * 0.02),
-    demanda,
-  }
-}
-// ---------- Fin de los datos de ejemplo ----------
-
-type ComplejoConDeportes = { id: string; nombre: string; indice: number; deportes: Deporte[] }
-
-// Suma las métricas de cada deporte de cada complejo (o solo las del deporte
-// elegido). Así "todos" siempre es la suma exacta de sus partes.
+// Suma las métricas de las canchas que entran en el filtro (un complejo, un
+// deporte, o todas si no viene ninguno). Así "todos" siempre es la suma exacta
+// de sus partes.
 function metricasDe(
-  complejos: ComplejoConDeportes[],
-  periodo: Periodo,
-  deporte: Deporte | undefined,
+  canchas: MetricasDeCancha[],
+  periodo: 'actual' | 'anterior',
+  filtro: { complejoId?: string; deporte?: Deporte },
 ): MetricasDelPeriodo {
   const partes: MetricasDelPeriodo[] = []
-  for (const complejo of complejos) {
-    for (const unDeporte of complejo.deportes) {
-      if (deporte !== undefined && unDeporte !== deporte) continue
-      partes.push(metricasDePrueba(periodo, complejo.indice, unDeporte))
-    }
+  for (const cancha of canchas) {
+    if (filtro.complejoId !== undefined && cancha.complejoId !== filtro.complejoId) continue
+    if (filtro.deporte !== undefined && cancha.deporte !== filtro.deporte) continue
+    partes.push(cancha[periodo])
   }
   return sumarMetricas(partes)
 }
@@ -225,16 +125,15 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
     orderBy: { deporte: 'asc' },
   })
 
-  const complejosDelAlcance: ComplejoConDeportes[] = []
-  for (let indice = 0; indice < complejos.length; indice++) {
-    const complejo = complejos[indice]
+  const complejosDelAlcance: { id: string; nombre: string; deportes: Deporte[] }[] = []
+  for (const complejo of complejos) {
     if (!idsDelAlcance.includes(complejo.id)) continue
 
     const deportesDelComplejo: Deporte[] = []
     for (const cancha of canchas) {
       if (cancha.complejoId === complejo.id) deportesDelComplejo.push(cancha.deporte)
     }
-    complejosDelAlcance.push({ ...complejo, indice, deportes: deportesDelComplejo })
+    complejosDelAlcance.push({ ...complejo, deportes: deportesDelComplejo })
   }
 
   // Todos los deportes del alcance, sin repetir. Si en la URL viene uno que
@@ -277,15 +176,44 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
   }
 
   // ---- Métricas ----
-  const metricas = metricasDe(complejosDelAlcance, rangos.actual, deporte)
-  const anteriores = metricasDe(complejosDelAlcance, rangos.anterior, deporte)
+  // Se piden por cancha (lib/metricas-complejo.ts filtra por cancha, no por
+  // deporte) y después se suman como haga falta. Entran también las canchas
+  // dadas de baja: sus reservas pasadas siguen contando en ingresos y
+  // cancelaciones (la ocupación ya las deja afuera).
+  const canchasConReservas = await db.cancha.findMany({
+    where: { complejoId: { in: idsDelAlcance } },
+    select: { id: true, complejoId: true, deporte: true },
+  })
+  const metricasPorCancha: MetricasDeCancha[] = await Promise.all(
+    canchasConReservas.map(async (cancha) => {
+      const actual = await metricasDelComplejo(
+        cancha.complejoId,
+        rangos.actual.desde,
+        rangos.actual.hasta,
+        cancha.id,
+      )
+      const anterior = await metricasDelComplejo(
+        cancha.complejoId,
+        rangos.anterior.desde,
+        rangos.anterior.hasta,
+        cancha.id,
+      )
+      return { complejoId: cancha.complejoId, deporte: cancha.deporte, actual, anterior }
+    }),
+  )
+
+  const metricas = metricasDe(metricasPorCancha, 'actual', { deporte })
+  const anteriores = metricasDe(metricasPorCancha, 'anterior', { deporte })
 
   // Ranking por complejo: solo cuando se ven todos y hay más de uno
   const filasPorComplejo: FilaDeComplejo[] = []
   if (sonTodos) {
     for (const complejo of complejosDelAlcance) {
       if (deporte !== undefined && !complejo.deportes.includes(deporte)) continue
-      const delComplejo = metricasDe([complejo], rangos.actual, deporte)
+      const delComplejo = metricasDe(metricasPorCancha, 'actual', {
+        complejoId: complejo.id,
+        deporte,
+      })
       filasPorComplejo.push({
         id: complejo.id,
         nombre: complejo.nombre,
@@ -303,7 +231,7 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
   const filasPorDeporte: FilaDeDeporte[] = []
   if (deporte === undefined && deportes.length > 1) {
     for (const unDeporte of deportes) {
-      const delDeporte = metricasDe(complejosDelAlcance, rangos.actual, unDeporte)
+      const delDeporte = metricasDe(metricasPorCancha, 'actual', { deporte: unDeporte })
       filasPorDeporte.push({
         deporte: unDeporte,
         porcentaje: delDeporte.ocupacion.porcentaje,

@@ -6,7 +6,6 @@ import { Building2, ChevronDown } from 'lucide-react'
 import { urlDelDashboard, type FiltrosDelDashboard } from '@/lib/dashboard'
 import type { VistaDelSelector } from '@/lib/periodos'
 import { PeriodPicker } from '@/components/period-picker'
-import { Badge } from '@/components/ui/badge'
 
 // Lo que hace falta para la barra del tiempo. Los filtros de cada botón (ir
 // al anterior, al siguiente, a hoy, cambiar de vista) ya vienen armados de la
@@ -80,7 +79,6 @@ export function DashboardFrame({
           </select>
           <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
         </div>
-        <Badge variant="outline">Datos de ejemplo</Badge>
       </div>
 
       <div className="bg-background/85 relative -mx-6 px-6 py-2 backdrop-blur-md md:sticky md:top-0 md:z-30">
