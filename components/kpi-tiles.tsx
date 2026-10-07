@@ -11,12 +11,13 @@ import { VariationBadge } from '@/components/variation-badge'
 // "bloque": adentro del bloque principal, de a dos. "fila": abajo, los cuatro
 // en una fila.
 
-const claseTarjeta = `${claseTarjetaDeDatos} p-5`
+const claseTarjeta = `${claseTarjetaDeDatos} p-3 sm:p-4`
 
 function Encabezado({ icono: Icono, texto }: { icono: typeof Wallet; texto: string }) {
   return (
     <p className="text-muted-foreground flex items-center gap-2 text-sm font-medium whitespace-nowrap">
-      <span className="bg-acento/10 text-acento flex size-8 shrink-0 items-center justify-center rounded-lg">
+      {/* En pantallas chicas sin ícono, para que entre el texto */}
+      <span className="bg-acento/10 text-acento hidden size-7 shrink-0 items-center justify-center rounded-lg sm:flex">
         <Icono className="size-4" />
       </span>
       {texto}
@@ -45,35 +46,36 @@ export function KpiTiles({
   horarioAImpulsar: CeldaDeDemanda | null
   hrefParaImpulsar: string
 }) {
-  // En pantallas chicas, una por fila: así los montos y textos entran enteros
-  const columnas =
-    variante === 'bloque'
-      ? 'grid-cols-1 sm:grid-cols-2'
-      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+  // De a dos (compactas); abajo del bloque, las cuatro en fila desde lg
+  const columnas = variante === 'bloque' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'
 
   return (
-    <div className={`grid gap-3 ${columnas}`}>
+    <div className={`grid gap-2 sm:gap-3 ${columnas}`}>
       <div className={claseTarjeta}>
         <Encabezado icono={Wallet} texto="Ingresos" />
-        <p className="mt-3 truncate text-2xl font-semibold tracking-tight sm:text-3xl">
+        <p className="mt-2 truncate text-xl font-semibold tracking-tight sm:text-2xl">
           <AnimatedNumber valor={ingresos} tipo="precio" />
         </p>
-        <div className="mt-1.5">
+        <div className="mt-1">
           <VariationBadge variacion={variacionIngresos} subirEsBueno={true} />
         </div>
       </div>
 
       <div className={claseTarjeta}>
         <Encabezado icono={Ban} texto="Turnos perdidos" />
-        <p className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+        <p className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">
           <AnimatedNumber valor={cancelaciones + noShows} />
         </p>
         {/* Si no entra en una línea, baja el dato entero (no se corta) */}
-        <p className="text-muted-foreground mt-1.5 flex flex-wrap gap-x-1.5 text-sm">
-          <span className="whitespace-nowrap">{cancelaciones} cancelados ·</span>
-          <span className="whitespace-nowrap">{noShows} ausentes</span>
+        <p className="text-muted-foreground mt-1 flex flex-wrap gap-x-1.5 text-sm">
+          <span className="whitespace-nowrap">
+            {cancelaciones} {cancelaciones === 1 ? 'cancelado' : 'cancelados'} ·
+          </span>
+          <span className="whitespace-nowrap">
+            {noShows} {noShows === 1 ? 'ausente' : 'ausentes'}
+          </span>
         </p>
-        <div className="mt-1.5">
+        <div className="mt-1">
           {/* Menos turnos perdidos es mejor: subir es malo */}
           <VariationBadge variacion={variacionPerdidos} subirEsBueno={false} />
         </div>
@@ -81,13 +83,15 @@ export function KpiTiles({
 
       <div className={claseTarjeta}>
         <Encabezado icono={Flame} texto="Horario pico" />
-        <p className="mt-3 text-2xl font-semibold tracking-tight whitespace-nowrap sm:text-3xl">
+        <p className="mt-2 text-xl font-semibold tracking-tight whitespace-nowrap sm:text-2xl">
           {horarioPico
             ? `${nombresCortosDeDias[horarioPico.diaSemana]} ${horarioPico.horaInicio}`
             : '—'}
         </p>
-        <p className="text-muted-foreground mt-1.5 truncate text-sm">
-          {horarioPico ? `${horarioPico.reservas} reservas` : 'Sin reservas'}
+        <p className="text-muted-foreground mt-1 text-sm">
+          {horarioPico
+            ? `${horarioPico.reservas} ${horarioPico.reservas === 1 ? 'reserva' : 'reservas'}`
+            : 'Sin reservas'}
         </p>
       </div>
 
@@ -100,12 +104,12 @@ export function KpiTiles({
           <Encabezado icono={Lightbulb} texto="A impulsar" />
           <ArrowUpRight className="text-acento size-5 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
-        <p className="mt-3 text-2xl font-semibold tracking-tight whitespace-nowrap sm:text-3xl">
+        <p className="mt-2 text-xl font-semibold tracking-tight whitespace-nowrap sm:text-2xl">
           {horarioAImpulsar
             ? `${nombresCortosDeDias[horarioAImpulsar.diaSemana]} ${horarioAImpulsar.horaInicio}`
             : '—'}
         </p>
-        <p className="text-muted-foreground mt-1.5 truncate text-sm">Probá un precio especial</p>
+        <p className="text-muted-foreground mt-1 text-sm">Probá un precio especial</p>
       </Link>
     </div>
   )

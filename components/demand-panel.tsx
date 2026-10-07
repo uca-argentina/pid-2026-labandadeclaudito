@@ -72,9 +72,9 @@ export function DemandPanel({
   const horarios = horariosDistintos(demanda)
 
   return (
-    <section className={`${claseTarjetaDeDatos} p-6`}>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-2xl font-semibold whitespace-nowrap">Demanda</h2>
+    <section className={`${claseTarjetaDeDatos} p-4 sm:p-5`}>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold whitespace-nowrap">Demanda</h2>
         {/* Con una sola vista no hay nada que elegir. En mobile ocupa todo el
             ancho y sin íconos, para que entren las tres */}
         {vistasDisponibles.length > 1 && (

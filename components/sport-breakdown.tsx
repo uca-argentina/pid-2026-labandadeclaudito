@@ -58,11 +58,11 @@ export function SportBreakdown({ filas }: { filas: FilaDeDeporte[] }) {
   }
 
   return (
-    <section className={`${claseTarjetaDeDatos} p-6`}>
-      <h2 className="mb-6 text-2xl font-semibold">Por deporte</h2>
+    <section className={`${claseTarjetaDeDatos} p-4 sm:p-5`}>
+      <h2 className="mb-4 text-xl font-semibold">Por deporte</h2>
 
       <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-[auto_minmax(0,1fr)]">
-        <div className="relative mx-auto size-60">
+        <div className="relative mx-auto size-48 sm:size-52">
           <svg
             viewBox="0 0 120 120"
             aria-hidden="true"
@@ -120,7 +120,7 @@ export function SportBreakdown({ filas }: { filas: FilaDeDeporte[] }) {
             ) : (
               <>
                 <span className="text-muted-foreground text-sm">Ingresos</span>
-                <span className="text-2xl font-semibold whitespace-nowrap">
+                <span className="text-xl font-semibold whitespace-nowrap">
                   {formatPrecio(ingresosTotales)}
                 </span>
                 <span className="text-muted-foreground text-sm">{filas.length} deportes</span>
@@ -154,7 +154,7 @@ export function SportBreakdown({ filas }: { filas: FilaDeDeporte[] }) {
                         : 'group flex items-center gap-3 rounded-xl p-3 transition-colors sm:gap-4'
                     }
                   >
-                    <span className="bg-background flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm">
+                    <span className="bg-background flex size-10 shrink-0 items-center justify-center rounded-xl shadow-sm">
                       <SportIcon deporte={fila.deporte} className="size-7" />
                     </span>
 
@@ -178,7 +178,7 @@ export function SportBreakdown({ filas }: { filas: FilaDeDeporte[] }) {
 
                     <ProgressRing
                       porcentaje={fila.porcentaje}
-                      className="size-14"
+                      className="size-12"
                       claseFondo="stroke-muted"
                       claseRelleno={colorDelDeporte[fila.deporte].trazo}
                     >

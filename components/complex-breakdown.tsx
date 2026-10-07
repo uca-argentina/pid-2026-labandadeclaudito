@@ -20,8 +20,8 @@ export type FilaDeComplejo = {
 // menor). Tocar uno muestra el dashboard de ese complejo.
 export function ComplexBreakdown({ filas }: { filas: FilaDeComplejo[] }) {
   return (
-    <section className={`${claseTarjetaDeDatos} p-6`}>
-      <h2 className="mb-5 text-2xl font-semibold">Por complejo</h2>
+    <section className={`${claseTarjetaDeDatos} p-4 sm:p-5`}>
+      <h2 className="mb-4 text-xl font-semibold">Por complejo</h2>
 
       <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {filas.map((fila, posicion) => (
@@ -29,7 +29,7 @@ export function ComplexBreakdown({ filas }: { filas: FilaDeComplejo[] }) {
             <Link
               href={fila.href}
               scroll={false}
-              className="border-border bg-background/60 hover:bg-muted hover:border-acento/30 group flex h-full items-center gap-3 rounded-xl border p-4 transition-colors sm:gap-4"
+              className="border-border bg-background/60 hover:bg-muted hover:border-acento/30 group flex h-full items-center gap-3 rounded-xl border p-3 transition-colors"
             >
               <span
                 className={
@@ -59,7 +59,7 @@ export function ComplexBreakdown({ filas }: { filas: FilaDeComplejo[] }) {
 
               <ProgressRing
                 porcentaje={fila.porcentaje}
-                className="size-16"
+                className="size-14"
                 claseFondo="stroke-muted"
                 claseRelleno="stroke-acento"
               >

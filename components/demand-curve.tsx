@@ -155,7 +155,7 @@ export function DemandCurve({
 
       <div className="flex">
         {/* Eje Y: el techo de la escala, la mitad y 0 */}
-        <div className="text-muted-foreground flex h-72 w-10 shrink-0 flex-col justify-between pr-2 text-right text-sm tabular-nums">
+        <div className="text-muted-foreground flex h-52 w-10 shrink-0 flex-col justify-between pr-2 text-right text-sm tabular-nums sm:h-64">
           <span className="-translate-y-1/2">{escala}</span>
           <span>{escala / 2}</span>
           <span className="translate-y-1/2">0</span>
@@ -169,7 +169,7 @@ export function DemandCurve({
           onPointerLeave={() => setIndiceElegido(null)}
           onKeyDown={elegirConTeclado}
           onBlur={() => setIndiceElegido(null)}
-          className="focus-visible:ring-ring/50 relative h-72 flex-1 cursor-crosshair rounded-md outline-none focus-visible:ring-3"
+          className="focus-visible:ring-ring/50 relative h-52 flex-1 cursor-crosshair rounded-md outline-none focus-visible:ring-3 sm:h-64"
         >
           {/* Franjas del día de fondo (una sí y otra no, con un tinte) */}
           {bandas.map((banda, i) => (

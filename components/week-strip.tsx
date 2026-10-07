@@ -60,7 +60,7 @@ export function WeekStrip({ totalesPorDia }: { totalesPorDia: number[] }) {
               <Icono
                 className={esPico ? 'size-6 motion-safe:animate-pulse' : 'text-acento size-6'}
               />
-              <span className="text-2xl font-semibold tabular-nums">{total}</span>
+              <span className="text-xl font-semibold tabular-nums">{total}</span>
               <span
                 className={
                   esPico
