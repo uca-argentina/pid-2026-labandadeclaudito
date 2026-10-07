@@ -59,6 +59,169 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Animaciones del dashboard del dueño. Se usan con motion-safe: (ej.
+   motion-safe:animate-crecer-barra) para no animar a quien pidió reducir
+   el movimiento en su sistema. "backwards" y no "both": terminada la
+   animación de entrada no pisa nada, y las transiciones (al cambiar de
+   filtro) siguen funcionando. */
+@theme {
+  --animate-crecer-barra: crecer-barra 0.8s ease-out backwards;
+  --animate-llenar-anillo: llenar-anillo 1.2s ease-out backwards;
+
+  @keyframes crecer-barra {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  /* 327 = largo del círculo del anillo de ocupación (2 × π × radio 52):
+     arranca vacío y termina en el valor que tiene el elemento */
+  @keyframes llenar-anillo {
+    from {
+      stroke-dashoffset: 327;
+    }
+  }
+
+  /* La curva de demanda aparece de izquierda a derecha */
+  --animate-revelar: revelar 1.4s ease-out backwards;
+  @keyframes revelar {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+  }
+
+  /* Las que siguen se repiten siempre: le dan vida a la ilustración */
+  --animate-flotar: flotar 6s ease-in-out infinite;
+  @keyframes flotar {
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  --animate-saltito: saltito 1.6s ease-in-out infinite;
+  @keyframes saltito {
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
+  /* Pelota de fútbol: pases entre jugadores */
+  --animate-pase: pase 4s ease-in-out infinite;
+  @keyframes pase {
+    25% {
+      transform: translate(-45px, -30px);
+    }
+    50% {
+      transform: translate(40px, -20px);
+    }
+    75% {
+      transform: translate(70px, 30px);
+    }
+  }
+
+  /* Pelota de tenis y pádel: cruza la red de un lado al otro */
+  --animate-peloteo: peloteo 2.4s ease-in-out infinite alternate;
+  @keyframes peloteo {
+    from {
+      transform: translate(-110px, 25px);
+    }
+    to {
+      transform: translate(110px, -25px);
+    }
+  }
+
+  /* Pelota de básquet: pique */
+  --animate-pique: pique 1.2s ease-in infinite alternate;
+  @keyframes pique {
+    from {
+      transform: translate(0, -18px) scale(1.15);
+    }
+  }
+}
+
+/* Colores por deporte del dashboard del dueño.
+   - tema-desde / tema-hasta: degradé del bloque principal (el piso de la cancha)
+   - acento: color de los gráficos del deporte elegido
+   La clase tema-<deporte> va en el contenedor de la página (ver temaDelDeporte
+   en lib/dashboard.ts) y todo lo de adentro usa bg-acento, stroke-acento, etc. */
+@theme inline {
+  --color-tema-desde: var(--tema-desde);
+  --color-tema-hasta: var(--tema-hasta);
+  --color-acento: var(--acento);
+  --color-acento-foreground: var(--acento-foreground);
+  /* Un color por deporte para los gráficos de "Todos" (validados para que se
+     distingan también con daltonismo) */
+  --color-deporte-futbol-5: var(--deporte-futbol-5);
+  --color-deporte-futbol-7: var(--deporte-futbol-7);
+  --color-deporte-futbol-11: var(--deporte-futbol-11);
+  --color-deporte-tenis: var(--deporte-tenis);
+  --color-deporte-padel: var(--deporte-padel);
+  --color-deporte-basquet: var(--deporte-basquet);
+}
+
+:root {
+  --acento-foreground: oklch(0.99 0 0);
+  --deporte-futbol-5: #008300;
+  --deporte-futbol-7: #1baf7a;
+  --deporte-futbol-11: #4a3aa7;
+  --deporte-tenis: #eb6834;
+  --deporte-padel: #2a78d6;
+  --deporte-basquet: #eda100;
+}
+
+.dark {
+  --acento-foreground: oklch(0.17 0.02 145);
+  --deporte-futbol-5: #2f8f2f;
+  --deporte-futbol-7: #17a6a6;
+  --deporte-futbol-11: #9085e9;
+  --deporte-tenis: #d95926;
+  --deporte-padel: #3987e5;
+  --deporte-basquet: #c98500;
+}
+
+.tema-todos {
+  --tema-desde: oklch(0.56 0.13 152);
+  --tema-hasta: oklch(0.3 0.06 195);
+  --acento: oklch(0.45 0.15 150);
+}
+.tema-futbol {
+  --tema-desde: oklch(0.6 0.15 145);
+  --tema-hasta: oklch(0.33 0.09 158);
+  --acento: oklch(0.47 0.14 148);
+}
+.tema-tenis {
+  --tema-desde: oklch(0.66 0.14 45);
+  --tema-hasta: oklch(0.38 0.1 32);
+  --acento: oklch(0.55 0.15 40);
+}
+.tema-padel {
+  --tema-desde: oklch(0.6 0.13 250);
+  --tema-hasta: oklch(0.3 0.09 265);
+  --acento: oklch(0.5 0.14 255);
+}
+.tema-basquet {
+  --tema-desde: oklch(0.72 0.12 70);
+  --tema-hasta: oklch(0.42 0.09 45);
+  --acento: oklch(0.58 0.13 60);
+}
+
+/* En modo oscuro el acento es más claro, para que se lea sobre las tarjetas */
+.dark .tema-todos {
+  --acento: oklch(0.72 0.16 150);
+}
+.dark .tema-futbol {
+  --acento: oklch(0.72 0.16 148);
+}
+.dark .tema-tenis {
+  --acento: oklch(0.72 0.14 42);
+}
+.dark .tema-padel {
+  --acento: oklch(0.7 0.13 252);
+}
+.dark .tema-basquet {
+  --acento: oklch(0.76 0.13 70);
+}
+
 :root {
   --background: oklch(0.97 0.014 100);
   --foreground: oklch(0.24 0.025 145);
