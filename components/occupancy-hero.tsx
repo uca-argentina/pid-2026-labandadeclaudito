@@ -52,35 +52,52 @@ export function OccupancyHero({
               : 'grid grid-cols-1 items-center gap-4 lg:grid-cols-2'
           }
         >
-          <div className={`${claseTarjetaDeDatos} flex items-center gap-4 p-4`}>
+          {/* @container: el contenido se acomoda al ancho de la tarjeta (en
+              una pantalla ancha, reservados y libres van lado a lado) */}
+          <div
+            className={`${claseTarjetaDeDatos} @container flex items-center gap-4 p-4 @sm:gap-6 @sm:px-6`}
+          >
             <ProgressRing
               porcentaje={porcentaje}
-              className="size-24 sm:size-28"
+              className="size-24 @sm:size-32"
               claseFondo="stroke-acento/15"
               claseRelleno="stroke-acento"
             >
-              <span className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              <span className="text-2xl font-semibold tracking-tight @sm:text-3xl">
                 <AnimatedNumber valor={porcentaje} tipo="porcentaje" />
               </span>
-              <span className="text-muted-foreground text-xs whitespace-nowrap sm:text-sm">
+              <span className="text-muted-foreground text-xs whitespace-nowrap @sm:text-sm">
                 ocupación
               </span>
             </ProgressRing>
 
-            <div className="min-w-0 space-y-1.5">
-              <p className="text-muted-foreground text-sm whitespace-nowrap">Turnos reservados</p>
-              <p className="text-2xl font-semibold tracking-tight whitespace-nowrap">
-                <AnimatedNumber valor={turnosReservados} />
-                <span className="text-muted-foreground text-base font-normal">
-                  {' '}
-                  de {turnosOfrecidos.toLocaleString('es-AR')}
-                </span>
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
+            {/* Al lado del anillo: los turnos vendidos y los libres (lo que
+                todavía se puede vender), con un punto del mismo color que su
+                parte del anillo, y cuánto cambió */}
+            <div className="min-w-0 flex-1">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-1 @sm:grid-cols-2">
+                <div>
+                  <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
+                    <span className="bg-acento size-2.5 shrink-0 rounded-full" />
+                    Reservados
+                  </p>
+                  <p className="text-2xl font-semibold tracking-tight @sm:text-3xl">
+                    <AnimatedNumber valor={turnosReservados} />
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
+                    <span className="bg-acento/20 size-2.5 shrink-0 rounded-full" />
+                    Libres
+                  </p>
+                  <p className="text-2xl font-semibold tracking-tight @sm:text-3xl">
+                    <AnimatedNumber valor={turnosOfrecidos - turnosReservados} />
+                  </p>
+                </div>
+              </div>
+              <div className="border-border mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 border-t pt-2">
                 <VariationBadge variacion={variacionTurnos} subirEsBueno={true} />
-                <span className="text-muted-foreground text-sm whitespace-nowrap">
-                  vs. {comparacion}
-                </span>
+                <span className="text-muted-foreground text-sm">vs. {comparacion}</span>
               </div>
             </div>
           </div>
