@@ -43,7 +43,7 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
   const filtrosAplicados = activeFilterChips(filtros)
 
   return (
-    <main className="mx-auto max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+    <main className="max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Buscar canchas</h1>
         <p className="text-muted-foreground mt-2">
@@ -80,7 +80,7 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
           <p className="text-muted-foreground text-sm">Probá aflojando algún filtro.</p>
         </div>
       ) : (
-        <div className={`mx-auto mt-8 grid gap-5 ${clasesGrillaAdaptable(complejos.length)}`}>
+        <div className={`mt-8 grid gap-5 ${clasesGrillaAdaptable(complejos.length)}`}>
           {complejos.map((complejo) => {
             const deportes = deportesDistintos(complejo.canchas)
             const precioMinimo = precioMasBajo(complejo.canchas)

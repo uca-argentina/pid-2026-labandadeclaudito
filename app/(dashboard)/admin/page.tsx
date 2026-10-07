@@ -8,7 +8,7 @@ export default async function AdminHomePage() {
   if (!session) redirect('/login')
 
   return (
-    <div className="mx-auto max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+    <div className="max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <h1 className="text-3xl font-semibold tracking-tight">Hola, {session.user.name}</h1>
       <p className="text-muted-foreground mt-2">
         Administrá usuarios, complejos y disputas de la plataforma.

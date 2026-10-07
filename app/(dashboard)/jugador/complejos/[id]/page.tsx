@@ -21,7 +21,7 @@ export default async function ComplejoDetallePage({
   if (!complejo) notFound()
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+    <main className="w-full max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <Link
         href={`/jugador/canchas${filtersToQueryString(filtros)}`}
         className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"

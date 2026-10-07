@@ -20,6 +20,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { iniciales } from '@/lib/iniciales'
 import { SignOutButton } from '@/components/sign-out-button'
 import { Logo } from '@/components/logo'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -62,15 +63,6 @@ export function MobileMenuButton() {
       <Equal className="size-5" />
     </Button>
   )
-}
-
-function iniciales(nombre: string) {
-  return nombre
-    .split(' ')
-    .map((palabra) => palabra[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
 }
 
 export function AppSidebar({
