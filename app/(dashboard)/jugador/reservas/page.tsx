@@ -3,22 +3,51 @@ import { redirect } from 'next/navigation'
 import { CalendarCheck, Clock, Hourglass, MapPin, Wallet } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { pendientesVencidas } from '@/lib/bookings'
+import type { Prisma } from '@/lib/generated/prisma/client'
+import { dondeHistorial, dondeProximas } from '@/lib/bookings'
 import { deporteLabels, formatPrecio } from '@/lib/labels'
 import { montoDelHistorial } from '@/lib/historial'
-import { estadoDeReserva, venceLaSena } from '@/lib/estado-reserva'
+import { venceLaSena } from '@/lib/estado-reserva'
+import { calcularPagina } from '@/lib/paginacion'
 import { diaDeReserva, formatearDia, momentoActual, refundsDeposit, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { CancelBookingButton } from '@/components/cancel-booking-button'
-import { CollapsibleSection } from '@/components/collapsible-section'
+import { Paginacion } from '@/components/paginacion'
 import { PayDepositButton } from '@/components/pay-deposit-button'
 import { RefreshWhenDepositExpires } from '@/components/refresh-when-deposit-expires'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
-async function getReservas(jugadorId: string) {
+// Próximas se muestran como tarjetas (tienen acciones: pagar, cancelar).
+// Historial y canceladas, como tabla: son solo para consultar.
+const TARJETAS_POR_PAGINA = 12
+const FILAS_POR_PAGINA = 20
+
+const vistas = {
+  proximas: 'Próximas',
+  historial: 'Historial',
+  canceladas: 'Canceladas',
+}
+type Vista = keyof typeof vistas
+
+async function getReservas(
+  where: Prisma.ReservaWhereInput,
+  orden: 'asc' | 'desc',
+  skip: number,
+  take: number,
+) {
   return db.reserva.findMany({
-    where: { jugadorId, NOT: pendientesVencidas() },
+    where,
     include: { cancha: { include: { complejo: true } }, pago: true },
-    orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
+    orderBy: [{ fecha: orden }, { horaInicio: orden }],
+    skip,
+    take,
   })
 }
 
@@ -30,30 +59,69 @@ const tonos = {
   peligro: 'text-destructive',
 }
 
-export default async function MisReservasPage() {
+export default async function MisReservasPage({ searchParams }: PageProps<'/jugador/reservas'>) {
   const session = await auth()
   if (!session) redirect('/login')
+  const jugadorId = session.user.id
 
-  const reservas = await getReservas(session.user.id)
+  // ?vista=historial|canceladas elige la pestaña (sin vista = próximas)
+  // ?pagina=2 elige la página dentro de esa pestaña
+  const { vista: vistaPedida, pagina } = await searchParams
+  let vista: Vista = 'proximas'
+  if (vistaPedida === 'historial' || vistaPedida === 'canceladas') vista = vistaPedida
+
+  // Qué es "próxima" o "historial" lo decide la base (ver dondeProximas),
+  // así cuenta y pagina sin traer todas las reservas.
   const ahora = momentoActual()
-
-  // Próximas: las que todavía se van a jugar (la que está en curso también),
-  // de la más cercana a la más lejana. Historial: las que ya pasaron.
-  // Canceladas: aparte, con o sin seña devuelta. Estas dos, de la más
-  // reciente a la más vieja.
-  const esProxima = (r: Reserva) => {
-    const dia = diaDeReserva(r.fecha)
-    const visible = estadoDeReserva(
-      { estado: r.estado, asistio: r.asistio, dia, horaInicio: r.horaInicio, horaFin: r.horaFin },
-      ahora,
-    )
-    if (visible === 'CONFIRMADA' || visible === 'EN_CURSO') return true
-    // Una pendiente que nunca se pagó deja de ser próxima cuando empieza el turno.
-    return visible === 'PENDIENTE' && !turnoYaPaso(dia, r.horaInicio)
+  const dondePorVista: Record<Vista, Prisma.ReservaWhereInput> = {
+    proximas: { jugadorId, ...dondeProximas(ahora) },
+    historial: { jugadorId, ...dondeHistorial(ahora) },
+    canceladas: { jugadorId, estado: 'CANCELADA' },
   }
-  const proximas = reservas.filter(esProxima).reverse()
-  const historial = reservas.filter((r) => !esProxima(r) && r.estado !== 'CANCELADA')
-  const canceladas = reservas.filter((r) => r.estado === 'CANCELADA')
+
+  const [totalProximas, totalHistorial, totalCanceladas] = await Promise.all([
+    db.reserva.count({ where: dondePorVista.proximas }),
+    db.reserva.count({ where: dondePorVista.historial }),
+    db.reserva.count({ where: dondePorVista.canceladas }),
+  ])
+  const totales = {
+    proximas: totalProximas,
+    historial: totalHistorial,
+    canceladas: totalCanceladas,
+  }
+
+  const porPagina = vista === 'proximas' ? TARJETAS_POR_PAGINA : FILAS_POR_PAGINA
+  const { paginaActual, totalPaginas, skip } = calcularPagina(pagina, totales[vista], porPagina)
+
+  // Próximas: de la más cercana a la más lejana.
+  // Historial y canceladas: de la más reciente a la más vieja.
+  const reservas = await getReservas(
+    dondePorVista[vista],
+    vista === 'proximas' ? 'asc' : 'desc',
+    skip,
+    porPagina,
+  )
+
+  function urlDe(vistaDelLink: Vista, paginaDelLink: number) {
+    const params = new URLSearchParams()
+    if (vistaDelLink !== 'proximas') params.set('vista', vistaDelLink)
+    if (paginaDelLink > 1) params.set('pagina', String(paginaDelLink))
+    return `/jugador/reservas?${params.toString()}`
+  }
+
+  const paginacion = (
+    <Paginacion
+      paginaActual={paginaActual}
+      totalPaginas={totalPaginas}
+      desde={skip + 1}
+      hasta={skip + reservas.length}
+      total={totales[vista]}
+      urlAnterior={urlDe(vista, paginaActual - 1)}
+      urlSiguiente={urlDe(vista, paginaActual + 1)}
+    />
+  )
+
+  const noReservoNunca = totalProximas + totalHistorial + totalCanceladas === 0
 
   return (
     <main className="max-w-5xl px-6 pt-6 pb-12 md:pt-4">
@@ -64,7 +132,7 @@ export default async function MisReservasPage() {
         </p>
       </div>
 
-      {reservas.length === 0 ? (
+      {noReservoNunca ? (
         <div className="border-border bg-card rounded-2xl border p-8 text-center">
           <CalendarCheck className="text-muted-foreground mx-auto mb-3 size-8" />
           <p className="text-muted-foreground text-sm">Todavía no reservaste ninguna cancha.</p>
@@ -76,34 +144,149 @@ export default async function MisReservasPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-8">
-          {proximas.length > 0 && (
-            <section className="space-y-4">
-              <h2 className="text-muted-foreground text-sm font-medium">Próximos</h2>
+        <>
+          {/* Pestañas: cada una es un link, la elegida va rellena */}
+          <div className="mb-6 flex flex-wrap gap-2">
+            <PestaniaDeVista href={urlDe('proximas', 1)} elegida={vista === 'proximas'}>
+              {vistas.proximas} ({totales.proximas})
+            </PestaniaDeVista>
+            <PestaniaDeVista href={urlDe('historial', 1)} elegida={vista === 'historial'}>
+              {vistas.historial} ({totales.historial})
+            </PestaniaDeVista>
+            <PestaniaDeVista href={urlDe('canceladas', 1)} elegida={vista === 'canceladas'}>
+              {vistas.canceladas} ({totales.canceladas})
+            </PestaniaDeVista>
+          </div>
+
+          {reservas.length === 0 && (
+            <p className="text-muted-foreground text-sm">
+              {vista === 'proximas' && 'No tenés turnos próximos.'}
+              {vista === 'historial' && 'Todavía no jugaste ningún turno.'}
+              {vista === 'canceladas' && 'No tenés reservas canceladas.'}
+            </p>
+          )}
+
+          {reservas.length > 0 && vista === 'proximas' && (
+            <>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {proximas.map((reserva) => (
+                {reservas.map((reserva) => (
                   <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
                 ))}
               </div>
-            </section>
+              {/* Con una sola página de tarjetas no hace falta el pie */}
+              {totalPaginas > 1 && (
+                <div className="border-border bg-card mt-4 overflow-hidden rounded-2xl border">
+                  {paginacion}
+                </div>
+              )}
+            </>
           )}
-          {historial.length > 0 && (
-            <CollapsibleSection title="Historial" /* count={historial.length} */>
-              {historial.map((reserva) => (
-                <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
-              ))}
-            </CollapsibleSection>
+
+          {reservas.length > 0 && vista !== 'proximas' && (
+            <div className="border-border bg-card overflow-hidden rounded-2xl border shadow-sm">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="pl-4">Turno</TableHead>
+                    <TableHead>Cancha</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="hidden pr-4 text-right sm:table-cell">Monto</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reservas.map((reserva) => (
+                    <FilaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
+                  ))}
+                </TableBody>
+              </Table>
+              {paginacion}
+            </div>
           )}
-          {canceladas.length > 0 && (
-            <CollapsibleSection title="Canceladas" /* count={canceladas.length} */>
-              {canceladas.map((reserva) => (
-                <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
-              ))}
-            </CollapsibleSection>
-          )}
-        </div>
+        </>
       )}
     </main>
+  )
+}
+
+function PestaniaDeVista({
+  href,
+  elegida,
+  children,
+}: {
+  href: string
+  elegida: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <Link
+      href={href}
+      className={
+        elegida
+          ? 'bg-primary text-primary-foreground rounded-full px-3 py-1 text-sm'
+          : 'border-border hover:bg-muted rounded-full border px-3 py-1 text-sm'
+      }
+    >
+      {children}
+    </Link>
+  )
+}
+
+// Una fila de la tabla de historial o canceladas: solo para consultar
+function FilaReserva({
+  reserva,
+  ahora,
+}: {
+  reserva: Reserva
+  ahora: { dia: string; hora: string }
+}) {
+  const dia = diaDeReserva(reserva.fecha)
+  const monto = montoDelHistorial(
+    {
+      estado: reserva.estado,
+      asistio: reserva.asistio,
+      precioTurno: reserva.precioTurno.toString(),
+      pago: reserva.pago && { ...reserva.pago, monto: reserva.pago.monto.toString() },
+    },
+    turnoYaPaso(dia, reserva.horaInicio),
+    'JUGADOR',
+  )
+
+  return (
+    <TableRow>
+      <TableCell className="pl-4">
+        <p className="font-medium">{formatearDia(dia)}</p>
+        <p className="text-muted-foreground text-xs">
+          {reserva.horaInicio} a {reserva.horaFin} hs
+        </p>
+      </TableCell>
+      <TableCell>
+        <p className="font-medium">
+          {reserva.cancha.nombre}{' '}
+          <span className="text-muted-foreground text-xs font-normal">
+            · {deporteLabels[reserva.cancha.deporte]}
+          </span>
+        </p>
+        <p className="text-muted-foreground text-xs">{reserva.cancha.complejo.nombre}</p>
+      </TableCell>
+      <TableCell>
+        <BookingStatusBadge
+          estado={reserva.estado}
+          asistio={reserva.asistio}
+          dia={dia}
+          horaInicio={reserva.horaInicio}
+          horaFin={reserva.horaFin}
+          ahoraInicial={ahora}
+        />
+      </TableCell>
+      <TableCell className="hidden pr-4 text-right sm:table-cell">
+        {monto && (
+          <>
+            <p className={`font-semibold ${tonos[monto.tono]}`}>{monto.monto}</p>
+            <p className="text-muted-foreground text-xs">{monto.etiqueta}</p>
+          </>
+        )}
+      </TableCell>
+    </TableRow>
   )
 }
 

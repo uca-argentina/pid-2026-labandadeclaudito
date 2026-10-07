@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Building2, ChevronLeft, ChevronRight, ShieldCheck, User, UserX, Users } from 'lucide-react'
+import { Building2, ShieldCheck, User, UserX, Users } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { iniciales } from '@/lib/iniciales'
+import { calcularPagina } from '@/lib/paginacion'
 import { StatCard } from '@/components/stat-card'
+import { Paginacion } from '@/components/paginacion'
 import { UserSearch } from '@/components/user-search'
 import { RoleFilter } from '@/components/role-filter'
 import { SuspendUserButton } from '@/components/suspend-user-button'
@@ -86,16 +88,17 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
       db.usuario.count({ where }),
     ])
 
-  // Si piden una página que no existe (ej. ?pagina=99), mostramos la última
-  const totalPaginas = Math.max(Math.ceil(totalEncontrados / USUARIOS_POR_PAGINA), 1)
-  const paginaPedida = Number(pagina) || 1
-  const paginaActual = Math.min(Math.max(paginaPedida, 1), totalPaginas)
+  const { paginaActual, totalPaginas, skip } = calcularPagina(
+    pagina,
+    totalEncontrados,
+    USUARIOS_POR_PAGINA,
+  )
 
   // Solo los usuarios de esta página, y solo los campos que se muestran
   const usuarios = await db.usuario.findMany({
     where,
     orderBy: { nombre: 'asc' },
-    skip: (paginaActual - 1) * USUARIOS_POR_PAGINA,
+    skip,
     take: USUARIOS_POR_PAGINA,
     select: {
       id: true,
@@ -121,9 +124,6 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
     if (paginaDelLink > 1) params.set('pagina', String(paginaDelLink))
     return `/admin/usuarios?${params.toString()}`
   }
-
-  const primeroDeLaPagina = (paginaActual - 1) * USUARIOS_POR_PAGINA + 1
-  const ultimoDeLaPagina = primeroDeLaPagina + usuarios.length - 1
 
   return (
     <main className="px-6 pt-6 pb-12 md:pt-4">
@@ -266,44 +266,15 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
             </TableBody>
           </Table>
 
-          <div className="border-border flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm">
-            <p className="text-muted-foreground whitespace-nowrap">
-              {primeroDeLaPagina}–{ultimoDeLaPagina} de {totalEncontrados}
-            </p>
-            <div className="flex items-center gap-2">
-              {paginaActual > 1 ? (
-                <Link
-                  href={urlDe({ pagina: paginaActual - 1 })}
-                  className="border-border hover:bg-muted inline-flex items-center gap-1 rounded-lg border px-2.5 py-1"
-                >
-                  <ChevronLeft className="size-4" />
-                  Anterior
-                </Link>
-              ) : (
-                <span className="border-border text-muted-foreground inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 opacity-50">
-                  <ChevronLeft className="size-4" />
-                  Anterior
-                </span>
-              )}
-              <span className="text-muted-foreground whitespace-nowrap">
-                {paginaActual} / {totalPaginas}
-              </span>
-              {paginaActual < totalPaginas ? (
-                <Link
-                  href={urlDe({ pagina: paginaActual + 1 })}
-                  className="border-border hover:bg-muted inline-flex items-center gap-1 rounded-lg border px-2.5 py-1"
-                >
-                  Siguiente
-                  <ChevronRight className="size-4" />
-                </Link>
-              ) : (
-                <span className="border-border text-muted-foreground inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 opacity-50">
-                  Siguiente
-                  <ChevronRight className="size-4" />
-                </span>
-              )}
-            </div>
-          </div>
+          <Paginacion
+            paginaActual={paginaActual}
+            totalPaginas={totalPaginas}
+            desde={skip + 1}
+            hasta={skip + usuarios.length}
+            total={totalEncontrados}
+            urlAnterior={urlDe({ pagina: paginaActual - 1 })}
+            urlSiguiente={urlDe({ pagina: paginaActual + 1 })}
+          />
         </div>
       )}
     </main>
