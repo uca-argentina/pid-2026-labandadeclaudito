@@ -82,6 +82,15 @@
     }
   }
 
+  /* Cada parte de la dona de ingresos se dibuja desde cero (327 = largo del
+     círculo de radio 52, igual que el anillo) */
+  --animate-dibujar-segmento: dibujar-segmento 0.9s ease-out backwards;
+  @keyframes dibujar-segmento {
+    from {
+      stroke-dasharray: 0 327;
+    }
+  }
+
   /* La curva de demanda aparece de izquierda a derecha */
   --animate-revelar: revelar 1.4s ease-out backwards;
   @keyframes revelar {
