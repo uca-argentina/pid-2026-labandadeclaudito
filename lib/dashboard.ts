@@ -249,6 +249,32 @@ export function trazoDeLinea(puntos: Punto[]): string {
   return trazo.trim()
 }
 
+// Como trazoDeLinea pero con curvas suaves que pasan exactamente por cada
+// punto (Catmull-Rom). Entre un punto y el siguiente va una curva de Bézier:
+// sus dos puntos de control siguen la dirección que traen los vecinos.
+// alto: el piso del gráfico; los controles no pasan de 0 ni de alto para que
+// la curva no se salga por arriba ni baje del piso entre dos puntos.
+export function trazoSuave(puntos: Punto[], alto: number): string {
+  if (puntos.length < 3) return trazoDeLinea(puntos)
+
+  let trazo = `M${puntos[0].x.toFixed(1)} ${puntos[0].y.toFixed(1)}`
+  for (let i = 0; i < puntos.length - 1; i++) {
+    // En las puntas no hay vecino: se usa el mismo punto
+    const anterior = puntos[Math.max(i - 1, 0)]
+    const actual = puntos[i]
+    const siguiente = puntos[i + 1]
+    const despues = puntos[Math.min(i + 2, puntos.length - 1)]
+
+    const control1X = actual.x + (siguiente.x - anterior.x) / 6
+    const control1Y = Math.min(Math.max(actual.y + (siguiente.y - anterior.y) / 6, 0), alto)
+    const control2X = siguiente.x - (despues.x - actual.x) / 6
+    const control2Y = Math.min(Math.max(siguiente.y - (despues.y - actual.y) / 6, 0), alto)
+
+    trazo += ` C${control1X.toFixed(1)} ${control1Y.toFixed(1)} ${control2X.toFixed(1)} ${control2Y.toFixed(1)} ${siguiente.x.toFixed(1)} ${siguiente.y.toFixed(1)}`
+  }
+  return trazo
+}
+
 export type Segmento = { largo: number; inicio: number }
 
 // Partes de una dona dibujada con el trazo de un círculo de largoTotal.

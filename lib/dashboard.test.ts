@@ -15,6 +15,7 @@ import {
   sumarMetricas,
   temaDelDeporte,
   trazoDeLinea,
+  trazoSuave,
   variacionPorcentual,
 } from './dashboard'
 
@@ -233,5 +234,45 @@ describe('sumarMetricas', () => {
 
   test('sin nada para sumar da todo en 0', () => {
     expect(sumarMetricas([]).ocupacion.porcentaje).toBe(0)
+  })
+})
+
+describe('trazoSuave', () => {
+  const puntos = [
+    { x: 0, y: 100 },
+    { x: 50, y: 0 },
+    { x: 100, y: 100 },
+  ]
+
+  test('arranca en el primer punto y pasa por todos (cada curva termina en uno)', () => {
+    const trazo = trazoSuave(puntos, 100)
+    expect(trazo.startsWith('M0.0 100.0')).toBe(true)
+    expect(trazo).toContain(' 50.0 0.0 C')
+    expect(trazo.endsWith(' 100.0 100.0')).toBe(true)
+  })
+
+  test('una curva por cada par de puntos', () => {
+    expect(trazoSuave(puntos, 100).split('C').length - 1).toBe(2)
+  })
+
+  test('los controles no bajan del piso ni suben del techo', () => {
+    const trazo = trazoSuave(puntos, 100)
+    const numeros = trazo.replace(/[MC]/g, ' ').trim().split(/\s+/).map(Number)
+    for (let i = 1; i < numeros.length; i += 2) {
+      expect(numeros[i]).toBeGreaterThanOrEqual(0)
+      expect(numeros[i]).toBeLessThanOrEqual(100)
+    }
+  })
+
+  test('con menos de tres puntos es una línea recta', () => {
+    expect(
+      trazoSuave(
+        [
+          { x: 0, y: 50 },
+          { x: 100, y: 0 },
+        ],
+        100,
+      ),
+    ).toBe('M0.0 50.0 L100.0 0.0')
   })
 })
