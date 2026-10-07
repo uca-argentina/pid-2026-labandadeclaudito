@@ -8,8 +8,6 @@ import {
   horarioMasPedido,
   horariosDistintos,
   reservasEn,
-  reservasPorDia,
-  reservasPorHorario,
   type CeldaDeDemanda,
 } from '@/lib/dashboard'
 import { Button } from '@/components/ui/button'
@@ -29,22 +27,15 @@ function claseDeIntensidad(reservas: number, maximo: number): string {
   return 'bg-acento text-acento-foreground'
 }
 
-function maximoDe(valores: number[]): number {
-  let maximo = 0
-  for (const valor of valores) {
-    if (valor > maximo) maximo = valor
-  }
-  return maximo
-}
-
 function textoDeCelda(celda: CeldaDeDemanda): string {
   const palabra = celda.reservas === 1 ? 'reserva' : 'reservas'
   return `${nombresCortosDeDias[celda.diaSemana]} ${celda.horaInicio} · ${celda.reservas} ${palabra}`
 }
 
-// Mapa de calor día × hora con el número de reservas en cada celda, el total
-// de cada día a la derecha y el de cada hora abajo. Pasar el mouse (o el foco
-// de teclado) por una celda resalta su día, su hora y sus totales.
+// Mapa de calor día × hora con el número de reservas en cada celda. Sirve
+// para encontrar qué horario de qué día se llena y cuál queda vacío. Los
+// totales por día y por hora no van acá: son las vistas "Por día" y "Por hora".
+// Pasar el mouse (o el foco de teclado) por una celda resalta su día y su hora.
 // diasDelPeriodo: solo se muestran los días de la semana que tiene el período.
 export function DemandHeatmap({
   demanda,
@@ -58,9 +49,6 @@ export function DemandHeatmap({
 
   const horarios = horariosDistintos(demanda)
   const estrella = horarioMasPedido(demanda)
-  const totalesPorDia = reservasPorDia(demanda)
-  const totalesPorHorario = reservasPorHorario(demanda, horarios)
-  const maximoPorDia = maximoDe(totalesPorDia)
 
   const dias: number[] = []
   for (const dia of ordenDeDias) {
@@ -113,7 +101,6 @@ export function DemandHeatmap({
                   {franja.etiqueta}
                 </th>
               ))}
-              <th />
             </tr>
             <tr>
               <th className="sr-only">Día</th>
@@ -130,15 +117,12 @@ export function DemandHeatmap({
                   {horario.slice(0, 2)}
                 </th>
               ))}
-              <th className="text-muted-foreground pl-2 text-left font-medium">Total</th>
             </tr>
           </thead>
 
           <tbody>
             {dias.map((diaSemana, fila) => {
               const esDiaActivo = celdaActiva?.diaSemana === diaSemana
-              const anchoDelTotal =
-                maximoPorDia === 0 ? 0 : (totalesPorDia[diaSemana] / maximoPorDia) * 100
 
               return (
                 <tr key={diaSemana}>
@@ -186,44 +170,10 @@ export function DemandHeatmap({
                       </td>
                     )
                   })}
-
-                  {/* Total del día, con una barrita */}
-                  <td className="pl-2">
-                    <div className="flex w-20 items-center gap-1.5 sm:w-28">
-                      <div className="bg-acento/10 h-2 flex-1 rounded-full">
-                        <div
-                          className={`h-full rounded-full transition-[width] duration-700 ${esDiaActivo ? 'bg-acento' : 'bg-acento/50'}`}
-                          style={{ width: `${anchoDelTotal}%` }}
-                        />
-                      </div>
-                      <span className="w-8 text-right font-semibold tabular-nums">
-                        {totalesPorDia[diaSemana]}
-                      </span>
-                    </div>
-                  </td>
                 </tr>
               )
             })}
           </tbody>
-
-          <tfoot>
-            <tr>
-              <th className="text-muted-foreground pr-1.5 text-left font-medium">Total</th>
-              {horarios.map((horario, columna) => (
-                <td
-                  key={horario}
-                  className={
-                    celdaActiva?.horaInicio === horario
-                      ? 'text-foreground pt-1 text-center font-semibold tabular-nums'
-                      : 'text-muted-foreground pt-1 text-center font-medium tabular-nums'
-                  }
-                >
-                  {totalesPorHorario[columna]}
-                </td>
-              ))}
-              <td />
-            </tr>
-          </tfoot>
         </table>
       </div>
 
