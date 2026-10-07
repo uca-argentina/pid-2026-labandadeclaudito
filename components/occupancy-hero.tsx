@@ -1,3 +1,4 @@
+import { Gauge } from 'lucide-react'
 import { formatoDeJuego } from '@/lib/labels'
 import type { Deporte } from '@/lib/generated/prisma/client'
 import { AnimatedNumber } from '@/components/animated-number'
@@ -48,57 +49,60 @@ export function OccupancyHero({
         <div
           className={
             deporte === undefined
-              ? 'grid grid-cols-1 items-center gap-4 xl:grid-cols-2'
+              ? 'grid grid-cols-1 items-stretch gap-4 xl:grid-cols-2'
               : 'grid grid-cols-1 items-center gap-4 lg:grid-cols-2'
           }
         >
-          {/* @container: el contenido se acomoda al ancho de la tarjeta (en
-              una pantalla ancha, reservados y libres van lado a lado) */}
+          {/* Tarjeta vertical: el anillo grande al centro, abajo los turnos
+              reservados y libres (con un punto del color de su parte del
+              anillo, como leyenda) y al pie cuánto cambió. Ocupa todo el alto
+              del bloque, a la par de los datos clave. */}
           <div
-            className={`${claseTarjetaDeDatos} @container flex items-center gap-4 p-4 @sm:gap-6 @sm:px-6`}
+            className={`${claseTarjetaDeDatos} flex h-full flex-col items-center gap-4 p-4 text-center sm:p-5`}
           >
+            <p className="text-muted-foreground flex items-center gap-2 self-start text-sm font-medium">
+              <span className="bg-acento/10 text-acento flex size-7 items-center justify-center rounded-lg">
+                <Gauge className="size-4" />
+              </span>
+              Ocupación
+            </p>
+
             <ProgressRing
               porcentaje={porcentaje}
-              className="size-24 @sm:size-32"
+              className="size-36 sm:size-40"
               claseFondo="stroke-acento/15"
               claseRelleno="stroke-acento"
             >
-              <span className="text-2xl font-semibold tracking-tight @sm:text-3xl">
+              <span className="text-4xl font-semibold tracking-tight">
                 <AnimatedNumber valor={porcentaje} tipo="porcentaje" />
               </span>
-              <span className="text-muted-foreground text-xs whitespace-nowrap @sm:text-sm">
-                ocupación
-              </span>
+              <span className="text-muted-foreground text-sm">de los turnos</span>
             </ProgressRing>
 
-            {/* Al lado del anillo: los turnos vendidos y los libres (lo que
-                todavía se puede vender), con un punto del mismo color que su
-                parte del anillo, y cuánto cambió */}
-            <div className="min-w-0 flex-1">
-              <div className="grid grid-cols-1 gap-x-6 gap-y-1 @sm:grid-cols-2">
-                <div>
-                  <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
-                    <span className="bg-acento size-2.5 shrink-0 rounded-full" />
-                    Reservados
-                  </p>
-                  <p className="text-2xl font-semibold tracking-tight @sm:text-3xl">
-                    <AnimatedNumber valor={turnosReservados} />
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
-                    <span className="bg-acento/20 size-2.5 shrink-0 rounded-full" />
-                    Libres
-                  </p>
-                  <p className="text-2xl font-semibold tracking-tight @sm:text-3xl">
-                    <AnimatedNumber valor={turnosOfrecidos - turnosReservados} />
-                  </p>
-                </div>
+            <div className="divide-border grid w-full grid-cols-2 divide-x">
+              <div>
+                <p className="text-muted-foreground flex items-center justify-center gap-1.5 text-sm">
+                  <span className="bg-acento size-2.5 shrink-0 rounded-full" />
+                  Reservados
+                </p>
+                <p className="text-2xl font-semibold tracking-tight">
+                  <AnimatedNumber valor={turnosReservados} />
+                </p>
               </div>
-              <div className="border-border mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 border-t pt-2">
-                <VariationBadge variacion={variacionTurnos} subirEsBueno={true} />
-                <span className="text-muted-foreground text-sm">vs. {comparacion}</span>
+              <div>
+                <p className="text-muted-foreground flex items-center justify-center gap-1.5 text-sm">
+                  <span className="bg-acento/20 size-2.5 shrink-0 rounded-full" />
+                  Libres
+                </p>
+                <p className="text-2xl font-semibold tracking-tight">
+                  <AnimatedNumber valor={turnosOfrecidos - turnosReservados} />
+                </p>
               </div>
+            </div>
+
+            <div className="border-border mt-auto flex w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t pt-3">
+              <VariationBadge variacion={variacionTurnos} subirEsBueno={true} />
+              <span className="text-muted-foreground text-sm">vs. {comparacion}</span>
             </div>
           </div>
 
