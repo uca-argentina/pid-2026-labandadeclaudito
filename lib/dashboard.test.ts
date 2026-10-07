@@ -16,6 +16,7 @@ import {
   temaDelDeporte,
   trazoDeLinea,
   trazoSuave,
+  urlDelDashboard,
   variacionPorcentual,
 } from './dashboard'
 
@@ -67,13 +68,28 @@ describe('horarioMasPedido', () => {
 })
 
 describe('horarioMenosPedido', () => {
+  const todaLaSemana = [0, 1, 2, 3, 4, 5, 6]
+
   test('cuenta los horarios sin reservas de la grilla', () => {
     // El domingo (0) no tiene ninguna reserva: su primer horario tiene 0
-    expect(horarioMenosPedido(demanda)).toEqual({ diaSemana: 0, horaInicio: '09:00', reservas: 0 })
+    expect(horarioMenosPedido(demanda, todaLaSemana)).toEqual({
+      diaSemana: 0,
+      horaInicio: '09:00',
+      reservas: 0,
+    })
+  })
+
+  test('solo busca en los días del período', () => {
+    // Mirando solo el sábado (6), el horario más flojo es de ese día
+    expect(horarioMenosPedido(demanda, [6])).toEqual({
+      diaSemana: 6,
+      horaInicio: '15:00',
+      reservas: 0,
+    })
   })
 
   test('sin demanda no hay grilla', () => {
-    expect(horarioMenosPedido([])).toBeNull()
+    expect(horarioMenosPedido([], todaLaSemana)).toBeNull()
   })
 })
 
@@ -274,5 +290,17 @@ describe('trazoSuave', () => {
         100,
       ),
     ).toBe('M0.0 50.0 L100.0 0.0')
+  })
+})
+
+describe('urlDelDashboard', () => {
+  test('solo la vista: todos los complejos, hoy y todos los deportes', () => {
+    expect(urlDelDashboard({ vista: 'dia' })).toBe('/dueno/dashboard?vista=dia')
+  })
+
+  test('con todos los filtros', () => {
+    expect(
+      urlDelDashboard({ complejoId: 'abc', vista: 'mes', fecha: '2026-09-01', deporte: 'PADEL' }),
+    ).toBe('/dueno/dashboard?complejoId=abc&vista=mes&fecha=2026-09-01&deporte=PADEL')
   })
 })

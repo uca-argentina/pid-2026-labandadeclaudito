@@ -79,8 +79,15 @@ export function DemandCurve({
 
   const punto = puntosActuales[indice]
   const puntoAnterior = puntosAnteriores[indice]
-  // El globito no se sale por los costados
-  const izquierdaDelGlobo = Math.min(Math.max(punto.x, 12), 88)
+  // El globito no se sale por los costados: cerca del borde derecho crece
+  // hacia la izquierda del punto, cerca del izquierdo hacia la derecha, y en
+  // el medio queda centrado
+  let corrimientoX = '-50%'
+  if (punto.x > 66) corrimientoX = '-100%'
+  if (punto.x < 34) corrimientoX = '0%'
+  // Arriba del punto; si el punto está muy alto, abajo (si no, se sale del
+  // gráfico y tapa las franjas)
+  const corrimientoY = punto.y < 45 ? '18px' : 'calc(-100% - 18px)'
   // Ancho de una hora en %, para la columna resaltada y las franjas
   const anchoDeUnaHora = 100 / (horarios.length - 1)
 
@@ -250,12 +257,9 @@ export function DemandCurve({
             aria-live="polite"
             className="bg-card text-card-foreground border-acento/20 pointer-events-none absolute z-10 rounded-xl border px-4 py-2.5 whitespace-nowrap shadow-xl transition-[left,top] duration-150"
             style={{
-              left: `${izquierdaDelGlobo}%`,
+              left: `${punto.x}%`,
               top: `${punto.y}%`,
-              // Arriba del punto; si el punto está muy alto, abajo (si no, se
-              // sale del gráfico y tapa las franjas)
-              transform:
-                punto.y < 45 ? 'translate(-50%, 18px)' : 'translate(-50%, calc(-100% - 18px))',
+              transform: `translate(${corrimientoX}, ${corrimientoY})`,
             }}
           >
             <p className="text-muted-foreground text-sm">{horarios[indice]} hs</p>

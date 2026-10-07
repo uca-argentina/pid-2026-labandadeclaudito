@@ -3,24 +3,37 @@ import { redirect } from 'next/navigation'
 import { Building2 } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { diaDeHoy, formatearDia, sumarDias } from '@/lib/time'
+import { diaDeHoy, sumarDias } from '@/lib/time'
 import {
-  familiaDelDeporte,
   horarioMasPedido,
   horarioMenosPedido,
   porcentaje,
   sumarMetricas,
   temaDelDeporte,
+  urlDelDashboard,
   variacionPorcentual,
   type CeldaDeDemanda,
-  type FamiliaDeDeporte,
   type MetricasDelPeriodo,
 } from '@/lib/dashboard'
+import {
+  cantidadDeDias,
+  comparacionDeLaVista,
+  diaSemanaDe,
+  diasDeLaSemanaDe,
+  fechaDelPeriodoVecino,
+  nombreDelAnterior,
+  nombreDelPeriodo,
+  periodoQueContiene,
+  rangoDelPeriodo,
+  rangosAComparar,
+  type Periodo,
+  type Vista,
+} from '@/lib/periodos'
 import { dashboardFiltersSchema } from '@/lib/validations/dashboard'
 import type { Deporte } from '@/lib/generated/prisma/client'
 import { ComplexBreakdown, type FilaDeComplejo } from '@/components/complex-breakdown'
 import { DashboardFrame } from '@/components/dashboard-frame'
-import { DemandPanel } from '@/components/demand-panel'
+import { DemandPanel, type VistaDeDemanda } from '@/components/demand-panel'
 import { KpiTiles } from '@/components/kpi-tiles'
 import { OccupancyHero } from '@/components/occupancy-hero'
 import { SportBreakdown, type FilaDeDeporte } from '@/components/sport-breakdown'
@@ -29,8 +42,8 @@ import { Button } from '@/components/ui/button'
 
 // ---------- Datos de ejemplo (hasta que entre SCRUM-62) ----------
 // Cuando entre lib/metricas-complejo.ts, metricasDePrueba se reemplaza por
-// await metricasDelComplejo(complejo.id, desde, hasta, deporte). OJO: el
-// parámetro deporte hay que pedírselo a Franco.
+// await metricasDelComplejo(complejo.id, periodo.desde, periodo.hasta, deporte).
+// OJO: el parámetro deporte hay que pedírselo a Franco.
 
 // Qué tan bien le va a cada deporte (0 a 1) y cuánto se cobra de seña
 const ocupacionDePrueba: Record<Deporte, number> = {
@@ -62,36 +75,56 @@ function pesoDelHorario(deporte: Deporte, diaSemana: number, hora: number): numb
   return peso
 }
 
-// Métricas de un deporte de un complejo. indiceDelComplejo: cada complejo
-// rinde un poco distinto. factor: el período anterior da otros números.
+// Métricas de un deporte de un complejo en un período. Cada período rinde un
+// poco distinto (según sus fechas), así al cambiar de período cambian los números.
 function metricasDePrueba(
-  dias: number,
-  factor: number,
+  periodo: Periodo,
   indiceDelComplejo: number,
   deporte: Deporte,
 ): MetricasDelPeriodo {
+  const dias = cantidadDeDias(periodo)
   const rindeElComplejo = Math.max(1 - indiceDelComplejo * 0.18, 0.4)
+  const rindeElPeriodo =
+    0.8 +
+    ((Number(periodo.desde.slice(8, 10)) * 7 + Number(periodo.desde.slice(5, 7)) * 3) % 10) * 0.03
   const turnosOfrecidos = 15 * dias
   const turnosReservados = Math.round(
-    turnosOfrecidos * ocupacionDePrueba[deporte] * rindeElComplejo * 0.8 * factor,
+    turnosOfrecidos * ocupacionDePrueba[deporte] * rindeElComplejo * rindeElPeriodo * 0.8,
   )
 
-  // Las reservas se reparten entre los horarios según cuánto se pide cada uno
-  let pesoTotal = 0
+  // Cuánto pesa cada día de la semana × hora en el período (un día que se
+  // repite, como los lunes de un mes, pesa más)
+  const pesos: number[][] = []
   for (let diaSemana = 0; diaSemana < 7; diaSemana++) {
+    pesos.push([])
+    for (let hora = 9; hora <= 23; hora++) pesos[diaSemana].push(0)
+  }
+  let pesoTotal = 0
+  for (let i = 0; i < dias; i++) {
+    const diaSemana = diaSemanaDe(sumarDias(periodo.desde, i))
     for (let hora = 9; hora <= 23; hora++) {
-      pesoTotal += pesoDelHorario(deporte, diaSemana, hora)
+      const peso = pesoDelHorario(deporte, diaSemana, hora)
+      pesos[diaSemana][hora - 9] += peso
+      pesoTotal += peso
     }
   }
+
+  // Las reservas se reparten según esos pesos. Se redondea lo acumulado (no
+  // cada celda) para que la suma dé exacto el total. Solo aparecen los días
+  // de la semana que tiene el período.
   const demanda: CeldaDeDemanda[] = []
+  let pesoAcumulado = 0
   for (let diaSemana = 0; diaSemana < 7; diaSemana++) {
     for (let hora = 9; hora <= 23; hora++) {
+      const peso = pesos[diaSemana][hora - 9]
+      if (peso === 0) continue
+      const antes = Math.round((turnosReservados * pesoAcumulado) / pesoTotal)
+      pesoAcumulado += peso
+      const despues = Math.round((turnosReservados * pesoAcumulado) / pesoTotal)
       demanda.push({
         diaSemana,
         horaInicio: `${String(hora).padStart(2, '0')}:00`,
-        reservas: Math.round(
-          (turnosReservados * pesoDelHorario(deporte, diaSemana, hora)) / pesoTotal,
-        ),
+        reservas: despues - antes,
       })
     }
   }
@@ -116,26 +149,24 @@ type ComplejoConDeportes = { id: string; nombre: string; indice: number; deporte
 // elegido). Así "todos" siempre es la suma exacta de sus partes.
 function metricasDe(
   complejos: ComplejoConDeportes[],
-  dias: number,
-  factor: number,
+  periodo: Periodo,
   deporte: Deporte | undefined,
 ): MetricasDelPeriodo {
   const partes: MetricasDelPeriodo[] = []
   for (const complejo of complejos) {
     for (const unDeporte of complejo.deportes) {
       if (deporte !== undefined && unDeporte !== deporte) continue
-      partes.push(metricasDePrueba(dias, factor, complejo.indice, unDeporte))
+      partes.push(metricasDePrueba(periodo, complejo.indice, unDeporte))
     }
   }
   return sumarMetricas(partes)
 }
 
-function urlDelDashboard(complejoId: string | undefined, dias: number, deporte?: Deporte) {
-  const params = new URLSearchParams()
-  if (complejoId !== undefined) params.set('complejoId', complejoId)
-  params.set('dias', String(dias))
-  if (deporte !== undefined) params.set('deporte', deporte)
-  return `/dueno/dashboard?${params.toString()}`
+// Qué vistas de la demanda tienen sentido según el largo del período
+const vistasDeDemanda: Record<Vista, VistaDeDemanda[]> = {
+  dia: ['hora'],
+  semana: ['hora', 'dia'],
+  mes: ['hora', 'dia', 'semana'],
 }
 
 export default async function DashboardDuenioPage({ searchParams }: PageProps<'/dueno/dashboard'>) {
@@ -168,6 +199,19 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
     )
   }
 
+  // ---- Período ----
+  // Sin fecha se ve el período de hoy. No hay datos del futuro: una fecha
+  // posterior al período de hoy también muestra el de hoy.
+  const vista = filtros.vista
+  const hoy = diaDeHoy()
+  let fecha = filtros.fecha ?? hoy
+  if (periodoQueContiene(fecha, vista).desde > periodoQueContiene(hoy, vista).desde) {
+    fecha = hoy
+  }
+  const esElActual = periodoQueContiene(fecha, vista).desde === periodoQueContiene(hoy, vista).desde
+  const rangos = rangosAComparar(fecha, vista, hoy)
+
+  // ---- Complejos y deportes ----
   // Se arranca viendo todos los complejos. El elegido tiene que estar en la
   // lista del dueño: si en la URL viene uno ajeno, también se ven todos.
   let elegido: { id: string; nombre: string } | undefined = undefined
@@ -178,11 +222,11 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
   }
   const sonTodos = elegido === undefined
 
-  // Qué deportes tiene cada complejo (por sus canchas activas)
   const idsDelAlcance: string[] = []
   for (const complejo of complejos) {
     if (sonTodos || complejo.id === elegido?.id) idsDelAlcance.push(complejo.id)
   }
+  // Qué deportes tiene cada complejo (por sus canchas activas)
   const canchas = await db.cancha.findMany({
     where: { complejoId: { in: idsDelAlcance }, activo: true },
     distinct: ['complejoId', 'deporte'],
@@ -213,25 +257,24 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
     deporte = filtros.deporte
   }
 
-  const familias: FamiliaDeDeporte[] = []
-  for (const unDeporte of deportes) {
-    const familia = familiaDelDeporte(unDeporte)
-    if (!familias.includes(familia)) familias.push(familia)
+  // Los filtros ya validados. La fecha va en la URL solo si no es el período de hoy.
+  const filtrosValidos = {
+    complejoId: elegido?.id,
+    vista,
+    fecha: esElActual ? undefined : fecha,
+    deporte,
   }
 
-  // El período termina hoy: "últimos 7 días" es hoy y los 6 anteriores. El
-  // anterior es el mismo largo justo antes, para comparar.
-  const hasta = diaDeHoy()
-  const desde = sumarDias(hasta, -(filtros.dias - 1))
-  const metricas = metricasDe(complejosDelAlcance, filtros.dias, 1, deporte)
-  const anteriores = metricasDe(complejosDelAlcance, filtros.dias, 0.9, deporte)
+  // ---- Métricas ----
+  const metricas = metricasDe(complejosDelAlcance, rangos.actual, deporte)
+  const anteriores = metricasDe(complejosDelAlcance, rangos.anterior, deporte)
 
   // Ranking por complejo: solo cuando se ven todos y hay más de uno
   const filasPorComplejo: FilaDeComplejo[] = []
   if (sonTodos) {
     for (const complejo of complejosDelAlcance) {
       if (deporte !== undefined && !complejo.deportes.includes(deporte)) continue
-      const delComplejo = metricasDe([complejo], filtros.dias, 1, deporte)
+      const delComplejo = metricasDe([complejo], rangos.actual, deporte)
       filasPorComplejo.push({
         id: complejo.id,
         nombre: complejo.nombre,
@@ -239,7 +282,7 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
         porcentaje: delComplejo.ocupacion.porcentaje,
         turnosReservados: delComplejo.ocupacion.turnosReservados,
         ingresos: delComplejo.ingresos,
-        href: urlDelDashboard(complejo.id, filtros.dias, deporte),
+        href: urlDelDashboard({ ...filtrosValidos, complejoId: complejo.id }),
       })
     }
     filasPorComplejo.sort((a, b) => b.porcentaje - a.porcentaje)
@@ -249,13 +292,13 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
   const filasPorDeporte: FilaDeDeporte[] = []
   if (deporte === undefined && deportes.length > 1) {
     for (const unDeporte of deportes) {
-      const delDeporte = metricasDe(complejosDelAlcance, filtros.dias, 1, unDeporte)
+      const delDeporte = metricasDe(complejosDelAlcance, rangos.actual, unDeporte)
       filasPorDeporte.push({
         deporte: unDeporte,
         porcentaje: delDeporte.ocupacion.porcentaje,
         turnosReservados: delDeporte.ocupacion.turnosReservados,
         ingresos: delDeporte.ingresos,
-        href: urlDelDashboard(elegido?.id, filtros.dias, unDeporte),
+        href: urlDelDashboard({ ...filtrosValidos, deporte: unDeporte }),
       })
     }
   }
@@ -271,35 +314,41 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
       anteriores.cancelaciones + anteriores.noShows,
     ),
     horarioPico: horarioMasPedido(metricas.demanda),
-    horarioAImpulsar: horarioMenosPedido(metricas.demanda),
+    horarioAImpulsar: horarioMenosPedido(metricas.demanda, diasDeLaSemanaDe(rangos.actual)),
     hrefParaImpulsar: elegido ? `/dueno/complejos/${elegido.id}` : '/dueno/complejos',
   }
+  const nombre = nombreDelPeriodo(fecha, vista, hoy)
 
   return (
     // El tema pinta todo lo de adentro con los colores del deporte elegido
     <div
-      className={`${temaDelDeporte(deporte)} mx-auto w-full max-w-5xl space-y-6 px-6 pt-6 pb-12 md:pt-4`}
+      className={`${temaDelDeporte(deporte)} mx-auto w-full max-w-5xl space-y-4 px-6 pt-6 pb-12 md:pt-4`}
     >
-      <div>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-3xl font-semibold">Estadísticas</h1>
-          <Badge variant="outline">Datos de ejemplo</Badge>
-        </div>
-        <p className="text-muted-foreground mt-1 text-base">
-          {formatearDia(desde)} al {formatearDia(hasta)}
-        </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="text-3xl font-semibold">Estadísticas</h1>
+        <Badge variant="outline">Datos de ejemplo</Badge>
       </div>
 
       <DashboardFrame
         complejos={complejos}
         deportes={deportes}
-        complejoId={elegido?.id}
-        dias={filtros.dias}
-        deporte={deporte}
+        filtros={filtrosValidos}
+        periodo={{
+          nombre,
+          rango: rangoDelPeriodo(rangos.actual),
+          esElActual,
+          fechaAnterior: fechaDelPeriodoVecino(fecha, vista, -1),
+          fechaSiguiente: fechaDelPeriodoVecino(fecha, vista, 1),
+        }}
       >
+        {/* El orden de un buen tablero: primero el panorama (ocupación y
+            datos clave), después cuándo se juega (demanda) y al final el
+            detalle (por complejo, por deporte) */}
         <div className="space-y-6">
           <OccupancyHero
             alcance={elegido ? elegido.nombre : 'Todos los complejos'}
+            periodo={nombre}
+            comparacion={comparacionDeLaVista[vista]}
             porcentaje={metricas.ocupacion.porcentaje}
             turnosReservados={turnosReservados}
             turnosOfrecidos={turnosOfrecidos}
@@ -308,7 +357,6 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
               anteriores.ocupacion.turnosReservados,
             )}
             deporte={deporte}
-            familias={familias}
             resumen={<KpiTiles variante="bloque" {...datosClave} />}
           />
 
@@ -316,11 +364,16 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
               clave en el bloque principal: van acá abajo */}
           {deporte !== undefined && <KpiTiles variante="fila" {...datosClave} />}
 
+          <DemandPanel
+            demanda={metricas.demanda}
+            demandaAnterior={anteriores.demanda}
+            vistasDisponibles={vistasDeDemanda[vista]}
+            nombreDelAnterior={nombreDelAnterior[vista]}
+          />
+
           {filasPorComplejo.length > 1 && <ComplexBreakdown filas={filasPorComplejo} />}
 
           {filasPorDeporte.length > 0 && <SportBreakdown filas={filasPorDeporte} />}
-
-          <DemandPanel demanda={metricas.demanda} demandaAnterior={anteriores.demanda} />
         </div>
       </DashboardFrame>
     </div>

@@ -1,4 +1,5 @@
 import type { Deporte } from '@/lib/generated/prisma/client'
+import type { Vista } from '@/lib/periodos'
 
 // Cuentas que hace la pantalla del dashboard del dueño con lo que ya devuelve
 // metricasDelComplejo (lib/metricas-complejo.ts). No consultan la DB.
@@ -108,13 +109,19 @@ export function horarioMasPedido(demanda: CeldaDeDemanda[]): CeldaDeDemanda | nu
   return masPedido
 }
 
-// Se busca en toda la grilla (todos los días × los horarios que aparecen), no
-// solo en la demanda: así un horario sin ninguna reserva también cuenta.
-export function horarioMenosPedido(demanda: CeldaDeDemanda[]): CeldaDeDemanda | null {
+// Se busca en toda la grilla (los días de la semana que tiene el período ×
+// los horarios que aparecen), no solo en la demanda: así un horario sin
+// ninguna reserva también cuenta. diasDelPeriodo hace falta porque un día sin
+// reservas no viene en la demanda (y mirando un miércoles no tiene sentido
+// proponer el domingo).
+export function horarioMenosPedido(
+  demanda: CeldaDeDemanda[],
+  diasDelPeriodo: number[],
+): CeldaDeDemanda | null {
   const horarios = horariosDistintos(demanda)
   let menosPedido: CeldaDeDemanda | null = null
 
-  for (let diaSemana = 0; diaSemana < 7; diaSemana++) {
+  for (const diaSemana of diasDelPeriodo) {
     for (const horaInicio of horarios) {
       const reservas = reservasEn(demanda, diaSemana, horaInicio)
       if (menosPedido === null || reservas < menosPedido.reservas) {
@@ -299,4 +306,22 @@ export function segmentosDeDona(
     inicio += largoCompleto
   }
   return segmentos
+}
+
+export type FiltrosDelDashboard = {
+  complejoId?: string
+  vista: Vista
+  fecha?: string
+  deporte?: Deporte
+}
+
+// El link al dashboard con esos filtros. Los que no vienen no van en la URL
+// (sin complejo = todos; sin fecha = hoy; sin deporte = todos).
+export function urlDelDashboard(filtros: FiltrosDelDashboard): string {
+  const params = new URLSearchParams()
+  if (filtros.complejoId !== undefined) params.set('complejoId', filtros.complejoId)
+  params.set('vista', filtros.vista)
+  if (filtros.fecha !== undefined) params.set('fecha', filtros.fecha)
+  if (filtros.deporte !== undefined) params.set('deporte', filtros.deporte)
+  return `/dueno/dashboard?${params.toString()}`
 }

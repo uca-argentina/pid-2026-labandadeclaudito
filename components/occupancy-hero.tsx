@@ -1,9 +1,8 @@
 import { Building2 } from 'lucide-react'
 import { deporteLabels, formatoDeJuego } from '@/lib/labels'
-import type { FamiliaDeDeporte } from '@/lib/dashboard'
 import type { Deporte } from '@/lib/generated/prisma/client'
 import { AnimatedNumber } from '@/components/animated-number'
-import { CourtIllustration, FloatingBalls } from '@/components/court-illustration'
+import { CourtIllustration } from '@/components/court-illustration'
 import { claseTarjetaDeDatos } from '@/components/data-card'
 import { ProgressRing } from '@/components/progress-ring'
 import { SportIcon } from '@/components/sport-icon'
@@ -12,25 +11,27 @@ import { VariationBadge } from '@/components/variation-badge'
 // El bloque principal: un degradé del color del deporte con los datos en
 // tarjetas sólidas encima. Lo primero que ve el dueño es la ocupación (la
 // métrica que dice si las canchas trabajan). Al lado:
-// - sin deporte elegido: los datos clave (resumen), con las pelotas de fondo
+// - sin deporte elegido: los datos clave (resumen)
 // - con un deporte: su cancha ilustrada; los datos clave van abajo del bloque
 export function OccupancyHero({
   alcance,
+  periodo,
+  comparacion,
   porcentaje,
   turnosReservados,
   turnosOfrecidos,
   variacionTurnos,
   deporte,
-  familias,
   resumen,
 }: {
   alcance: string
+  periodo: string
+  comparacion: string
   porcentaje: number
   turnosReservados: number
   turnosOfrecidos: number
   variacionTurnos: number | null
   deporte: Deporte | undefined
-  familias: FamiliaDeDeporte[]
   resumen: React.ReactNode
 }) {
   return (
@@ -38,30 +39,26 @@ export function OccupancyHero({
       {/* Luces difusas que suavizan el degradé */}
       <div className="bg-hero-line/20 pointer-events-none absolute -top-32 -left-24 size-96 rounded-full blur-3xl" />
       <div className="bg-tema-desde pointer-events-none absolute -right-20 -bottom-40 size-112 rounded-full opacity-70 blur-3xl" />
-      {deporte === undefined && (
-        <div className="pointer-events-none absolute -right-10 -bottom-16 hidden h-80 w-120 opacity-15 lg:block">
-          <FloatingBalls familias={familias} />
-        </div>
-      )}
 
       {/* El resumen necesita más ancho que la cancha para no cortar los montos:
           va en dos columnas recién desde xl */}
       <div
         className={
           deporte === undefined
-            ? 'relative grid items-center gap-6 p-6 md:p-8 xl:grid-cols-2'
-            : 'relative grid items-center gap-6 p-6 md:p-8 lg:grid-cols-2'
+            ? 'relative grid grid-cols-1 items-center gap-6 p-6 md:p-8 xl:grid-cols-2'
+            : 'relative grid grid-cols-1 items-center gap-6 p-6 md:p-8 lg:grid-cols-2'
         }
       >
         <div className="space-y-4">
-          <p className="bg-hero-line/15 inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1 text-sm font-medium">
+          <p className="bg-hero-line/15 inline-flex max-w-full items-center gap-2 rounded-2xl px-3 py-1 text-sm font-medium">
             {deporte ? (
               <SportIcon deporte={deporte} className="size-5" />
             ) : (
               <Building2 className="size-4 shrink-0" />
             )}
-            <span className="truncate">
-              {alcance} · {deporte ? deporteLabels[deporte] : 'Todos los deportes'}
+            {/* Si no entra, baja de línea (no se corta) */}
+            <span>
+              {alcance} · {deporte ? deporteLabels[deporte] : 'Todos los deportes'} · {periodo}
             </span>
           </p>
 
@@ -87,7 +84,12 @@ export function OccupancyHero({
                   de {turnosOfrecidos.toLocaleString('es-AR')}
                 </span>
               </p>
-              <VariationBadge variacion={variacionTurnos} subirEsBueno={true} />
+              <div className="flex flex-wrap items-center gap-2">
+                <VariationBadge variacion={variacionTurnos} subirEsBueno={true} />
+                <span className="text-muted-foreground text-sm whitespace-nowrap">
+                  vs. {comparacion}
+                </span>
+              </div>
             </div>
           </div>
         </div>

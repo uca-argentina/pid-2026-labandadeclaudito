@@ -1,4 +1,3 @@
-import type { FamiliaDeDeporte } from '@/lib/dashboard'
 import type { Deporte } from '@/lib/generated/prisma/client'
 import { PelotaDeBasquet, PelotaDeFutbol, PelotaDeTenis } from '@/components/sport-ball'
 
@@ -456,36 +455,6 @@ function CanchaInclinada({ children }: { children: React.ReactNode }) {
         </svg>
       </div>
     </div>
-  )
-}
-
-// Pelotas de los deportes que hay, flotando: el fondo del bloque principal
-// cuando no hay un deporte elegido
-export function FloatingBalls({ familias }: { familias: FamiliaDeDeporte[] }) {
-  // Sin canchas todavía: se muestran las tres
-  const sinCanchas = familias.length === 0
-  const tieneFutbol = sinCanchas || familias.includes('futbol')
-  const tieneRaqueta = sinCanchas || familias.includes('tenis') || familias.includes('padel')
-  const tieneBasquet = sinCanchas || familias.includes('basquet')
-
-  return (
-    <svg viewBox="0 0 400 240" aria-hidden="true" className="pointer-events-none size-full">
-      {tieneFutbol && (
-        <g className="motion-safe:animate-flotar">
-          <PelotaDeFutbol x={110} y={120} r={70} />
-        </g>
-      )}
-      {tieneRaqueta && (
-        <g className="motion-safe:animate-flotar" style={{ animationDelay: '-2s' }}>
-          <PelotaDeTenis x={270} y={70} r={42} />
-        </g>
-      )}
-      {tieneBasquet && (
-        <g className="motion-safe:animate-flotar" style={{ animationDelay: '-4s' }}>
-          <PelotaDeBasquet x={300} y={185} r={52} />
-        </g>
-      )}
-    </svg>
   )
 }
 
