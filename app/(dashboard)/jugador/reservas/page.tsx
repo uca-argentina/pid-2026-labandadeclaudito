@@ -5,7 +5,6 @@ import {
   CalendarDays,
   CircleDot,
   Clock,
-  Hourglass,
   LandPlot,
   MapPin,
   Wallet,
@@ -21,6 +20,7 @@ import { calcularPagina } from '@/lib/paginacion'
 import { diaDeReserva, formatearDia, momentoActual, refundsDeposit, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { CancelBookingButton } from '@/components/cancel-booking-button'
+import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
 import { CeldaCancha, CeldaMonto } from '@/components/celdas-reserva'
 import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
 import { FechaDelTurno } from '@/components/fecha-del-turno'
@@ -287,7 +287,7 @@ function TarjetaReserva({
 
   const muestraPagar = reserva.estado === 'PENDIENTE' && !yaPaso
   const muestraCancelar = !cancelada && !yaPaso
-  const horaLimiteSena = momentoActual(venceLaSena(reserva.createdAt)).hora
+  const venceSena = venceLaSena(reserva.createdAt).toISOString()
 
   // Aviso para el diálogo de cancelar: mismo cálculo que hace el endpoint.
   let avisoSena: string | null = null
@@ -335,11 +335,10 @@ function TarjetaReserva({
           {formatearDia(dia)} · {reserva.horaInicio} a {reserva.horaFin} hs
         </p>
         {muestraPagar && (
-          <p className="text-foreground flex items-center gap-1.5 font-medium">
-            <Hourglass className="size-3.5 shrink-0" />
-            Pagá la seña antes de las {horaLimiteSena} hs o el turno se libera
-            <RefreshWhenDepositExpires venceEn={venceLaSena(reserva.createdAt).toISOString()} />
-          </p>
+          <div className="pt-1">
+            <CuentaRegresivaSena venceEn={venceSena} />
+            <RefreshWhenDepositExpires venceEn={venceSena} />
+          </div>
         )}
       </div>
 

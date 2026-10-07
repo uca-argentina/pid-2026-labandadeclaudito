@@ -23,6 +23,7 @@ import { iniciales } from '@/lib/iniciales'
 import { diaDeReserva, formatearDia, momentoActual, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { AttendanceButtons } from '@/components/attendance-buttons'
+import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
 import { CeldaCancha, CeldaMonto } from '@/components/celdas-reserva'
 import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
 import { FechaDelTurno } from '@/components/fecha-del-turno'
@@ -379,8 +380,13 @@ function TarjetaReserva({
           )}
         </div>
       </div>
+      {/* El dueño ve el mismo reloj que el jugador: cuándo se libera el turno
+          si no pagan la seña */}
       {reserva.estado === 'PENDIENTE' && (
-        <RefreshWhenDepositExpires venceEn={venceLaSena(reserva.createdAt).toISOString()} />
+        <div className="mb-4">
+          <CuentaRegresivaSena venceEn={venceLaSena(reserva.createdAt).toISOString()} />
+          <RefreshWhenDepositExpires venceEn={venceLaSena(reserva.createdAt).toISOString()} />
+        </div>
       )}
 
       {/* Footer con borde arriba, separado del cuerpo: precio a la izquierda,

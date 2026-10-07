@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react'
 import { format, parse } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Calendar, Check, CheckCircle2, Clock, Loader2, Wallet } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowRight, Calendar, Check, CheckCircle2, Clock, Loader2, Wallet } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MINUTOS_PARA_PAGAR_SENA, venceLaSena } from '@/lib/estado-reserva'
+import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
 import { formatPrecio } from '@/lib/labels'
-import { diaDeHoy, formatAdvanceTime } from '@/lib/time'
+import { diaDeHoy, formatAdvanceTime, ultimoDiaParaReservar } from '@/lib/time'
 
 type Slot = { horaInicio: string; horaFin: string; disponible: boolean; precio: string }
 // reservando -> pendiente (reserva creada, falta la seña) -> pagando -> exito
@@ -81,6 +83,24 @@ export function CourtSlotPicker({
     }
   }, [fecha, courtId])
 
+  // Grilla en vivo: cada 5 segundos vuelve a pedir la disponibilidad. Así, si
+  // otro jugador reserva un turno, acá aparece tachado sin recargar la página.
+  useEffect(() => {
+    let activo = true
+    const fechaISO = format(fecha, 'yyyy-MM-dd')
+    const id = setInterval(async () => {
+      const res = await fetch(`/api/courts/${courtId}/availability?fecha=${fechaISO}`)
+      // Si mientras tanto cambió la fecha o se cerró, esta respuesta ya no sirve
+      if (!activo || !res.ok) return
+      const json = await res.json()
+      setSlots(json.slots)
+    }, 5000)
+    return () => {
+      activo = false
+      clearInterval(id)
+    }
+  }, [fecha, courtId])
+
   // Si el jugador no paga la seña a tiempo: se avisa y se recarga la grilla,
   // donde el turno ya aparece libre. Es un temporizador del navegador, solo
   // mientras esta pantalla está abierta.
@@ -107,6 +127,8 @@ export function CourtSlotPicker({
   }, [reservaHecha, estado, fecha, courtId])
 
   const slotSeleccionado = slots.find((slot) => slot.horaInicio === horaSeleccionada)
+  // El turno elegido lo reservó otro jugador mientras lo miraba (lo trajo la grilla en vivo)
+  const turnoElegidoSeOcupo = slotSeleccionado !== undefined && !slotSeleccionado.disponible
   const montoSenaSeleccionada = slotSeleccionado
     ? (Number(slotSeleccionado.precio) * porcentajeSena) / 100
     : 0
@@ -177,6 +199,7 @@ export function CourtSlotPicker({
           id={`fecha-${courtId}`}
           type="date"
           min={diaDeHoy()}
+          max={ultimoDiaParaReservar()}
           value={format(fecha, 'yyyy-MM-dd')}
           onChange={(e) => {
             setFecha(new Date(`${e.target.value}T00:00:00`))
@@ -187,6 +210,10 @@ export function CourtSlotPicker({
           }}
           className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
         />
+        <span className="text-muted-foreground ml-auto flex items-center gap-1.5 text-xs">
+          <span className="size-2 animate-pulse rounded-full bg-green-500" />
+          En vivo
+        </span>
       </div>
 
       {minAdvanceMinutes > 0 && (
@@ -213,6 +240,10 @@ export function CourtSlotPicker({
                 type="button"
                 disabled={!slot.disponible}
                 onClick={() => {
+                  // Si la reserva anterior ya quedó pagada, se olvida: si no,
+                  // volvería a aparecer su "Pagar seña" con la cuenta regresiva.
+                  // Si todavía está pendiente, se queda (falta pagarla).
+                  if (estado === 'exito') setReservaHecha(null)
                   setHoraSeleccionada(slot.horaInicio)
                   setEstado('idle')
                   setMensajeError('')
@@ -237,7 +268,13 @@ export function CourtSlotPicker({
         </div>
       )}
 
-      {horaSeleccionada && slotSeleccionado && (
+      {turnoElegidoSeOcupo && (
+        <p className="text-destructive text-sm">
+          Otro jugador acaba de reservar las {horaSeleccionada}. Elegí otro horario.
+        </p>
+      )}
+
+      {horaSeleccionada && slotSeleccionado && !turnoElegidoSeOcupo && (
         <div className="bg-secondary border-border flex flex-col gap-3 rounded-lg border px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-sm font-medium">
@@ -292,11 +329,11 @@ export function CourtSlotPicker({
                 Reservaste {courtName} a las {reservaHecha.hora} hs
               </p>
               <p className="text-muted-foreground text-xs">
-                Pagá la seña para confirmar el turno. Tenés {MINUTOS_PARA_PAGAR_SENA} minutos; si
-                no, el turno se libera.
+                Pagá la seña para confirmar el turno; si no, el turno se libera.
               </p>
             </div>
           </div>
+          <CuentaRegresivaSena venceEn={reservaHecha.venceEn} />
           <Button onClick={pagarSena} disabled={estado === 'pagando'} className="self-end">
             {estado === 'pagando' ? (
               <Loader2 className="size-3.5 animate-spin" />
@@ -319,6 +356,13 @@ export function CourtSlotPicker({
               {courtName} a las {reservaHecha.hora} hs — seña de{' '}
               {formatPrecio(reservaHecha.montoSena)} pagada (simulado).
             </p>
+            <Link
+              href="/jugador/reservas"
+              className="text-primary mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline"
+            >
+              Ver mis reservas
+              <ArrowRight className="size-3.5" />
+            </Link>
           </div>
         </div>
       )}

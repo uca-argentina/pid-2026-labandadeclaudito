@@ -51,6 +51,15 @@ export function senaVencida(creadaEn: Date, ahora: Date = new Date()): boolean {
   return ahora > venceLaSena(creadaEn)
 }
 
+// Lo que falta para que venza la seña, como "MM:SS" para la cuenta regresiva.
+// Redondea para arriba (con 14,2 segundos muestra 00:15) y nunca es negativo.
+export function formatearTiempoRestante(msRestantes: number): string {
+  const segundos = Math.max(Math.ceil(msRestantes / 1000), 0)
+  const minutos = Math.floor(segundos / 60)
+  const resto = segundos % 60
+  return `${String(minutos).padStart(2, '0')}:${String(resto).padStart(2, '0')}`
+}
+
 // Terminado el turno, lo que manda es si el dueño marcó la asistencia.
 function estadoDeUnTurnoTerminado(asistio: boolean | null): EstadoVisible {
   if (asistio === true) return 'ASISTIO'

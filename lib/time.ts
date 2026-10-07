@@ -56,6 +56,16 @@ export function diaDeHoy(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: ZONA_ARGENTINA })
 }
 
+// Se reserva con hasta 30 días de anticipación: así nadie toma turnos de acá
+// a fin de año. Devuelve ese último día como YYYY-MM-DD.
+export const DIAS_MAXIMOS_DE_ANTICIPACION = 30
+
+export function ultimoDiaParaReservar(hoy: string = diaDeHoy()): string {
+  const fecha = new Date(`${hoy}T00:00:00Z`)
+  fecha.setUTCDate(fecha.getUTCDate() + DIAS_MAXIMOS_DE_ANTICIPACION)
+  return fecha.toISOString().slice(0, 10)
+}
+
 // 0 (domingo) a 6 (sábado). Igual que diaDeReserva, se lee en UTC porque
 // @db.Date llega como medianoche UTC.
 export function diaSemanaDeReserva(fecha: Date): number {

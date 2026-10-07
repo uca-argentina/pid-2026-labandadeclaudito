@@ -35,23 +35,40 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     )
   }
 
-  // Sin seña pagada no hay nada que devolver: solo se cancela la reserva.
-  if (!reserva.pago) {
-    await db.reserva.update({ where: { id }, data: { estado: 'CANCELADA' } })
-    return NextResponse.json({ ok: true, devuelto: false }, { status: 200 })
+  // Sin seña pagada no hay nada que devolver; con seña, se decide si se
+  // devuelve según la política de cancelación.
+  const pago = reserva.pago
+  const devuelto = pago
+    ? refundsDeposit(
+        dia,
+        reserva.horaInicio,
+        pago.cancellationHours,
+        reserva.cancha.complejo.cancellationHours,
+      )
+    : false
+
+  // Entre que se leyó la reserva y ahora, el jugador pudo haber pagado la
+  // seña (o cancelado dos veces). Por eso se cancela solo si sigue en el
+  // estado en que se leyó: si justo pagó, la decisión de devolver la seña se
+  // tomaría sin ver ese pago. Y la devolución se marca en la misma transacción.
+  const cancelada = await db.$transaction(async (tx) => {
+    const canceladas = await tx.reserva.updateMany({
+      where: { id, estado: reserva.estado },
+      data: { estado: 'CANCELADA' },
+    })
+    if (canceladas.count === 0) return false
+
+    if (pago) {
+      await tx.pago.update({ where: { reservaId: id }, data: { devuelto } })
+    }
+    return true
+  })
+  if (!cancelada) {
+    return NextResponse.json(
+      { error: 'La reserva cambió mientras cancelabas. Recargá la página.' },
+      { status: 409 },
+    )
   }
-
-  const devuelto = refundsDeposit(
-    dia,
-    reserva.horaInicio,
-    reserva.pago.cancellationHours,
-    reserva.cancha.complejo.cancellationHours,
-  )
-
-  await db.$transaction([
-    db.reserva.update({ where: { id }, data: { estado: 'CANCELADA' } }),
-    db.pago.update({ where: { reservaId: id }, data: { devuelto } }),
-  ])
 
   return NextResponse.json({ ok: true, devuelto }, { status: 200 })
 }

@@ -11,6 +11,7 @@ import {
   sumarMinutos,
   timeTextToMinutes,
   turnoYaPaso,
+  ultimoDiaParaReservar,
 } from './time'
 
 describe('generateSlots', () => {
@@ -260,5 +261,15 @@ describe('franjaDentroDelHorario', () => {
     expect(franjaDentroDelHorario('10:00', '12:00', '20:00', '03:00')).toBe(false)
     // Pisa los dos tramos y el hueco del medio, en que la cancha está cerrada
     expect(franjaDentroDelHorario('01:00', '21:00', '20:00', '03:00')).toBe(false)
+  })
+})
+
+describe('ultimoDiaParaReservar', () => {
+  test('30 días después de hoy', () => {
+    expect(ultimoDiaParaReservar('2026-10-07')).toBe('2026-11-06')
+  })
+
+  test('cruza fin de año', () => {
+    expect(ultimoDiaParaReservar('2026-12-15')).toBe('2027-01-14')
   })
 })
