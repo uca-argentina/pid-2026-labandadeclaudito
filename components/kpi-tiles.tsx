@@ -3,45 +3,20 @@ import { ArrowUpRight, Ban, Flame, Lightbulb, Wallet } from 'lucide-react'
 import { nombresCortosDeDias } from '@/lib/labels'
 import type { CeldaDeDemanda } from '@/lib/dashboard'
 import { AnimatedNumber } from '@/components/animated-number'
+import { claseTarjetaDeDatos, claseTarjetaInteractiva } from '@/components/data-card'
 import { VariationBadge } from '@/components/variation-badge'
 
 // Los cuatro datos que más le sirven al dueño después de la ocupación:
 // cuánto ganó, cuánto perdió, cuándo se llena y qué horario conviene mover.
-// "vidrio": adentro del bloque verde (sobre el degradé). "tarjeta": abajo.
+// "bloque": adentro del bloque principal, de a dos. "fila": abajo, los cuatro
+// en una fila.
 
-type Variante = 'vidrio' | 'tarjeta'
+const claseTarjeta = `${claseTarjetaDeDatos} p-5`
 
-const claseDeLaVariante: Record<Variante, string> = {
-  vidrio:
-    'border-hero-line/25 bg-hero-line/10 text-hero-line rounded-2xl border p-4 backdrop-blur-md',
-  tarjeta:
-    'border-border bg-card rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md',
-}
-
-const claseDelIcono: Record<Variante, string> = {
-  vidrio: 'bg-hero-line/15 flex size-8 shrink-0 items-center justify-center rounded-lg',
-  tarjeta: 'bg-acento/10 text-acento flex size-8 shrink-0 items-center justify-center rounded-lg',
-}
-
-const claseSecundaria: Record<Variante, string> = {
-  vidrio: 'text-sm opacity-80',
-  tarjeta: 'text-muted-foreground text-sm',
-}
-
-function Encabezado({
-  icono: Icono,
-  texto,
-  variante,
-}: {
-  icono: typeof Wallet
-  texto: string
-  variante: Variante
-}) {
+function Encabezado({ icono: Icono, texto }: { icono: typeof Wallet; texto: string }) {
   return (
-    <p
-      className={`flex items-center gap-2 font-medium whitespace-nowrap ${claseSecundaria[variante]}`}
-    >
-      <span className={claseDelIcono[variante]}>
+    <p className="text-muted-foreground flex items-center gap-2 text-sm font-medium whitespace-nowrap">
+      <span className="bg-acento/10 text-acento flex size-8 shrink-0 items-center justify-center rounded-lg">
         <Icono className="size-4" />
       </span>
       {texto}
@@ -60,7 +35,7 @@ export function KpiTiles({
   horarioAImpulsar,
   hrefParaImpulsar,
 }: {
-  variante: Variante
+  variante: 'bloque' | 'fila'
   ingresos: number
   variacionIngresos: number | null
   cancelaciones: number
@@ -70,54 +45,48 @@ export function KpiTiles({
   horarioAImpulsar: CeldaDeDemanda | null
   hrefParaImpulsar: string
 }) {
-  const enVidrio = variante === 'vidrio'
   // En pantallas chicas, una por fila: así los montos y textos entran enteros
-  const columnas = enVidrio
-    ? 'grid-cols-1 sm:grid-cols-2'
-    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+  const columnas =
+    variante === 'bloque'
+      ? 'grid-cols-1 sm:grid-cols-2'
+      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
 
   return (
     <div className={`grid gap-3 ${columnas}`}>
-      <div className={claseDeLaVariante[variante]}>
-        <Encabezado icono={Wallet} texto="Ingresos" variante={variante} />
+      <div className={claseTarjeta}>
+        <Encabezado icono={Wallet} texto="Ingresos" />
         <p className="mt-3 truncate text-2xl font-semibold tracking-tight sm:text-3xl">
           <AnimatedNumber valor={ingresos} tipo="precio" />
         </p>
         <div className="mt-1.5">
-          <VariationBadge
-            variacion={variacionIngresos}
-            subirEsBueno={true}
-            enFondoDeColor={enVidrio}
-          />
+          <VariationBadge variacion={variacionIngresos} subirEsBueno={true} />
         </div>
       </div>
 
-      <div className={claseDeLaVariante[variante]}>
-        <Encabezado icono={Ban} texto="Turnos perdidos" variante={variante} />
+      <div className={claseTarjeta}>
+        <Encabezado icono={Ban} texto="Turnos perdidos" />
         <p className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
           <AnimatedNumber valor={cancelaciones + noShows} />
         </p>
-        <p className={`mt-1.5 truncate ${claseSecundaria[variante]}`}>
-          {cancelaciones} cancelados · {noShows} ausentes
+        {/* Si no entra en una línea, baja el dato entero (no se corta) */}
+        <p className="text-muted-foreground mt-1.5 flex flex-wrap gap-x-1.5 text-sm">
+          <span className="whitespace-nowrap">{cancelaciones} cancelados ·</span>
+          <span className="whitespace-nowrap">{noShows} ausentes</span>
         </p>
         <div className="mt-1.5">
           {/* Menos turnos perdidos es mejor: subir es malo */}
-          <VariationBadge
-            variacion={variacionPerdidos}
-            subirEsBueno={false}
-            enFondoDeColor={enVidrio}
-          />
+          <VariationBadge variacion={variacionPerdidos} subirEsBueno={false} />
         </div>
       </div>
 
-      <div className={claseDeLaVariante[variante]}>
-        <Encabezado icono={Flame} texto="Horario pico" variante={variante} />
+      <div className={claseTarjeta}>
+        <Encabezado icono={Flame} texto="Horario pico" />
         <p className="mt-3 text-2xl font-semibold tracking-tight whitespace-nowrap sm:text-3xl">
           {horarioPico
             ? `${nombresCortosDeDias[horarioPico.diaSemana]} ${horarioPico.horaInicio}`
             : '—'}
         </p>
-        <p className={`mt-1.5 truncate ${claseSecundaria[variante]}`}>
+        <p className="text-muted-foreground mt-1.5 truncate text-sm">
           {horarioPico ? `${horarioPico.reservas} reservas` : 'Sin reservas'}
         </p>
       </div>
@@ -125,18 +94,18 @@ export function KpiTiles({
       <Link
         href={hrefParaImpulsar}
         title="El horario con menos reservas: un precio especial más bajo puede llenarlo"
-        className={`${claseDeLaVariante[variante]} group ${enVidrio ? 'hover:bg-hero-line/20 transition-colors' : ''}`}
+        className={`${claseTarjeta} ${claseTarjetaInteractiva} group`}
       >
         <div className="flex items-center justify-between gap-2">
-          <Encabezado icono={Lightbulb} texto="A impulsar" variante={variante} />
-          <ArrowUpRight className="size-5 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <Encabezado icono={Lightbulb} texto="A impulsar" />
+          <ArrowUpRight className="text-acento size-5 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
         <p className="mt-3 text-2xl font-semibold tracking-tight whitespace-nowrap sm:text-3xl">
           {horarioAImpulsar
             ? `${nombresCortosDeDias[horarioAImpulsar.diaSemana]} ${horarioAImpulsar.horaInicio}`
             : '—'}
         </p>
-        <p className={`mt-1.5 truncate ${claseSecundaria[variante]}`}>Probá un precio especial</p>
+        <p className="text-muted-foreground mt-1.5 truncate text-sm">Probá un precio especial</p>
       </Link>
     </div>
   )

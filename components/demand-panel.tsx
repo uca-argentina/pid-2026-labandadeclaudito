@@ -8,6 +8,7 @@ import {
   reservasPorHorario,
   type CeldaDeDemanda,
 } from '@/lib/dashboard'
+import { claseTarjetaDeDatos } from '@/components/data-card'
 import { DemandCurve } from '@/components/demand-curve'
 import { DemandHeatmap } from '@/components/demand-heatmap'
 import { WeekStrip } from '@/components/week-strip'
@@ -38,7 +39,7 @@ function Opcion({
       onClick={() => elegir(vista)}
       className={
         activa
-          ? `${claseOpcion} bg-card shadow-sm`
+          ? `${claseOpcion} bg-card text-acento shadow-sm`
           : `${claseOpcion} text-muted-foreground hover:text-foreground`
       }
     >
@@ -64,7 +65,7 @@ export function DemandPanel({
   const horarios = horariosDistintos(demanda)
 
   return (
-    <section className="border-border bg-card rounded-2xl border p-6">
+    <section className={`${claseTarjetaDeDatos} p-6`}>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-2xl font-semibold whitespace-nowrap">Demanda</h2>
         {/* En mobile ocupa todo el ancho y sin íconos, para que entren las tres */}

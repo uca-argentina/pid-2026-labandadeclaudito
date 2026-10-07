@@ -168,17 +168,13 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
     )
   }
 
-  // El complejo elegido tiene que estar en la lista del dueño: si en la URL
-  // viene uno ajeno (o ninguno), se muestran todos sus complejos. Con uno solo,
-  // "todos" es ese.
+  // Se arranca viendo todos los complejos. El elegido tiene que estar en la
+  // lista del dueño: si en la URL viene uno ajeno, también se ven todos.
   let elegido: { id: string; nombre: string } | undefined = undefined
   for (const complejo of complejos) {
     if (complejo.id === filtros.complejoId) {
       elegido = complejo
     }
-  }
-  if (elegido === undefined && complejos.length === 1) {
-    elegido = complejos[0]
   }
   const sonTodos = elegido === undefined
 
@@ -303,7 +299,7 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
       >
         <div className="space-y-6">
           <OccupancyHero
-            alcance={elegido ? elegido.nombre : 'Todos tus complejos'}
+            alcance={elegido ? elegido.nombre : 'Todos los complejos'}
             porcentaje={metricas.ocupacion.porcentaje}
             turnosReservados={turnosReservados}
             turnosOfrecidos={turnosOfrecidos}
@@ -313,12 +309,12 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
             )}
             deporte={deporte}
             familias={familias}
-            resumen={<KpiTiles variante="vidrio" {...datosClave} />}
+            resumen={<KpiTiles variante="bloque" {...datosClave} />}
           />
 
           {/* Con un deporte elegido, la cancha ocupa el lugar de los datos
               clave en el bloque principal: van acá abajo */}
-          {deporte !== undefined && <KpiTiles variante="tarjeta" {...datosClave} />}
+          {deporte !== undefined && <KpiTiles variante="fila" {...datosClave} />}
 
           {filasPorComplejo.length > 1 && <ComplexBreakdown filas={filasPorComplejo} />}
 

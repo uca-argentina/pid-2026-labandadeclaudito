@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ChevronRight, Trophy } from 'lucide-react'
 import { formatPrecio } from '@/lib/labels'
 import type { Deporte } from '@/lib/generated/prisma/client'
+import { claseTarjetaDeDatos } from '@/components/data-card'
 import { ProgressRing } from '@/components/progress-ring'
 import { SportIcon } from '@/components/sport-icon'
 
@@ -19,7 +20,7 @@ export type FilaDeComplejo = {
 // menor). Tocar uno muestra el dashboard de ese complejo.
 export function ComplexBreakdown({ filas }: { filas: FilaDeComplejo[] }) {
   return (
-    <section className="border-border bg-card rounded-2xl border p-6">
+    <section className={`${claseTarjetaDeDatos} p-6`}>
       <h2 className="mb-5 text-2xl font-semibold">Por complejo</h2>
 
       <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -28,7 +29,7 @@ export function ComplexBreakdown({ filas }: { filas: FilaDeComplejo[] }) {
             <Link
               href={fila.href}
               scroll={false}
-              className="border-border hover:bg-muted group flex h-full items-center gap-3 rounded-xl border p-4 transition-colors sm:gap-4"
+              className="border-border bg-background/60 hover:bg-muted hover:border-acento/30 group flex h-full items-center gap-3 rounded-xl border p-4 transition-colors sm:gap-4"
             >
               <span
                 className={

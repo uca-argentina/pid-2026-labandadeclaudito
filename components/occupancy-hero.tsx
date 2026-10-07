@@ -4,15 +4,14 @@ import type { FamiliaDeDeporte } from '@/lib/dashboard'
 import type { Deporte } from '@/lib/generated/prisma/client'
 import { AnimatedNumber } from '@/components/animated-number'
 import { CourtIllustration, FloatingBalls } from '@/components/court-illustration'
+import { claseTarjetaDeDatos } from '@/components/data-card'
 import { ProgressRing } from '@/components/progress-ring'
 import { SportIcon } from '@/components/sport-icon'
 import { VariationBadge } from '@/components/variation-badge'
 
-// Vidrio esmerilado sobre el degradé (como las tarjetas de la referencia oscura)
-const vidrio = 'border-hero-line/25 bg-hero-line/10 rounded-2xl border backdrop-blur-md'
-
-// El bloque principal. Lo primero que ve el dueño es la ocupación (la métrica
-// que dice si las canchas trabajan). Al lado:
+// El bloque principal: un degradé del color del deporte con los datos en
+// tarjetas sólidas encima. Lo primero que ve el dueño es la ocupación (la
+// métrica que dice si las canchas trabajan). Al lado:
 // - sin deporte elegido: los datos clave (resumen), con las pelotas de fondo
 // - con un deporte: su cancha ilustrada; los datos clave van abajo del bloque
 export function OccupancyHero({
@@ -66,29 +65,29 @@ export function OccupancyHero({
             </span>
           </p>
 
-          <div className={`${vidrio} flex flex-wrap items-center gap-6 p-5`}>
+          <div className={`${claseTarjetaDeDatos} flex flex-wrap items-center gap-6 p-5`}>
             <ProgressRing
               porcentaje={porcentaje}
               className="size-36"
-              claseFondo="stroke-hero-line/20"
-              claseRelleno="stroke-hero-line"
+              claseFondo="stroke-acento/15"
+              claseRelleno="stroke-acento"
             >
               <span className="text-4xl font-semibold tracking-tight">
                 <AnimatedNumber valor={porcentaje} tipo="porcentaje" />
               </span>
-              <span className="text-sm whitespace-nowrap opacity-80">ocupación</span>
+              <span className="text-muted-foreground text-sm whitespace-nowrap">ocupación</span>
             </ProgressRing>
 
             <div className="space-y-2">
-              <p className="text-base whitespace-nowrap opacity-80">Turnos reservados</p>
+              <p className="text-muted-foreground text-base whitespace-nowrap">Turnos reservados</p>
               <p className="text-3xl font-semibold tracking-tight whitespace-nowrap">
                 <AnimatedNumber valor={turnosReservados} />
-                <span className="text-lg font-normal opacity-70">
+                <span className="text-muted-foreground text-lg font-normal">
                   {' '}
                   de {turnosOfrecidos.toLocaleString('es-AR')}
                 </span>
               </p>
-              <VariationBadge variacion={variacionTurnos} subirEsBueno={true} enFondoDeColor />
+              <VariationBadge variacion={variacionTurnos} subirEsBueno={true} />
             </div>
           </div>
         </div>
@@ -100,7 +99,7 @@ export function OccupancyHero({
           <div className="relative order-first lg:order-0">
             <CourtIllustration deporte={deporte} />
             <p
-              className={`${vidrio} absolute right-2 bottom-0 inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold whitespace-nowrap`}
+              className={`${claseTarjetaDeDatos} absolute right-2 bottom-0 inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold whitespace-nowrap`}
             >
               <SportIcon deporte={deporte} className="size-5" />
               {formatoDeJuego[deporte]}
