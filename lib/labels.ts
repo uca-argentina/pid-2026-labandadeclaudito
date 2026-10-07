@@ -51,6 +51,8 @@ export const nombresDeDias = [
   'Sábado',
 ]
 
+export const nombresCortosDeDias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
 export function formatPrecio(precio: number | string): string {
   return `$${Number(precio).toLocaleString('es-AR')}`
 }
