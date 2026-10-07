@@ -66,6 +66,18 @@ export function ultimoDiaParaReservar(hoy: string = diaDeHoy()): string {
   return fecha.toISOString().slice(0, 10)
 }
 
+// Todos los días que se pueden reservar, de hoy al último (YYYY-MM-DD): son
+// los que muestra la tira de días al elegir fecha.
+export function diasParaReservar(hoy: string = diaDeHoy()): string[] {
+  const dias: string[] = []
+  const fecha = new Date(`${hoy}T00:00:00Z`)
+  for (let i = 0; i <= DIAS_MAXIMOS_DE_ANTICIPACION; i++) {
+    dias.push(fecha.toISOString().slice(0, 10))
+    fecha.setUTCDate(fecha.getUTCDate() + 1)
+  }
+  return dias
+}
+
 // 0 (domingo) a 6 (sábado). Igual que diaDeReserva, se lee en UTC porque
 // @db.Date llega como medianoche UTC.
 export function diaSemanaDeReserva(fecha: Date): number {

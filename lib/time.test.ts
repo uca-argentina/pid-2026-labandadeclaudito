@@ -11,6 +11,7 @@ import {
   sumarMinutos,
   timeTextToMinutes,
   turnoYaPaso,
+  diasParaReservar,
   ultimoDiaParaReservar,
 } from './time'
 
@@ -271,5 +272,15 @@ describe('ultimoDiaParaReservar', () => {
 
   test('cruza fin de año', () => {
     expect(ultimoDiaParaReservar('2026-12-15')).toBe('2027-01-14')
+  })
+})
+
+describe('diasParaReservar', () => {
+  test('de hoy al último día que se puede reservar, sin saltear ninguno', () => {
+    const dias = diasParaReservar('2026-10-07')
+    expect(dias).toHaveLength(31)
+    expect(dias[0]).toBe('2026-10-07')
+    expect(dias[1]).toBe('2026-10-08')
+    expect(dias[30]).toBe(ultimoDiaParaReservar('2026-10-07'))
   })
 })

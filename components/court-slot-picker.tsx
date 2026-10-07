@@ -1,21 +1,38 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { format, parse } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
-import { ArrowRight, Calendar, Check, CheckCircle2, Clock, Loader2, Wallet } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import {
+  ArrowRight,
+  Calendar,
+  Check,
+  CheckCircle2,
+  Clock,
+  Loader2,
+  Moon,
+  Sun,
+  Sunset,
+  Wallet,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MINUTOS_PARA_PAGAR_SENA, venceLaSena } from '@/lib/estado-reserva'
 import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
-import { formatPrecio } from '@/lib/labels'
-import { diaDeHoy, formatAdvanceTime, ultimoDiaParaReservar } from '@/lib/time'
+import { formatPrecio, mesesCortos, nombresCortosDeDias } from '@/lib/labels'
+import { diaDeHoy, diasParaReservar, formatAdvanceTime } from '@/lib/time'
 
 type Slot = { horaInicio: string; horaFin: string; disponible: boolean; precio: string }
 // reservando -> pendiente (reserva creada, falta la seña) -> pagando -> exito
 type EstadoConfirmacion = 'idle' | 'reservando' | 'pendiente' | 'pagando' | 'exito' | 'error'
+
+// Los horarios se agrupan por momento del día ("desde" incluido, "hasta" no)
+const periodosDelDia = [
+  { nombre: 'Mañana', icono: Sun, desde: '00:00', hasta: '12:00' },
+  { nombre: 'Tarde', icono: Sunset, desde: '12:00', hasta: '19:00' },
+  { nombre: 'Noche', icono: Moon, desde: '19:00', hasta: '24:00' },
+]
 
 function capitalizar(texto: string): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1)
@@ -54,6 +71,12 @@ export function CourtSlotPicker({
     montoSena: number
     venceEn: string
   } | null>(null)
+
+  // El día elegido se centra en la tira (al abrir y al cambiar de día)
+  const diaElegidoRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    diaElegidoRef.current?.scrollIntoView({ inline: 'center', block: 'nearest' })
+  }, [fecha])
 
   async function cargarDisponibilidad(fechaConsultada: Date) {
     const fechaISO = format(fechaConsultada, 'yyyy-MM-dd')
@@ -185,190 +208,239 @@ export function CourtSlotPicker({
     setEstado('error')
   }
 
+  // Tira de días: todos los que se pueden reservar (hoy + 30)
+  const dias = diasParaReservar()
+  const diaElegido = format(fecha, 'yyyy-MM-dd')
+
+  function elegirDia(dia: string) {
+    setFecha(parse(dia, 'yyyy-MM-dd', new Date()))
+    setCargando(true)
+    setHoraSeleccionada(null)
+    setEstado('idle')
+    setReservaHecha(null)
+  }
+
+  // El pie (fijo abajo del sheet) aparece cuando hay algo para hacer o avisar
+  const hayPie =
+    turnoElegidoSeOcupo ||
+    (horaSeleccionada !== null && slotSeleccionado !== undefined) ||
+    reservaHecha !== null ||
+    (estado === 'error' && mensajeError !== '')
+
+  function botonDeTurno(slot: Slot) {
+    const seleccionado = slot.horaInicio === horaSeleccionada
+    const esPrecioEspecial = slot.precio !== precioBase
+    return (
+      <button
+        key={slot.horaInicio}
+        type="button"
+        disabled={!slot.disponible}
+        onClick={() => {
+          // Si la reserva anterior ya quedó pagada, se olvida: si no,
+          // volvería a aparecer su "Pagar seña" con la cuenta regresiva.
+          // Si todavía está pendiente, se queda (falta pagarla).
+          if (estado === 'exito') setReservaHecha(null)
+          setHoraSeleccionada(slot.horaInicio)
+          setEstado('idle')
+          setMensajeError('')
+        }}
+        className={
+          !slot.disponible
+            ? 'bg-secondary text-muted-foreground flex h-10 cursor-not-allowed flex-col items-center justify-center rounded-lg border text-sm font-medium line-through opacity-45'
+            : seleccionado
+              ? 'bg-primary text-primary-foreground border-primary flex h-10 flex-col items-center justify-center rounded-lg border text-sm font-semibold'
+              : 'border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground flex h-10 flex-col items-center justify-center rounded-lg border text-sm font-medium transition-colors'
+        }
+      >
+        {slot.horaInicio}
+        {esPrecioEspecial && slot.disponible && (
+          <span className="text-[10px] leading-none font-normal opacity-80">
+            {formatPrecio(slot.precio)}
+          </span>
+        )}
+      </button>
+    )
+  }
+
   return (
-    <div className="flex flex-col gap-3.5">
-      <div className="flex items-center gap-2">
-        <label
-          htmlFor={`fecha-${courtId}`}
-          className="flex items-center gap-1.5 text-sm font-medium"
-        >
+    <div className="flex flex-1 flex-col gap-5">
+      {/* Tira de días: se desliza de costado y el elegido queda centrado */}
+      <div>
+        <p className="mb-2 flex items-center gap-1.5 text-sm font-medium">
           <Calendar className="size-3.5" />
-          Fecha:
-        </label>
-        <input
-          id={`fecha-${courtId}`}
-          type="date"
-          min={diaDeHoy()}
-          max={ultimoDiaParaReservar()}
-          value={format(fecha, 'yyyy-MM-dd')}
-          onChange={(e) => {
-            setFecha(new Date(`${e.target.value}T00:00:00`))
-            setCargando(true)
-            setHoraSeleccionada(null)
-            setEstado('idle')
-            setReservaHecha(null)
-          }}
-          className="border-input bg-background h-9 rounded-lg border px-3 text-sm"
-        />
-        <span className="text-muted-foreground ml-auto flex items-center gap-1.5 text-xs">
-          <span className="size-2 animate-pulse rounded-full bg-green-500" />
-          En vivo
-        </span>
-      </div>
-
-      {minAdvanceMinutes > 0 && (
-        <p className="text-muted-foreground text-sm">
-          Los turnos se reservan con al menos {formatAdvanceTime(minAdvanceMinutes)} de
-          anticipación.
+          Elegí el día
         </p>
-      )}
-
-      {cargando ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-9 rounded-lg" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2">
-          {slots.map((slot) => {
-            const seleccionado = slot.horaInicio === horaSeleccionada
-            const esPrecioEspecial = slot.precio !== precioBase
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+          {dias.map((dia, indice) => {
+            const elegido = dia === diaElegido
+            let nombre = nombresCortosDeDias[new Date(`${dia}T00:00:00Z`).getUTCDay()]
+            if (indice === 0) nombre = 'Hoy'
+            if (indice === 1) nombre = 'Mañana'
             return (
               <button
-                key={slot.horaInicio}
+                key={dia}
+                ref={elegido ? diaElegidoRef : undefined}
                 type="button"
-                disabled={!slot.disponible}
-                onClick={() => {
-                  // Si la reserva anterior ya quedó pagada, se olvida: si no,
-                  // volvería a aparecer su "Pagar seña" con la cuenta regresiva.
-                  // Si todavía está pendiente, se queda (falta pagarla).
-                  if (estado === 'exito') setReservaHecha(null)
-                  setHoraSeleccionada(slot.horaInicio)
-                  setEstado('idle')
-                  setMensajeError('')
-                }}
+                aria-pressed={elegido}
+                onClick={() => elegirDia(dia)}
                 className={
-                  !slot.disponible
-                    ? 'bg-secondary text-muted-foreground flex h-9 cursor-not-allowed flex-col items-center justify-center rounded-lg border text-sm font-medium line-through opacity-45'
-                    : seleccionado
-                      ? 'bg-primary text-primary-foreground border-primary flex h-9 flex-col items-center justify-center rounded-lg border text-sm font-semibold'
-                      : 'border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground flex h-9 flex-col items-center justify-center rounded-lg border text-sm font-medium transition-colors'
+                  elegido
+                    ? 'bg-primary text-primary-foreground border-primary flex w-14 shrink-0 flex-col items-center rounded-xl border py-2'
+                    : 'border-border bg-card hover:bg-accent flex w-14 shrink-0 flex-col items-center rounded-xl border py-2 transition-colors'
                 }
               >
-                {slot.horaInicio}
-                {esPrecioEspecial && slot.disponible && (
-                  <span className="text-[10px] leading-none font-normal opacity-80">
-                    {formatPrecio(slot.precio)}
-                  </span>
-                )}
+                <span className="text-[11px] font-medium">{nombre}</span>
+                <span className="text-lg leading-tight font-bold">{Number(dia.slice(8))}</span>
+                <span className="text-[10px] uppercase opacity-75">
+                  {mesesCortos[Number(dia.slice(5, 7)) - 1]}
+                </span>
               </button>
             )
           })}
         </div>
-      )}
+      </div>
 
-      {turnoElegidoSeOcupo && (
-        <p className="text-destructive text-sm">
-          Otro jugador acaba de reservar las {horaSeleccionada}. Elegí otro horario.
-        </p>
-      )}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 text-sm font-medium">
+            <Clock className="size-3.5" />
+            Horarios
+          </p>
+          <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+            <span className="size-2 animate-pulse rounded-full bg-green-500" />
+            En vivo
+          </span>
+        </div>
 
-      {horaSeleccionada && slotSeleccionado && !turnoElegidoSeOcupo && (
-        <div className="bg-secondary border-border flex flex-col gap-3 rounded-lg border px-4 py-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-sm font-medium">
-              {capitalizar(format(fecha, 'EEEE dd/MM', { locale: es }))} · {horaSeleccionada} a{' '}
-              {slotSeleccionado.horaFin} hs
-            </div>
-            <div className="flex items-center gap-1.5 text-sm">
-              <span className="text-muted-foreground">Precio del turno:</span>
-              <span className="font-semibold">{formatPrecio(slotSeleccionado.precio)}</span>
-              {slotSeleccionado.precio !== precioBase && (
-                <Badge variant="secondary">Precio especial</Badge>
-              )}
-            </div>
+        {minAdvanceMinutes > 0 && (
+          <p className="text-muted-foreground text-sm">
+            Los turnos se reservan con al menos {formatAdvanceTime(minAdvanceMinutes)} de
+            anticipación.
+          </p>
+        )}
+
+        {cargando ? (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 rounded-lg" />
+            ))}
           </div>
-
-          <div className="bg-primary/10 border-primary/30 flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3.5 py-3">
-            <div className="flex items-center gap-2">
-              <Wallet className="text-primary size-4" />
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-medium">Seña para confirmar</span>
-                  <Badge variant="secondary">{porcentajeSena}%</Badge>
+        ) : (
+          // Agrupados por momento del día; los grupos sin turnos no se muestran
+          periodosDelDia.map((periodo) => {
+            const turnos = slots.filter(
+              (slot) => slot.horaInicio >= periodo.desde && slot.horaInicio < periodo.hasta,
+            )
+            if (turnos.length === 0) return null
+            const libres = turnos.filter((slot) => slot.disponible).length
+            const Icono = periodo.icono
+            return (
+              <div key={periodo.nombre}>
+                <p className="text-muted-foreground mb-1.5 flex items-center gap-1.5 text-xs font-medium">
+                  <Icono className="size-3.5" />
+                  {periodo.nombre}
+                  <span className="opacity-70">
+                    · {libres === 0 ? 'sin turnos libres' : `${libres} libres`}
+                  </span>
+                </p>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2">
+                  {turnos.map((slot) => botonDeTurno(slot))}
                 </div>
-                <span className="text-muted-foreground text-xs">
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* Pie fijo abajo del sheet: resumen para reservar, pago de la seña,
+          confirmación o error. mt-auto lo empuja abajo si sobra lugar. */}
+      {hayPie && (
+        <div className="bg-popover sticky bottom-0 -mx-4 mt-auto flex flex-col gap-3 border-t px-4 pt-3 pb-4 shadow-[0_-10px_20px_-16px_rgb(0_0_0/0.5)]">
+          {turnoElegidoSeOcupo && (
+            <p className="text-destructive text-sm">
+              Otro jugador acaba de reservar las {horaSeleccionada}. Elegí otro horario.
+            </p>
+          )}
+
+          {horaSeleccionada && slotSeleccionado && !turnoElegidoSeOcupo && (
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">
+                  {capitalizar(format(fecha, 'EEE dd/MM', { locale: es }))} · {horaSeleccionada} a{' '}
+                  {slotSeleccionado.horaFin} hs
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  Turno {formatPrecio(slotSeleccionado.precio)}
+                  {slotSeleccionado.precio !== precioBase && ' (precio especial)'} · Seña{' '}
+                  {porcentajeSena}%:{' '}
+                  <span className="text-primary font-semibold">
+                    {formatPrecio(montoSenaSeleccionada)}
+                  </span>
+                </p>
+                <p className="text-muted-foreground text-xs">
                   El resto ({formatPrecio(Number(slotSeleccionado.precio) - montoSenaSeleccionada)})
                   se paga en la cancha
-                </span>
+                </p>
+              </div>
+              <Button onClick={reservar} disabled={estado === 'reservando'} className="shrink-0">
+                {estado === 'reservando' ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Check className="size-3.5" />
+                )}
+                {estado === 'reservando' ? 'Reservando...' : 'Reservar'}
+              </Button>
+            </div>
+          )}
+
+          {reservaHecha && estado !== 'exito' && (
+            <div className="flex flex-col gap-3">
+              <div>
+                <p className="text-sm font-semibold">
+                  Reservaste {courtName} a las {reservaHecha.hora} hs
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  Pagá la seña para confirmar el turno; si no, el turno se libera.
+                </p>
+              </div>
+              <CuentaRegresivaSena venceEn={reservaHecha.venceEn} />
+              <Button onClick={pagarSena} disabled={estado === 'pagando'}>
+                {estado === 'pagando' ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Wallet className="size-3.5" />
+                )}
+                {estado === 'pagando'
+                  ? 'Pagando seña...'
+                  : `Pagar seña ${formatPrecio(reservaHecha.montoSena)}`}
+              </Button>
+            </div>
+          )}
+
+          {estado === 'exito' && reservaHecha && (
+            <div className="flex items-start gap-2.5">
+              <CheckCircle2 className="text-primary mt-0.5 size-5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold">Reserva confirmada</p>
+                <p className="text-muted-foreground text-xs">
+                  {courtName} a las {reservaHecha.hora} hs — seña de{' '}
+                  {formatPrecio(reservaHecha.montoSena)} pagada (simulado).
+                </p>
+                <Link
+                  href="/jugador/reservas"
+                  className="text-primary mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline"
+                >
+                  Ver mis reservas
+                  <ArrowRight className="size-3.5" />
+                </Link>
               </div>
             </div>
-            <span className="text-primary text-xl font-bold">
-              {formatPrecio(montoSenaSeleccionada)}
-            </span>
-          </div>
+          )}
 
-          <Button onClick={reservar} disabled={estado === 'reservando'} className="self-end">
-            {estado === 'reservando' ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Check className="size-3.5" />
-            )}
-            {estado === 'reservando' ? 'Reservando...' : 'Reservar'}
-          </Button>
+          {estado === 'error' && mensajeError && (
+            <p className="text-destructive text-sm">{mensajeError}</p>
+          )}
         </div>
-      )}
-
-      {reservaHecha && estado !== 'exito' && (
-        <div className="bg-secondary border-border flex flex-col gap-3 rounded-lg border px-4 py-3">
-          <div className="flex items-start gap-2.5">
-            <Clock className="text-muted-foreground mt-0.5 size-4 shrink-0" />
-            <div>
-              <p className="text-sm font-medium">
-                Reservaste {courtName} a las {reservaHecha.hora} hs
-              </p>
-              <p className="text-muted-foreground text-xs">
-                Pagá la seña para confirmar el turno; si no, el turno se libera.
-              </p>
-            </div>
-          </div>
-          <CuentaRegresivaSena venceEn={reservaHecha.venceEn} />
-          <Button onClick={pagarSena} disabled={estado === 'pagando'} className="self-end">
-            {estado === 'pagando' ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Wallet className="size-3.5" />
-            )}
-            {estado === 'pagando'
-              ? 'Pagando seña...'
-              : `Pagar seña ${formatPrecio(reservaHecha.montoSena)}`}
-          </Button>
-        </div>
-      )}
-
-      {estado === 'exito' && reservaHecha && (
-        <div className="border-primary/30 bg-primary/10 flex items-start gap-2.5 rounded-lg border px-4 py-3">
-          <CheckCircle2 className="text-primary mt-0.5 size-5 shrink-0" />
-          <div>
-            <p className="text-sm font-medium">Reserva confirmada</p>
-            <p className="text-muted-foreground text-xs">
-              {courtName} a las {reservaHecha.hora} hs — seña de{' '}
-              {formatPrecio(reservaHecha.montoSena)} pagada (simulado).
-            </p>
-            <Link
-              href="/jugador/reservas"
-              className="text-primary mt-2 inline-flex items-center gap-1 text-sm font-medium hover:underline"
-            >
-              Ver mis reservas
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {estado === 'error' && mensajeError && (
-        <p className="text-destructive text-sm">{mensajeError}</p>
       )}
     </div>
   )
