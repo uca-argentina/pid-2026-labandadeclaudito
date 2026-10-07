@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowRight, Building2, CalendarClock, Clock, LayoutGrid, Plus, User } from 'lucide-react'
+import { ArrowRight, Building2, CalendarClock, LayoutGrid, Plus, User } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { pendientesVencidas } from '@/lib/bookings'
-import { deporteLabels } from '@/lib/labels'
-import { diaDeHoy, diaDeReserva, formatearDia } from '@/lib/time'
+import { diaDeHoy, diaDeReserva } from '@/lib/time'
 import { StatCard } from '@/components/stat-card'
 import { Button } from '@/components/ui/button'
+import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
+import { FechaDelTurno } from '@/components/fecha-del-turno'
 
 export default async function DuenoHomePage() {
   const session = await auth()
@@ -104,25 +105,22 @@ export default async function DuenoHomePage() {
           {proximasReservas.map((reserva) => (
             <div
               key={reserva.id}
-              className="border-border bg-card flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-6"
+              className="border-border bg-card flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border p-5"
             >
+              <FechaDelTurno
+                dia={diaDeReserva(reserva.fecha)}
+                horaInicio={reserva.horaInicio}
+                horaFin={reserva.horaFin}
+              />
+              <div className="border-border hidden h-10 border-l sm:block" />
               <div>
                 <div className="flex items-center gap-2.5">
                   <span className="font-semibold">{reserva.cancha.nombre}</span>
-                  <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
-                    {deporteLabels[reserva.cancha.deporte]}
-                  </span>
+                  <EtiquetaDeporte deporte={reserva.cancha.deporte} />
                 </div>
                 <p className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-sm">
                   <User className="size-3.5 shrink-0" />
                   {reserva.cancha.complejo.nombre} · Reservó {reserva.jugador.nombre}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-medium">{formatearDia(diaDeReserva(reserva.fecha))}</p>
-                <p className="text-muted-foreground flex items-center justify-end gap-1.5 text-sm">
-                  <Clock className="size-3.5 shrink-0" />
-                  {reserva.horaInicio} a {reserva.horaFin} hs
                 </p>
               </div>
             </div>

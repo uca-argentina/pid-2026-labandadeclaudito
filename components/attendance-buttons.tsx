@@ -36,27 +36,32 @@ export function AttendanceButtons({
     setMarcando(false)
   }
 
+  // En pantallas angostas la tabla del historial no tiene lugar para el texto:
+  // se ven solo los íconos (el title y el aria-label dicen qué hace cada uno).
   return (
     <div className="text-right">
-      <p className="text-muted-foreground mb-1 text-xs">¿Se presentó el jugador?</p>
       <div className="flex justify-end gap-2">
         <Button
           size="sm"
           variant={asistio === true ? 'default' : 'outline'}
           onClick={() => marcar(true)}
           disabled={marcando}
+          title="Asistió"
+          aria-label="Asistió"
         >
           <Check className="size-3.5" />
-          Asistió
+          <span className="hidden 2xl:inline">Asistió</span>
         </Button>
         <Button
           size="sm"
           variant={asistio === false ? 'destructive' : 'outline'}
           onClick={() => marcar(false)}
           disabled={marcando}
+          title="No asistió"
+          aria-label="No asistió"
         >
           <X className="size-3.5" />
-          No asistió
+          <span className="hidden 2xl:inline">No asistió</span>
         </Button>
       </div>
       {error && <p className="text-destructive mt-1 text-xs">{error}</p>}

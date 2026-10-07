@@ -10,7 +10,7 @@ type ReservaDelHistorial = {
   pago: { monto: string; porcentaje: number; devuelto: boolean } | null
 }
 
-type MontoDelHistorial = {
+export type MontoDelHistorial = {
   etiqueta: string
   monto: string
   detalle?: string

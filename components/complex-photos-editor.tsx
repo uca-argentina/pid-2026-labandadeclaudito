@@ -62,7 +62,8 @@ export function ComplexPhotosEditor({
   }
 
   return (
-    <section className="space-y-4">
+    // id="fotos": el detalle del complejo linkea directo acá ("Cargar fotos")
+    <section id="fotos" className="scroll-mt-6 space-y-4">
       <div>
         <h2 className="flex items-center gap-2 text-xl font-semibold">
           <ImageIcon className="size-5" /> Fotos

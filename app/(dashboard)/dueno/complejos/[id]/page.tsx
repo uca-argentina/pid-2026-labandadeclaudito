@@ -1,13 +1,25 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { ArrowLeft, CalendarClock, MapPin, Pencil, Phone, Plus, Shapes } from 'lucide-react'
+import {
+  ArrowLeft,
+  CalendarClock,
+  ImageIcon,
+  ImagePlus,
+  MapPin,
+  Pencil,
+  Phone,
+  Plus,
+  Shapes,
+} from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { pendientesVencidas } from '@/lib/bookings'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
-import { diaDeHoy, diaDeReserva, formatearDia } from '@/lib/time'
+import { diaDeHoy, diaDeReserva } from '@/lib/time'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { ComplexGallery } from '@/components/complex-gallery'
+import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
+import { FechaDelTurno } from '@/components/fecha-del-turno'
 
 export default async function DetalleComplejoDuenoPage({
   params,
@@ -67,7 +79,24 @@ export default async function DetalleComplejoDuenoPage({
         </div>
       </div>
 
-      <ComplexGallery imagenes={complejo.imagenes} nombreComplejo={complejo.nombre} />
+      {complejo.imagenes.length > 0 ? (
+        <ComplexGallery imagenes={complejo.imagenes} nombreComplejo={complejo.nombre} />
+      ) : (
+        // Sin fotos: en lugar de la portada, una invitación a cargarlas
+        <div className="border-border bg-muted/30 mb-6 flex h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-6 text-center">
+          <ImageIcon className="text-muted-foreground size-8" />
+          <div>
+            <p className="font-medium">Tu complejo todavía no tiene fotos</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Se muestran en la búsqueda y en la página del complejo que ven los jugadores.
+            </p>
+          </div>
+          <Button size="sm" render={<Link href={`/dueno/complejos/${id}/editar#fotos`} />}>
+            <ImagePlus className="size-4" />
+            Cargar fotos
+          </Button>
+        </div>
+      )}
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">Canchas</h2>
@@ -126,23 +155,21 @@ export default async function DetalleComplejoDuenoPage({
           {proximosTurnos.map((reserva) => (
             <div
               key={reserva.id}
-              className="border-border bg-card flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-6"
+              className="border-border bg-card flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border p-5"
             >
+              <FechaDelTurno
+                dia={diaDeReserva(reserva.fecha)}
+                horaInicio={reserva.horaInicio}
+                horaFin={reserva.horaFin}
+              />
+              <div className="border-border hidden h-10 border-l sm:block" />
               <div>
                 <div className="flex items-center gap-2.5">
                   <span className="font-semibold">{reserva.cancha.nombre}</span>
-                  <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
-                    {deporteLabels[reserva.cancha.deporte]}
-                  </span>
+                  <EtiquetaDeporte deporte={reserva.cancha.deporte} />
                 </div>
                 <p className="text-muted-foreground mt-1.5 text-sm">
                   Reservó {reserva.jugador.nombre}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-medium">{formatearDia(diaDeReserva(reserva.fecha))}</p>
-                <p className="text-muted-foreground text-sm">
-                  {reserva.horaInicio} a {reserva.horaFin} hs
                 </p>
               </div>
             </div>

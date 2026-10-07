@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import Link from 'next/link'
 import { ImageIcon, MapPin, SearchX, Shapes, Wallet, X } from 'lucide-react'
-import { deporteLabels, formatPrecio } from '@/lib/labels'
+import { formatPrecio } from '@/lib/labels'
 import { activeFilterChips, filtersToQueryString, searchComplexes } from '@/lib/court-search'
 import type { CourtWithPrice } from '@/lib/court-search'
 import { searchCourtsSchema } from '@/lib/validations/court-search'
@@ -11,6 +11,7 @@ import { clasesGrillaAdaptable } from '@/lib/grid-columns'
 import { Button } from '@/components/ui/button'
 import { SearchFiltersSheet } from '@/components/search-filters-sheet'
 import type { Cancha, Deporte } from '@/lib/generated/prisma/client'
+import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
 
 function deportesDistintos(canchas: Cancha[]) {
   const deportes: Deporte[] = []
@@ -130,14 +131,9 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
                       : `${complejo.canchas.length} canchas`}
                   </span>
 
-                  <div className="mt-3 mb-4 flex flex-wrap items-center gap-1.5 text-xs">
+                  <div className="mt-3 mb-4 flex flex-wrap items-center gap-1.5">
                     {deportes.map((deporteDeCancha) => (
-                      <span
-                        key={deporteDeCancha}
-                        className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1"
-                      >
-                        {deporteLabels[deporteDeCancha]}
-                      </span>
+                      <EtiquetaDeporte key={deporteDeCancha} deporte={deporteDeCancha} />
                     ))}
                   </div>
 

@@ -16,6 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { CourtRowActions } from '@/components/court-row-actions'
+import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
 
 export default async function ListadoCanchasPage({
   params,
@@ -107,10 +108,8 @@ export default async function ListadoCanchasPage({
                 {canchas.map((cancha) => (
                   <TableRow key={cancha.id}>
                     <TableCell className="whitespace-normal">
-                      <span className="block font-semibold">{cancha.nombre}</span>
-                      <span className="text-muted-foreground text-sm">
-                        {deporteLabels[cancha.deporte]}
-                      </span>
+                      <span className="mb-1 block font-semibold">{cancha.nombre}</span>
+                      <EtiquetaDeporte deporte={cancha.deporte} />
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">{superficieLabels[cancha.tipoSuperficie]}</Badge>

@@ -1,18 +1,37 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { CalendarCheck, Clock, Hourglass, MapPin, Wallet } from 'lucide-react'
+import {
+  CalendarCheck,
+  CalendarDays,
+  CircleDot,
+  Clock,
+  Hourglass,
+  LandPlot,
+  MapPin,
+  Wallet,
+} from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import type { Prisma } from '@/lib/generated/prisma/client'
 import { dondeHistorial, dondeProximas } from '@/lib/bookings'
-import { deporteLabels, formatPrecio } from '@/lib/labels'
+import { formatPrecio } from '@/lib/labels'
 import { montoDelHistorial } from '@/lib/historial'
 import { venceLaSena } from '@/lib/estado-reserva'
 import { calcularPagina } from '@/lib/paginacion'
 import { diaDeReserva, formatearDia, momentoActual, refundsDeposit, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { CancelBookingButton } from '@/components/cancel-booking-button'
+import { CeldaCancha, CeldaMonto } from '@/components/celdas-reserva'
+import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
+import { FechaDelTurno } from '@/components/fecha-del-turno'
+import { TituloConIcono } from '@/components/titulo-con-icono'
 import { Paginacion } from '@/components/paginacion'
+import {
+  leerVista,
+  PestaniasDeReservas,
+  urlDeReservas,
+  type VistaDeReservas,
+} from '@/components/pestanias-reservas'
 import { PayDepositButton } from '@/components/pay-deposit-button'
 import { RefreshWhenDepositExpires } from '@/components/refresh-when-deposit-expires'
 import {
@@ -28,13 +47,6 @@ import {
 // Historial y canceladas, como tabla: son solo para consultar.
 const TARJETAS_POR_PAGINA = 12
 const FILAS_POR_PAGINA = 20
-
-const vistas = {
-  proximas: 'Próximas',
-  historial: 'Historial',
-  canceladas: 'Canceladas',
-}
-type Vista = keyof typeof vistas
 
 async function getReservas(
   where: Prisma.ReservaWhereInput,
@@ -67,13 +79,12 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
   // ?vista=historial|canceladas elige la pestaña (sin vista = próximas)
   // ?pagina=2 elige la página dentro de esa pestaña
   const { vista: vistaPedida, pagina } = await searchParams
-  let vista: Vista = 'proximas'
-  if (vistaPedida === 'historial' || vistaPedida === 'canceladas') vista = vistaPedida
+  const vista = leerVista(vistaPedida)
 
   // Qué es "próxima" o "historial" lo decide la base (ver dondeProximas),
   // así cuenta y pagina sin traer todas las reservas.
   const ahora = momentoActual()
-  const dondePorVista: Record<Vista, Prisma.ReservaWhereInput> = {
+  const dondePorVista: Record<VistaDeReservas, Prisma.ReservaWhereInput> = {
     proximas: { jugadorId, ...dondeProximas(ahora) },
     historial: { jugadorId, ...dondeHistorial(ahora) },
     canceladas: { jugadorId, estado: 'CANCELADA' },
@@ -102,13 +113,6 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
     porPagina,
   )
 
-  function urlDe(vistaDelLink: Vista, paginaDelLink: number) {
-    const params = new URLSearchParams()
-    if (vistaDelLink !== 'proximas') params.set('vista', vistaDelLink)
-    if (paginaDelLink > 1) params.set('pagina', String(paginaDelLink))
-    return `/jugador/reservas?${params.toString()}`
-  }
-
   const paginacion = (
     <Paginacion
       paginaActual={paginaActual}
@@ -116,8 +120,8 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
       desde={skip + 1}
       hasta={skip + reservas.length}
       total={totales[vista]}
-      urlAnterior={urlDe(vista, paginaActual - 1)}
-      urlSiguiente={urlDe(vista, paginaActual + 1)}
+      urlAnterior={urlDeReservas('/jugador/reservas', vista, paginaActual - 1)}
+      urlSiguiente={urlDeReservas('/jugador/reservas', vista, paginaActual + 1)}
     />
   )
 
@@ -145,18 +149,7 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
         </div>
       ) : (
         <>
-          {/* Pestañas: cada una es un link, la elegida va rellena */}
-          <div className="mb-6 flex flex-wrap gap-2">
-            <PestaniaDeVista href={urlDe('proximas', 1)} elegida={vista === 'proximas'}>
-              {vistas.proximas} ({totales.proximas})
-            </PestaniaDeVista>
-            <PestaniaDeVista href={urlDe('historial', 1)} elegida={vista === 'historial'}>
-              {vistas.historial} ({totales.historial})
-            </PestaniaDeVista>
-            <PestaniaDeVista href={urlDe('canceladas', 1)} elegida={vista === 'canceladas'}>
-              {vistas.canceladas} ({totales.canceladas})
-            </PestaniaDeVista>
-          </div>
+          <PestaniasDeReservas ruta="/jugador/reservas" vista={vista} totales={totales} />
 
           {reservas.length === 0 && (
             <p className="text-muted-foreground text-sm">
@@ -187,10 +180,18 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="pl-4">Turno</TableHead>
-                    <TableHead>Cancha</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="hidden pr-4 text-right sm:table-cell">Monto</TableHead>
+                    <TableHead className="pl-4">
+                      <TituloConIcono icono={CalendarDays}>Turno</TituloConIcono>
+                    </TableHead>
+                    <TableHead className="hidden sm:table-cell">
+                      <TituloConIcono icono={LandPlot}>Cancha</TituloConIcono>
+                    </TableHead>
+                    <TableHead>
+                      <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
+                    </TableHead>
+                    <TableHead className="hidden pr-4 sm:table-cell">
+                      <TituloConIcono icono={Wallet}>Monto</TituloConIcono>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -205,29 +206,6 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
         </>
       )}
     </main>
-  )
-}
-
-function PestaniaDeVista({
-  href,
-  elegida,
-  children,
-}: {
-  href: string
-  elegida: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <Link
-      href={href}
-      className={
-        elegida
-          ? 'bg-primary text-primary-foreground rounded-full px-3 py-1 text-sm'
-          : 'border-border hover:bg-muted rounded-full border px-3 py-1 text-sm'
-      }
-    >
-      {children}
-    </Link>
   )
 }
 
@@ -254,19 +232,15 @@ function FilaReserva({
   return (
     <TableRow>
       <TableCell className="pl-4">
-        <p className="font-medium">{formatearDia(dia)}</p>
-        <p className="text-muted-foreground text-xs">
-          {reserva.horaInicio} a {reserva.horaFin} hs
-        </p>
+        <FechaDelTurno dia={dia} horaInicio={reserva.horaInicio} horaFin={reserva.horaFin} />
       </TableCell>
-      <TableCell>
-        <p className="font-medium">
-          {reserva.cancha.nombre}{' '}
-          <span className="text-muted-foreground text-xs font-normal">
-            · {deporteLabels[reserva.cancha.deporte]}
-          </span>
-        </p>
-        <p className="text-muted-foreground text-xs">{reserva.cancha.complejo.nombre}</p>
+      {/* En celular no entra: se ven el turno y el estado */}
+      <TableCell className="hidden sm:table-cell">
+        <CeldaCancha
+          nombre={reserva.cancha.nombre}
+          deporte={reserva.cancha.deporte}
+          complejo={reserva.cancha.complejo.nombre}
+        />
       </TableCell>
       <TableCell>
         <BookingStatusBadge
@@ -278,13 +252,8 @@ function FilaReserva({
           ahoraInicial={ahora}
         />
       </TableCell>
-      <TableCell className="hidden pr-4 text-right sm:table-cell">
-        {monto && (
-          <>
-            <p className={`font-semibold ${tonos[monto.tono]}`}>{monto.monto}</p>
-            <p className="text-muted-foreground text-xs">{monto.etiqueta}</p>
-          </>
-        )}
+      <TableCell className="hidden pr-4 sm:table-cell">
+        <CeldaMonto monto={monto} />
       </TableCell>
     </TableRow>
   )
@@ -345,9 +314,7 @@ function TarjetaReserva({
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-lg font-bold">{reserva.cancha.nombre}</span>
-        <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
-          {deporteLabels[reserva.cancha.deporte]}
-        </span>
+        <EtiquetaDeporte deporte={reserva.cancha.deporte} />
         <BookingStatusBadge
           estado={reserva.estado}
           asistio={reserva.asistio}

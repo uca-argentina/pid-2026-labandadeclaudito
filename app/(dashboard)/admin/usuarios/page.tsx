@@ -1,11 +1,23 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Building2, ShieldCheck, User, UserX, Users } from 'lucide-react'
+import {
+  Activity,
+  Building2,
+  CalendarPlus,
+  CircleDot,
+  IdCard,
+  ShieldCheck,
+  User,
+  UserCog,
+  UserX,
+  Users,
+} from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { iniciales } from '@/lib/iniciales'
 import { calcularPagina } from '@/lib/paginacion'
 import { StatCard } from '@/components/stat-card'
+import { TituloConIcono } from '@/components/titulo-con-icono'
 import { Paginacion } from '@/components/paginacion'
 import { UserSearch } from '@/components/user-search'
 import { RoleFilter } from '@/components/role-filter'
@@ -177,12 +189,24 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="pl-4">Usuario</TableHead>
-                <TableHead className="hidden sm:table-cell">Rol</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="hidden lg:table-cell">Actividad</TableHead>
-                <TableHead className="hidden lg:table-cell">Alta</TableHead>
-                <TableHead className="pr-4 text-right">Acción</TableHead>
+                <TableHead className="pl-4">
+                  <TituloConIcono icono={User}>Usuario</TituloConIcono>
+                </TableHead>
+                <TableHead className="hidden sm:table-cell">
+                  <TituloConIcono icono={IdCard}>Rol</TituloConIcono>
+                </TableHead>
+                <TableHead>
+                  <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  <TituloConIcono icono={Activity}>Actividad</TituloConIcono>
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  <TituloConIcono icono={CalendarPlus}>Alta</TituloConIcono>
+                </TableHead>
+                <TableHead className="pr-4 text-right">
+                  <TituloConIcono icono={UserCog}>Acción</TituloConIcono>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
