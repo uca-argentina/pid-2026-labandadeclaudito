@@ -8,3 +8,8 @@ export const registerSchema = z.object({
 })
 
 export type RegisterInput = z.infer<typeof registerSchema>
+
+// El admin suspende (activo: false) o reactiva (activo: true) una cuenta
+export const cambiarActivoSchema = z.object({
+  activo: z.boolean(),
+})

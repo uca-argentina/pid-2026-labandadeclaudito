@@ -6,12 +6,12 @@ declare module 'next-auth' {
   interface Session {
     user: {
       id: string
-      rol: 'JUGADOR' | 'DUENIO'
+      rol: 'JUGADOR' | 'DUENIO' | 'ADMIN'
     } & DefaultSession['user']
   }
 
   interface User {
-    rol: 'JUGADOR' | 'DUENIO'
+    rol: 'JUGADOR' | 'DUENIO' | 'ADMIN'
   }
 }
 
@@ -20,6 +20,6 @@ declare module 'next-auth' {
 // si no, TS no hace el merge y token.rol queda como unknown.
 declare module '@auth/core/jwt' {
   interface JWT {
-    rol: 'JUGADOR' | 'DUENIO'
+    rol: 'JUGADOR' | 'DUENIO' | 'ADMIN'
   }
 }

@@ -25,7 +25,7 @@ export default async function MisComplejosPage() {
   })
 
   return (
-    <main className="mx-auto max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+    <main className="max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold">Mis complejos</h1>
@@ -50,7 +50,7 @@ export default async function MisComplejosPage() {
       )}
 
       {complejosDelDuenio.length > 0 && (
-        <div className={`mx-auto grid gap-5 ${clasesGrillaAdaptable(complejosDelDuenio.length)}`}>
+        <div className={`grid gap-5 ${clasesGrillaAdaptable(complejosDelDuenio.length)}`}>
           {complejosDelDuenio.map((complejo) => (
             <Card key={complejo.id} className="h-full gap-0 pt-0">
               {/* Foto y datos abren el detalle; "Ver canchas" queda afuera para no anidar

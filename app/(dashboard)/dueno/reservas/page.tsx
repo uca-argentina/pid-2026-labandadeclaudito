@@ -54,7 +54,7 @@ export default async function ReservasDelDuenioPage() {
   const canceladas = reservas.filter((r) => r.estado === 'CANCELADA')
 
   return (
-    <main className="mx-auto max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+    <main className="max-w-5xl px-6 pt-6 pb-12 md:pt-4">
       <div className="mb-6">
         <h1 className="text-3xl font-semibold">Reservas</h1>
         <p className="text-muted-foreground mt-1 text-sm">

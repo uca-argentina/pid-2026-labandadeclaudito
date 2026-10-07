@@ -68,7 +68,7 @@ export function matchingSlots(
 // alguna cancha activa, porque los demás nunca aparecen en los resultados.
 export async function getSearchableZones() {
   const complejos = await db.complejo.findMany({
-    where: { activo: true, canchas: { some: { activo: true } } },
+    where: { activo: true, duenio: { activo: true }, canchas: { some: { activo: true } } },
     distinct: ['zona'],
     select: { zona: true },
     orderBy: { zona: 'asc' },
@@ -156,6 +156,8 @@ export async function searchComplexes(filtros: SearchCourtsFilters, jugadorId?: 
       // La zona es texto libre: "CABA" y "caba" son la misma zona
       zona: filtros.zona === undefined ? undefined : { equals: filtros.zona, mode: 'insensitive' },
       activo: true,
+      // los complejos de un dueño suspendido no aparecen
+      duenio: { activo: true },
       canchas: { some: courtFilter(filtros) },
     },
     include: {
@@ -187,7 +189,7 @@ export async function getComplexDetail(
   jugadorId?: string,
 ) {
   const complejo = await db.complejo.findFirst({
-    where: { id, activo: true },
+    where: { id, activo: true, duenio: { activo: true } },
     include: {
       canchas: {
         where: courtFilter(filtros),
