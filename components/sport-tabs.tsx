@@ -16,32 +16,34 @@ const clasePestana =
 
 // Pestañas de deporte arriba del bloque principal: el deporte elegido cambia
 // los colores y la cancha del bloque, por eso se eligen ahí mismo.
-// En pantallas chicas scrollean de costado.
+// Si no entran en una fila bajan a la siguiente (sin scroll de costado, que en
+// el celular deja una barra fea).
 export function SportTabs({ pestanas }: { pestanas: PestanaDeDeporte[] }) {
   return (
-    <div className="-mx-4 overflow-x-auto px-4 pb-1 [contain:inline-size] sm:-mx-5 sm:px-5">
-      <nav className="flex gap-1.5" aria-label="Deporte">
-        {pestanas.map((pestana) => (
-          <Link
-            key={pestana.deporte ?? 'todos'}
-            href={pestana.href}
-            scroll={false}
-            aria-current={pestana.activa ? 'page' : undefined}
-            className={
-              pestana.activa
-                ? `${clasePestana} bg-hero-line text-tema-hasta shadow-sm`
-                : `${clasePestana} bg-hero-line/10 text-hero-line hover:bg-hero-line/20`
-            }
-          >
-            {pestana.deporte ? (
-              <SportIcon deporte={pestana.deporte} className="size-5" />
-            ) : (
-              <LayoutGrid className="size-4" />
-            )}
-            {pestana.deporte ? deporteLabels[pestana.deporte] : 'Todos los deportes'}
-          </Link>
-        ))}
-      </nav>
-    </div>
+    <nav className="flex flex-wrap gap-1.5" aria-label="Deporte">
+      {pestanas.map((pestana) => (
+        <Link
+          key={pestana.deporte ?? 'todos'}
+          href={pestana.href}
+          scroll={false}
+          aria-current={pestana.activa ? 'page' : undefined}
+          className={
+            pestana.activa
+              ? `${clasePestana} bg-hero-line text-tema-hasta shadow-sm`
+              : `${clasePestana} bg-hero-line/10 text-hero-line hover:bg-hero-line/20`
+          }
+        >
+          {pestana.deporte ? (
+            <SportIcon deporte={pestana.deporte} className="size-5" />
+          ) : (
+            <LayoutGrid className="size-4" />
+          )}
+          {pestana.deporte && deporteLabels[pestana.deporte]}
+          {/* En el celular, corto */}
+          {!pestana.deporte && <span className="sm:hidden">Todos</span>}
+          {!pestana.deporte && <span className="hidden sm:inline">Todos los deportes</span>}
+        </Link>
+      ))}
+    </nav>
   )
 }
