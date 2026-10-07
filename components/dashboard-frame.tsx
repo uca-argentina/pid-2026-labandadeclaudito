@@ -57,16 +57,18 @@ export function DashboardFrame({
     <div className="space-y-6">
       {/* En mobile cada select ocupa su fila, para que se lea el nombre entero */}
       <div className="flex flex-col gap-3 sm:flex-row">
+        {/* key: si el complejo cambia desde otro lado (el ranking "Por
+            complejo"), el select se vuelve a armar y muestra el nuevo */}
         <select
+          key={complejoId ?? 'todos'}
           aria-label="Complejo"
           defaultValue={complejoId ?? ''}
           // Otro complejo puede no tener el deporte elegido: vuelve a "Todos".
-          // El valor vacío es "Todos tus complejos".
+          // El valor vacío es "Todos los complejos".
           onChange={(e) => navegar(e.target.value || undefined, dias, undefined)}
           className={`${selectClassName} w-full sm:w-auto`}
         >
-          {/* Con un solo complejo no hay nada que sumar */}
-          {complejos.length > 1 && <option value="">Todos tus complejos</option>}
+          <option value="">Todos los complejos</option>
           {complejos.map((complejo) => (
             <option key={complejo.id} value={complejo.id}>
               {complejo.nombre}
@@ -74,6 +76,7 @@ export function DashboardFrame({
           ))}
         </select>
         <select
+          key={dias}
           aria-label="Período"
           defaultValue={String(dias)}
           onChange={(e) => navegar(complejoId, Number(e.target.value), deporte)}
