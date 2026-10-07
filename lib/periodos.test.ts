@@ -5,8 +5,12 @@ import {
   diasDeLaSemanaDe,
   fechaDelPeriodoVecino,
   nombreDelPeriodo,
+  periodoElegido,
   periodoQueContiene,
   rangosAComparar,
+  rangoValido,
+  rangoVecino,
+  tituloDelRango,
   tituloDelPeriodo,
 } from './periodos'
 
@@ -153,5 +157,106 @@ describe('tituloDelPeriodo', () => {
 
   test('mes', () => {
     expect(tituloDelPeriodo(hoy, 'mes')).toBe('Octubre de 2026')
+  })
+})
+
+describe('rangoValido', () => {
+  test('sin fechas son los últimos 30 días hasta hoy', () => {
+    expect(rangoValido(undefined, undefined, hoy)).toEqual({ desde: '2026-09-08', hasta: hoy })
+  })
+
+  test('desde y hasta al revés se acomodan', () => {
+    expect(rangoValido('2026-10-05', '2026-10-01', hoy)).toEqual({
+      desde: '2026-10-01',
+      hasta: '2026-10-05',
+    })
+  })
+
+  test('no llega al futuro', () => {
+    expect(rangoValido('2026-10-01', '2026-12-31', hoy)).toEqual({
+      desde: '2026-10-01',
+      hasta: hoy,
+    })
+  })
+
+  test('todo en el futuro queda en hoy', () => {
+    expect(rangoValido('2027-01-01', '2027-02-01', hoy)).toEqual({ desde: hoy, hasta: hoy })
+  })
+
+  test('como mucho 366 días', () => {
+    expect(rangoValido('2020-01-01', hoy, hoy)).toEqual({ desde: '2025-10-07', hasta: hoy })
+  })
+})
+
+describe('rangoVecino', () => {
+  test('el anterior y el siguiente tienen el mismo largo', () => {
+    const rango = { desde: '2026-10-01', hasta: '2026-10-07' }
+    expect(rangoVecino(rango, -1)).toEqual({ desde: '2026-09-24', hasta: '2026-09-30' })
+    expect(rangoVecino(rango, 1)).toEqual({ desde: '2026-10-08', hasta: '2026-10-14' })
+  })
+})
+
+describe('tituloDelRango', () => {
+  test('dentro de un mes', () => {
+    expect(tituloDelRango({ desde: '2026-10-03', hasta: '2026-10-09' })).toBe('3 – 9 oct 2026')
+  })
+
+  test('entre dos meses', () => {
+    expect(tituloDelRango({ desde: '2026-09-28', hasta: '2026-10-04' })).toBe('28 sep – 4 oct 2026')
+  })
+
+  test('entre dos años', () => {
+    expect(tituloDelRango({ desde: '2025-12-28', hasta: '2026-01-04' })).toBe(
+      '28 dic 2025 – 4 ene 2026',
+    )
+  })
+
+  test('un solo día', () => {
+    expect(tituloDelRango({ desde: hoy, hasta: hoy })).toBe('7 oct 2026')
+  })
+})
+
+describe('periodoElegido', () => {
+  test('sin nada: hoy, comparado contra ayer', () => {
+    const periodo = periodoElegido('dia', {}, hoy)
+    expect(periodo.actual).toEqual({ desde: hoy, hasta: hoy })
+    expect(periodo.anterior).toEqual({ desde: '2026-10-06', hasta: '2026-10-06' })
+    expect(periodo.esElActual).toBe(true)
+    expect(periodo.subtitulo).toBe('Hoy')
+    expect(periodo.fechasActuales).toEqual({ fecha: undefined })
+  })
+
+  test('una fecha del futuro muestra el período de hoy', () => {
+    expect(periodoElegido('mes', { fecha: '2027-03-01' }, hoy).titulo).toBe('Octubre de 2026')
+  })
+
+  test('un mes pasado lleva su fecha en los links y no tiene subtítulo', () => {
+    const periodo = periodoElegido('mes', { fecha: '2026-09-10' }, hoy)
+    expect(periodo.esElActual).toBe(false)
+    expect(periodo.subtitulo).toBe('')
+    expect(periodo.fechasActuales).toEqual({ fecha: '2026-09-10' })
+    expect(periodo.fechasSiguiente).toEqual({ fecha: '2026-10-01' })
+  })
+
+  test('pasar de un mes a rango arranca con ese mes', () => {
+    const periodo = periodoElegido('mes', { fecha: '2026-09-10' }, hoy)
+    expect(periodo.fechasPorVista.rango).toEqual({ desde: '2026-09-01', hasta: '2026-09-30' })
+  })
+
+  test('un rango se compara contra el mismo largo justo antes', () => {
+    const periodo = periodoElegido('rango', { desde: '2026-10-01', hasta: '2026-10-07' }, hoy)
+    expect(periodo.anterior).toEqual({ desde: '2026-09-24', hasta: '2026-09-30' })
+    expect(periodo.comparacion).toBe('los 7 días anteriores')
+    expect(periodo.subtitulo).toBe('Últimos 7 días')
+  })
+
+  test('"Hoy" en un rango mantiene el largo y termina hoy', () => {
+    const periodo = periodoElegido('rango', { desde: '2026-09-01', hasta: '2026-09-10' }, hoy)
+    expect(periodo.fechasDeHoy).toEqual({ desde: '2026-09-28', hasta: hoy })
+  })
+
+  test('de un rango pasado a mes se mira el mes de su último día', () => {
+    const periodo = periodoElegido('rango', { desde: '2026-08-20', hasta: '2026-09-10' }, hoy)
+    expect(periodo.fechasPorVista.mes).toEqual({ fecha: '2026-09-10' })
   })
 })

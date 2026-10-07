@@ -11,6 +11,10 @@ import { sumarDias } from '@/lib/time'
 
 export type Vista = 'dia' | 'semana' | 'mes'
 
+// Lo que se puede elegir en el selector: los períodos de calendario o un
+// rango de fechas a mano
+export type VistaDelSelector = Vista | 'rango'
+
 export type Periodo = { desde: string; hasta: string }
 
 // 0 (domingo) a 6 (sábado). Se lee en UTC para que la zona del servidor no
@@ -158,4 +162,157 @@ export function tituloDelPeriodo(fecha: string, vista: Vista): string {
   }
 
   return `${nombresDeMeses[Number(periodo.desde.slice(5, 7)) - 1]} de ${anio}`
+}
+
+// ---------- Rangos elegidos a mano ----------
+
+// Como mucho un año: más que eso trae demasiados datos de golpe
+export const MAXIMO_DE_DIAS_DEL_RANGO = 366
+
+// Un rango elegido a mano, ya validado: sin fechas son los últimos 30 días;
+// desde y hasta al revés se acomodan; nada en el futuro; como mucho 366 días.
+export function rangoValido(
+  desde: string | undefined,
+  hasta: string | undefined,
+  hoy: string,
+): Periodo {
+  let fin = hasta ?? hoy
+  let inicio = desde ?? sumarDias(fin, -29)
+  if (inicio > fin) {
+    const auxiliar = inicio
+    inicio = fin
+    fin = auxiliar
+  }
+  if (fin > hoy) fin = hoy
+  if (inicio > fin) inicio = fin
+  if (cantidadDeDias({ desde: inicio, hasta: fin }) > MAXIMO_DE_DIAS_DEL_RANGO) {
+    inicio = sumarDias(fin, -(MAXIMO_DE_DIAS_DEL_RANGO - 1))
+  }
+  return { desde: inicio, hasta: fin }
+}
+
+// El rango del mismo largo justo antes (paso -1) o justo después (paso 1)
+export function rangoVecino(rango: Periodo, paso: 1 | -1): Periodo {
+  const largo = cantidadDeDias(rango)
+  return {
+    desde: sumarDias(rango.desde, largo * paso),
+    hasta: sumarDias(rango.hasta, largo * paso),
+  }
+}
+
+// "3 – 9 oct 2026", "28 sep – 4 oct 2026", "28 dic 2025 – 4 ene 2026"
+export function tituloDelRango(rango: Periodo): string {
+  const anioDesde = rango.desde.slice(0, 4)
+  const anioHasta = rango.hasta.slice(0, 4)
+  if (rango.desde === rango.hasta) return `${diaCorto(rango.desde)} ${anioHasta}`
+  if (anioDesde !== anioHasta) {
+    return `${diaCorto(rango.desde)} ${anioDesde} – ${diaCorto(rango.hasta)} ${anioHasta}`
+  }
+  if (rango.desde.slice(5, 7) === rango.hasta.slice(5, 7)) {
+    const mes = nombresCortosDeMeses[Number(rango.desde.slice(5, 7)) - 1]
+    return `${Number(rango.desde.slice(8, 10))} – ${Number(rango.hasta.slice(8, 10))} ${mes} ${anioHasta}`
+  }
+  return `${diaCorto(rango.desde)} – ${diaCorto(rango.hasta)} ${anioHasta}`
+}
+
+// ---------- El período elegido en el selector, ya resuelto ----------
+
+// La parte de fechas de los filtros de la URL
+export type FechasDelFiltro = { fecha?: string; desde?: string; hasta?: string }
+
+export type PeriodoElegido = {
+  // Lo que se mide y contra qué se compara
+  actual: Periodo
+  anterior: Periodo
+  titulo: string
+  // Solo en el período actual o en un rango (vacío si no hay nada que aclarar)
+  subtitulo: string
+  esElActual: boolean
+  // "vs. la semana anterior"
+  comparacion: string
+  nombreDelAnterior: string
+  // Las fechas para cada botón del selector y para los links
+  fechasActuales: FechasDelFiltro
+  fechasAnterior: FechasDelFiltro
+  fechasSiguiente: FechasDelFiltro
+  fechasDeHoy: FechasDelFiltro
+  fechasPorVista: Record<VistaDelSelector, FechasDelFiltro>
+}
+
+function periodoDeUnRango(entrada: FechasDelFiltro, hoy: string): PeriodoElegido {
+  const actual = rangoValido(entrada.desde, entrada.hasta, hoy)
+  const dias = cantidadDeDias(actual)
+  const esElActual = actual.hasta === hoy
+  const anterior = rangoVecino(actual, -1)
+  const siguiente = rangoVecino(actual, 1)
+  // Al pasar a día, semana o mes se mira el período del último día del rango
+  const ancla = esElActual ? undefined : actual.hasta
+  const textoDeDias = dias === 1 ? '1 día' : `${dias} días`
+
+  return {
+    actual,
+    anterior,
+    titulo: tituloDelRango(actual),
+    subtitulo: esElActual ? `Últimos ${textoDeDias}` : textoDeDias,
+    esElActual,
+    comparacion: dias === 1 ? 'el día anterior' : `los ${dias} días anteriores`,
+    nombreDelAnterior: 'Período anterior',
+    fechasActuales: { desde: actual.desde, hasta: actual.hasta },
+    fechasAnterior: { desde: anterior.desde, hasta: anterior.hasta },
+    fechasSiguiente: { desde: siguiente.desde, hasta: siguiente.hasta },
+    // Mismo largo, terminando hoy
+    fechasDeHoy: { desde: sumarDias(hoy, -(dias - 1)), hasta: hoy },
+    fechasPorVista: {
+      dia: { fecha: ancla },
+      semana: { fecha: ancla },
+      mes: { fecha: ancla },
+      rango: { desde: actual.desde, hasta: actual.hasta },
+    },
+  }
+}
+
+// Resuelve lo que viene en la URL: qué se mide, contra qué se compara, qué
+// textos mostrar y a qué fechas lleva cada botón. Sin fecha es el período de
+// hoy; no hay datos del futuro, así que una fecha posterior también es hoy.
+export function periodoElegido(
+  vista: VistaDelSelector,
+  entrada: FechasDelFiltro,
+  hoy: string,
+): PeriodoElegido {
+  if (vista === 'rango') return periodoDeUnRango(entrada, hoy)
+
+  let fecha = entrada.fecha ?? hoy
+  if (periodoQueContiene(fecha, vista).desde > periodoQueContiene(hoy, vista).desde) {
+    fecha = hoy
+  }
+  const esElActual = periodoQueContiene(fecha, vista).desde === periodoQueContiene(hoy, vista).desde
+  const rangos = rangosAComparar(fecha, vista, hoy)
+  const nombre = nombreDelPeriodo(fecha, vista, hoy)
+  // La fecha va en la URL solo si no es el período de hoy
+  const ancla = esElActual ? undefined : fecha
+
+  let subtitulo = ''
+  if (esElActual) subtitulo = vista === 'dia' ? 'Hoy' : `${nombre} · hasta hoy`
+
+  return {
+    actual: rangos.actual,
+    anterior: rangos.anterior,
+    titulo: tituloDelPeriodo(fecha, vista),
+    subtitulo,
+    esElActual,
+    comparacion: comparacionDeLaVista[vista],
+    nombreDelAnterior: nombreDelAnterior[vista],
+    fechasActuales: { fecha: ancla },
+    fechasAnterior: { fecha: fechaDelPeriodoVecino(fecha, vista, -1) },
+    fechasSiguiente: { fecha: fechaDelPeriodoVecino(fecha, vista, 1) },
+    fechasDeHoy: {},
+    fechasPorVista: {
+      // Se queda en la misma fecha: de "Día" a "Mes" muestra el mes de ese día
+      dia: { fecha: ancla },
+      semana: { fecha: ancla },
+      mes: { fecha: ancla },
+      // Pasar a rango arranca con lo que se estaba mirando
+      rango: { desde: rangos.actual.desde, hasta: rangos.actual.hasta },
+    },
+  }
 }
