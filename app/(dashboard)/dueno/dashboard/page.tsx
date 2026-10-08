@@ -33,27 +33,27 @@ import { SportBreakdown, type FilaDeDeporte } from '@/components/sport-breakdown
 import { SportTabs, type PestanaDeDeporte } from '@/components/sport-tabs'
 import { Button } from '@/components/ui/button'
 
-// Métricas de una cancha en el período actual y en el anterior (para comparar)
-type MetricasDeCancha = {
+// Métricas de un deporte de un complejo en el período actual y en el anterior
+// (para comparar)
+type MetricasDeUnDeporte = {
   complejoId: string
   deporte: Deporte
   actual: MetricasDelPeriodo
   anterior: MetricasDelPeriodo
 }
 
-// Suma las métricas de las canchas que entran en el filtro (un complejo, un
-// deporte, o todas si no viene ninguno). Así "todos" siempre es la suma exacta
-// de sus partes.
+// Suma las métricas que entran en el filtro (un complejo, un deporte, o todas
+// si no viene ninguno). Así "todos" siempre es la suma exacta de sus partes.
 function metricasDe(
-  canchas: MetricasDeCancha[],
+  lista: MetricasDeUnDeporte[],
   periodo: 'actual' | 'anterior',
   filtro: { complejoId?: string; deporte?: Deporte },
 ): MetricasDelPeriodo {
   const partes: MetricasDelPeriodo[] = []
-  for (const cancha of canchas) {
-    if (filtro.complejoId !== undefined && cancha.complejoId !== filtro.complejoId) continue
-    if (filtro.deporte !== undefined && cancha.deporte !== filtro.deporte) continue
-    partes.push(cancha[periodo])
+  for (const metricas of lista) {
+    if (filtro.complejoId !== undefined && metricas.complejoId !== filtro.complejoId) continue
+    if (filtro.deporte !== undefined && metricas.deporte !== filtro.deporte) continue
+    partes.push(metricas[periodo])
   }
   return sumarMetricas(partes)
 }
@@ -176,41 +176,43 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
   }
 
   // ---- Métricas ----
-  // Se piden por cancha (lib/metricas-complejo.ts filtra por cancha, no por
-  // deporte) y después se suman como haga falta. Entran también las canchas
-  // dadas de baja: sus reservas pasadas siguen contando en ingresos y
-  // cancelaciones (la ocupación ya las deja afuera).
-  const canchasConReservas = await db.cancha.findMany({
+  // Una consulta por cada deporte de cada complejo, y después se suman como
+  // haga falta. Entran también los deportes de canchas dadas de baja: sus
+  // reservas pasadas siguen contando en ingresos y cancelaciones (la ocupación
+  // ya las deja afuera).
+  const deportesConReservas = await db.cancha.findMany({
     where: { complejoId: { in: idsDelAlcance } },
-    select: { id: true, complejoId: true, deporte: true },
+    distinct: ['complejoId', 'deporte'],
+    select: { complejoId: true, deporte: true },
   })
-  const metricasPorCancha: MetricasDeCancha[] = await Promise.all(
-    canchasConReservas.map(async (cancha) => {
+  const metricasPorDeporte: MetricasDeUnDeporte[] = await Promise.all(
+    deportesConReservas.map(async (parte) => {
+      const filtro = { deporte: parte.deporte }
       const actual = await metricasDelComplejo(
-        cancha.complejoId,
+        parte.complejoId,
         rangos.actual.desde,
         rangos.actual.hasta,
-        cancha.id,
+        filtro,
       )
       const anterior = await metricasDelComplejo(
-        cancha.complejoId,
+        parte.complejoId,
         rangos.anterior.desde,
         rangos.anterior.hasta,
-        cancha.id,
+        filtro,
       )
-      return { complejoId: cancha.complejoId, deporte: cancha.deporte, actual, anterior }
+      return { complejoId: parte.complejoId, deporte: parte.deporte, actual, anterior }
     }),
   )
 
-  const metricas = metricasDe(metricasPorCancha, 'actual', { deporte })
-  const anteriores = metricasDe(metricasPorCancha, 'anterior', { deporte })
+  const metricas = metricasDe(metricasPorDeporte, 'actual', { deporte })
+  const anteriores = metricasDe(metricasPorDeporte, 'anterior', { deporte })
 
   // Ranking por complejo: solo cuando se ven todos y hay más de uno
   const filasPorComplejo: FilaDeComplejo[] = []
   if (sonTodos) {
     for (const complejo of complejosDelAlcance) {
       if (deporte !== undefined && !complejo.deportes.includes(deporte)) continue
-      const delComplejo = metricasDe(metricasPorCancha, 'actual', {
+      const delComplejo = metricasDe(metricasPorDeporte, 'actual', {
         complejoId: complejo.id,
         deporte,
       })
@@ -231,7 +233,7 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
   const filasPorDeporte: FilaDeDeporte[] = []
   if (deporte === undefined && deportes.length > 1) {
     for (const unDeporte of deportes) {
-      const delDeporte = metricasDe(metricasPorCancha, 'actual', { deporte: unDeporte })
+      const delDeporte = metricasDe(metricasPorDeporte, 'actual', { deporte: unDeporte })
       filasPorDeporte.push({
         deporte: unDeporte,
         porcentaje: delDeporte.ocupacion.porcentaje,
