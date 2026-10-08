@@ -108,10 +108,13 @@ export function CourtSlotPicker({
 
   // Grilla en vivo: cada 5 segundos vuelve a pedir la disponibilidad. Así, si
   // otro jugador reserva un turno, acá aparece tachado sin recargar la página.
+  // Es solo visual: el que impide reservar dos veces el mismo turno es el server.
   useEffect(() => {
     let activo = true
     const fechaISO = format(fecha, 'yyyy-MM-dd')
     const id = setInterval(async () => {
+      // Con la pestaña en segundo plano nadie la está mirando: no se consulta
+      if (document.visibilityState !== 'visible') return
       const res = await fetch(`/api/courts/${courtId}/availability?fecha=${fechaISO}`)
       // Si mientras tanto cambió la fecha o se cerró, esta respuesta ya no sirve
       if (!activo || !res.ok) return
@@ -186,6 +189,9 @@ export function CourtSlotPicker({
     }
     setMensajeError(json.error)
     setEstado('error')
+    // Si falló porque otro lo reservó, que el turno aparezca tachado ya, sin
+    // esperar al próximo refresco de la grilla en vivo
+    await cargarDisponibilidad(fecha)
   }
 
   // Paso 2: pagar la seña pasa la reserva a CONFIRMADA.
@@ -437,7 +443,8 @@ export function CourtSlotPicker({
             </div>
           )}
 
-          {estado === 'error' && mensajeError && (
+          {/* Si el turno elegido lo tomó otro, ya se ve el aviso de arriba */}
+          {estado === 'error' && mensajeError && !turnoElegidoSeOcupo && (
             <p className="text-destructive text-sm">{mensajeError}</p>
           )}
         </div>

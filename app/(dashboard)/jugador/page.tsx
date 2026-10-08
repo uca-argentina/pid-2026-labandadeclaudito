@@ -16,34 +16,36 @@ export default async function JugadorHomePage() {
 
   const desdeHoy = new Date(diaDeHoy())
 
-  const proximasReservas = await db.reserva.findMany({
-    where: {
-      jugadorId: session.user.id,
-      estado: { not: 'CANCELADA' },
-      NOT: pendientesVencidas(),
-      fecha: { gte: desdeHoy },
-    },
-    include: { cancha: { include: { complejo: true } } },
-    orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
-    take: 3,
-  })
-
-  const totalProximasReservas = await db.reserva.count({
-    where: {
-      jugadorId: session.user.id,
-      estado: { not: 'CANCELADA' },
-      NOT: pendientesVencidas(),
-      fecha: { gte: desdeHoy },
-    },
-  })
-
-  const totalReservas = await db.reserva.count({
-    where: { jugadorId: session.user.id, NOT: pendientesVencidas() },
-  })
-
-  const totalComplejos = await db.complejo.count({
-    where: { activo: true, canchas: { some: { activo: true } } },
-  })
+  // Las cuatro consultas no dependen entre sí: se hacen a la vez (una sola
+  // espera a la base en lugar de cuatro seguidas).
+  const [proximasReservas, totalProximasReservas, totalReservas, totalComplejos] =
+    await Promise.all([
+      db.reserva.findMany({
+        where: {
+          jugadorId: session.user.id,
+          estado: { not: 'CANCELADA' },
+          NOT: pendientesVencidas(),
+          fecha: { gte: desdeHoy },
+        },
+        include: { cancha: { include: { complejo: true } } },
+        orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
+        take: 3,
+      }),
+      db.reserva.count({
+        where: {
+          jugadorId: session.user.id,
+          estado: { not: 'CANCELADA' },
+          NOT: pendientesVencidas(),
+          fecha: { gte: desdeHoy },
+        },
+      }),
+      db.reserva.count({
+        where: { jugadorId: session.user.id, NOT: pendientesVencidas() },
+      }),
+      db.complejo.count({
+        where: { activo: true, canchas: { some: { activo: true } } },
+      }),
+    ])
 
   return (
     <div className="max-w-5xl px-6 pt-6 pb-12 md:pt-4">

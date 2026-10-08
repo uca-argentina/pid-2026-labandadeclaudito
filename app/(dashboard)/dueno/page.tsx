@@ -17,33 +17,37 @@ export default async function DuenoHomePage() {
   const desdeHoy = new Date(diaDeHoy())
   const canchasDelDuenio = { complejo: { duenioId: session.user.id } }
 
-  const totalComplejos = await db.complejo.count({
-    where: { duenioId: session.user.id, activo: true },
-  })
-  const totalCanchas = await db.cancha.count({
-    where: { activo: true, complejo: { duenioId: session.user.id, activo: true } },
-  })
-
-  const totalProximasReservas = await db.reserva.count({
-    where: {
-      cancha: canchasDelDuenio,
-      estado: { not: 'CANCELADA' },
-      NOT: pendientesVencidas(),
-      fecha: { gte: desdeHoy },
-    },
-  })
-
-  const proximasReservas = await db.reserva.findMany({
-    where: {
-      cancha: canchasDelDuenio,
-      estado: { not: 'CANCELADA' },
-      NOT: pendientesVencidas(),
-      fecha: { gte: desdeHoy },
-    },
-    include: { cancha: { include: { complejo: true } }, jugador: true },
-    orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
-    take: 5,
-  })
+  // Las cuatro consultas no dependen entre sí: se hacen a la vez (una sola
+  // espera a la base en lugar de cuatro seguidas).
+  const [totalComplejos, totalCanchas, totalProximasReservas, proximasReservas] = await Promise.all(
+    [
+      db.complejo.count({
+        where: { duenioId: session.user.id, activo: true },
+      }),
+      db.cancha.count({
+        where: { activo: true, complejo: { duenioId: session.user.id, activo: true } },
+      }),
+      db.reserva.count({
+        where: {
+          cancha: canchasDelDuenio,
+          estado: { not: 'CANCELADA' },
+          NOT: pendientesVencidas(),
+          fecha: { gte: desdeHoy },
+        },
+      }),
+      db.reserva.findMany({
+        where: {
+          cancha: canchasDelDuenio,
+          estado: { not: 'CANCELADA' },
+          NOT: pendientesVencidas(),
+          fecha: { gte: desdeHoy },
+        },
+        include: { cancha: { include: { complejo: true } }, jugador: true },
+        orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
+        take: 5,
+      }),
+    ],
+  )
 
   return (
     <div className="max-w-5xl px-6 pt-6 pb-12 md:pt-4">
