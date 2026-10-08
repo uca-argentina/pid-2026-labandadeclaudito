@@ -46,6 +46,7 @@ const navPorRol: Record<'JUGADOR' | 'DUENIO' | 'ADMIN', ItemNav[]> = {
   ADMIN: [
     { href: '/admin', label: 'Inicio', icon: Home },
     { href: '/admin/usuarios', label: 'Usuarios', icon: Users },
+    { href: '/admin/reservas', label: 'Reservas', icon: CalendarDays },
   ],
 }
 
