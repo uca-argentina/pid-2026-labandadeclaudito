@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ArrowRight } from 'lucide-react'
 import { auth } from '@/auth'
-import { diaEnPalabras } from '@/lib/fechas'
+import { diaEnPalabras, saludoSegunHora } from '@/lib/fechas'
 import { diaDeHoy } from '@/lib/time'
 
 // ponytail: página mínima para que el layout /admin exista;
@@ -17,7 +17,7 @@ export default async function AdminHomePage() {
     <div>
       <p className="text-muted-foreground text-sm font-medium">{diaEnPalabras(diaDeHoy())}</p>
       <h1 className="font-heading mt-1 text-4xl font-bold tracking-tight">
-        ¡Buenas, {primerNombre}!
+        ¡{saludoSegunHora()}, {primerNombre}!
       </h1>
       <p className="text-muted-foreground mt-1.5">
         Desde acá administrás las cuentas de la plataforma.

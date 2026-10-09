@@ -3,9 +3,9 @@ import { redirect } from 'next/navigation'
 import { ArrowRight, Search } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { pendientesVencidas } from '@/lib/bookings'
+import { dondeProximas, pendientesVencidas } from '@/lib/bookings'
 import { venceLaSena } from '@/lib/estado-reserva'
-import { diaCercano, diaEnPalabras, proximoSabado } from '@/lib/fechas'
+import { diaCercano, diaEnPalabras, proximoSabado, saludoSegunHora } from '@/lib/fechas'
 import { diaDeHoy, diaDeReserva } from '@/lib/time'
 import { Button } from '@/components/ui/button'
 import { EstadoVacio } from '@/components/estado-vacio'
@@ -18,8 +18,6 @@ export default async function JugadorHomePage() {
   const session = await auth()
   if (!session) redirect('/login')
 
-  const desdeHoy = new Date(diaDeHoy())
-
   // Las cuatro consultas no dependen entre sí: se hacen a la vez (una sola
   // espera a la base en lugar de cuatro seguidas).
   const [proximasReservas, totalProximasReservas, totalReservas, totalComplejos] =
@@ -27,9 +25,7 @@ export default async function JugadorHomePage() {
       db.reserva.findMany({
         where: {
           jugadorId: session.user.id,
-          estado: { not: 'CANCELADA' },
-          NOT: pendientesVencidas(),
-          fecha: { gte: desdeHoy },
+          ...dondeProximas(),
         },
         include: { cancha: { include: { complejo: true } } },
         orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
@@ -38,9 +34,7 @@ export default async function JugadorHomePage() {
       db.reserva.count({
         where: {
           jugadorId: session.user.id,
-          estado: { not: 'CANCELADA' },
-          NOT: pendientesVencidas(),
-          fecha: { gte: desdeHoy },
+          ...dondeProximas(),
         },
       }),
       db.reserva.count({
@@ -79,7 +73,7 @@ export default async function JugadorHomePage() {
         <div>
           <p className="text-muted-foreground text-sm font-medium">{diaEnPalabras(hoy)}</p>
           <h1 className="font-heading mt-1 text-4xl font-bold tracking-tight">
-            ¡Buenas, {primerNombre}!
+            ¡{saludoSegunHora()}, {primerNombre}!
           </h1>
           <p className="text-muted-foreground mt-1.5">{bajada}</p>
         </div>
@@ -143,7 +137,7 @@ export default async function JugadorHomePage() {
               {otrosTurnos.length > 0 && (
                 <>
                   <div className="mt-7 mb-3.5 flex items-baseline justify-between px-1">
-                    <h2 className="font-heading text-xl font-bold">Después vienen</h2>
+                    <h2 className="font-heading text-xl font-bold">Próximas reservas</h2>
                     <Link
                       href="/jugador/reservas"
                       className="text-primary inline-flex items-center gap-1.5 text-sm font-semibold"
@@ -193,7 +187,7 @@ export default async function JugadorHomePage() {
               <div className="min-w-0 flex-1">
                 <p className="font-heading text-2xl font-bold">{totalProximasReservas}</p>
                 <p className="text-muted-foreground text-sm">
-                  {totalProximasReservas === 1 ? 'turno por venir' : 'turnos por venir'}
+                  {totalProximasReservas === 1 ? 'próximo turno' : 'próximos turnos'}
                 </p>
               </div>
               <div className="border-border min-w-0 flex-1 border-l pl-5">

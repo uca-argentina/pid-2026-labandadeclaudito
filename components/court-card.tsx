@@ -47,7 +47,8 @@ export function CourtCard({
 
       {/* Los datos a la izquierda y, a la derecha, el precio pegado al botón.
           Si no entran en una línea (pantallas chicas), precio y botón bajan
-          juntos: el precio queda a la izquierda y el botón a la derecha. */}
+          juntos: el precio queda a la izquierda y el botón a la derecha. En
+          celular tampoco entran los dos juntos: el botón baja abajo del precio. */}
       <div className="relative ml-28 flex min-h-31 flex-wrap items-center gap-x-5 gap-y-3 py-4 pr-5">
         <div className="min-w-0 flex-[999_1_12rem]">
           <p
@@ -67,7 +68,7 @@ export function CourtCard({
           )}
         </div>
 
-        <div className="flex flex-auto items-center justify-between gap-5">
+        <div className="flex flex-auto flex-wrap items-center justify-between gap-x-5 gap-y-3">
           <div>
             <p className="text-muted-foreground text-xs">desde</p>
             <p className="font-heading text-primary text-2xl leading-tight font-bold">

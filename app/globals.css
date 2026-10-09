@@ -352,13 +352,14 @@
   --hero-skin-2: oklch(0.6 0.055 66.5);
 }
 
-/* Fondo de las tarjetas destacadas (próximo partido): el verde de marca con
-   franjas apenas más claras, como el césped cortado de una cancha. */
+/* Fondo de las tarjetas destacadas (próximo partido): el color del deporte
+   (--acento, de tema-<deporte>) con franjas apenas más claras, como el césped
+   cortado de una cancha. */
 @utility fondo-cancha {
   background: repeating-linear-gradient(
     90deg,
-    var(--primary) 0 80px,
-    color-mix(in oklch, var(--primary), white 4%) 80px 160px
+    var(--acento) 0 80px,
+    color-mix(in oklch, var(--acento), white 4%) 80px 160px
   );
 }
 

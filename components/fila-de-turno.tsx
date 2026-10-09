@@ -5,7 +5,7 @@ import { mesesCortos, nombresCortosDeDias } from '@/lib/labels'
 import { DibujoDeCancha } from '@/components/dibujo-de-cancha'
 import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
 
-// Fila de un turno en una lista ("Después vienen", "Próximos turnos"): la
+// Fila de un turno en una lista ("Próximas reservas", "Próximos turnos"): la
 // cancha del deporte en diagonal, el día en grande, la hora y un renglón de
 // detalle (cancha y complejo). Toda la fila es un link.
 // children: lo que va a la derecha (una flecha para el jugador; quién reservó

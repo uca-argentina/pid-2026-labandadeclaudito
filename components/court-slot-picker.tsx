@@ -272,8 +272,11 @@ export function CourtSlotPicker({
           <Calendar className="size-3.5" />
           Elegí el día
         </p>
-        {/* py-2: lugar para que la sombra de los días no quede cortada */}
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none]">
+        {/* Entran 5 días enteros (el ancho se reparte entre 5): ninguno queda
+            cortado contra el borde, y como es impar, el elegido queda centrado
+            con el mismo margen a los dos lados.
+            py-2: lugar para que la sombra de los días no quede cortada */}
+        <div className="-mx-4 grid auto-cols-[calc((100%-4*--spacing(2))/5)] grid-flow-col gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none]">
           {dias.map((dia, indice) => {
             const elegido = dia === diaElegido
             let nombre = nombresCortosDeDias[new Date(`${dia}T00:00:00Z`).getUTCDay()]
@@ -288,8 +291,8 @@ export function CourtSlotPicker({
                 onClick={() => elegirDia(dia)}
                 className={
                   elegido
-                    ? 'bg-primary text-primary-foreground shadow-button flex w-14 shrink-0 flex-col items-center rounded-2xl py-2.5'
-                    : 'bg-card shadow-soft hover:bg-accent flex w-14 shrink-0 flex-col items-center rounded-2xl py-2.5 transition-colors'
+                    ? 'bg-primary text-primary-foreground shadow-button flex flex-col items-center rounded-2xl py-2.5'
+                    : 'bg-card shadow-soft hover:bg-accent flex flex-col items-center rounded-2xl py-2.5 transition-colors'
                 }
               >
                 <span className="text-[11px] font-medium">{nombre}</span>

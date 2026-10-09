@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft, ImageIcon, ImagePlus, MapPin, Pencil, Phone, Plus, Shapes } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { pendientesVencidas } from '@/lib/bookings'
+import { dondeProximas } from '@/lib/bookings'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { diaDeHoy, diaDeReserva, formatAdvanceTime } from '@/lib/time'
 import { bloqueosDelDia, textoDelBloqueo } from '@/lib/blocks'
@@ -37,9 +37,7 @@ export default async function DetalleComplejoDuenoPage({
     db.reserva.findMany({
       where: {
         cancha: { complejoId: id },
-        estado: { not: 'CANCELADA' },
-        NOT: pendientesVencidas(),
-        fecha: { gte: new Date(diaDeHoy()) },
+        ...dondeProximas(),
       },
       include: { cancha: true, jugador: true },
       orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],

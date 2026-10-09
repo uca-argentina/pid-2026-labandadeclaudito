@@ -1,7 +1,7 @@
 // Fechas escritas en palabras, para mostrar en pantalla. Los días llegan como
 // YYYY-MM-DD y se leen en UTC para que no se corran por la zona horaria.
 import { nombresDeDias } from '@/lib/labels'
-import { diaDeHoy } from '@/lib/time'
+import { diaDeHoy, momentoActual } from '@/lib/time'
 
 const nombresDeMeses = [
   'enero',
@@ -50,4 +50,12 @@ export function proximoSabado(hoy: string = diaDeHoy()): string {
   const diasHastaElSabado = (SABADO - fecha.getUTCDay() + 7) % 7
   fecha.setUTCDate(fecha.getUTCDate() + diasHastaElSabado)
   return fecha.toISOString().slice(0, 10)
+}
+
+// El saludo del Inicio según la hora en Argentina (HH:MM): buen día de 6 a 12,
+// buenas tardes hasta las 20 y buenas noches el resto.
+export function saludoSegunHora(hora: string = momentoActual().hora): string {
+  if (hora >= '06:00' && hora < '12:00') return 'Buen día'
+  if (hora >= '12:00' && hora < '20:00') return 'Buenas tardes'
+  return 'Buenas noches'
 }

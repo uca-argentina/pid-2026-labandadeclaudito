@@ -1,11 +1,12 @@
 import { Clock, MapPin } from 'lucide-react'
 import type { Deporte } from '@/lib/generated/prisma/client'
 import { diaEnPalabras } from '@/lib/fechas'
+import { temaDelDeporte } from '@/lib/dashboard'
 import { deporteLabels } from '@/lib/labels'
 import { DibujoDeCancha } from '@/components/dibujo-de-cancha'
 
-// La tarjeta destacada del Inicio: el próximo turno en grande, sobre el verde
-// de marca. La usan el jugador (su próximo partido) y el dueño (el próximo
+// La tarjeta destacada del Inicio: el próximo turno en grande, sobre el color
+// del deporte (tema-<deporte> en globals.css, el mismo del dashboard del dueño). La usan el jugador (su próximo partido) y el dueño (el próximo
 // turno en sus canchas).
 // etiqueta: el cartelito de arriba. children: lo que va abajo (el botón, la
 // cuenta regresiva de la seña, quién reservó).
@@ -29,7 +30,9 @@ export function ProximoTurnoDestacado({
   children: React.ReactNode
 }) {
   return (
-    <div className="fondo-cancha text-primary-foreground shadow-card relative overflow-hidden rounded-3xl p-7 sm:p-8">
+    <div
+      className={`fondo-cancha ${temaDelDeporte(deporte)} text-acento-foreground shadow-card relative overflow-hidden rounded-3xl p-7 sm:p-8`}
+    >
       {/* Franja con la cancha del deporte, recortada en diagonal contra el
           borde derecho. Es un detalle: va chica y semitransparente. */}
       <div
@@ -43,7 +46,7 @@ export function ProximoTurnoDestacado({
         aria-hidden
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
-        className="text-primary-foreground/40 absolute inset-y-0 right-0 hidden h-full w-31 sm:block"
+        className="text-acento-foreground/40 absolute inset-y-0 right-0 hidden h-full w-31 sm:block"
       >
         <line
           x1="42"
@@ -57,7 +60,7 @@ export function ProximoTurnoDestacado({
       </svg>
 
       <div className="relative sm:pr-28">
-        <p className="border-primary-foreground/40 inline-flex h-7 items-center rounded-full border px-3 text-sm font-semibold">
+        <p className="border-acento-foreground/40 inline-flex h-7 items-center rounded-full border px-3 text-sm font-semibold">
           {etiqueta}
         </p>
         <p className="font-heading mt-3.5 text-4xl font-bold tracking-tight">
@@ -70,7 +73,7 @@ export function ProximoTurnoDestacado({
         <p className="mt-4 font-semibold">
           {cancha} · {deporteLabels[deporte]}
         </p>
-        <p className="text-primary-foreground/90 mt-0.5 flex items-center gap-1.5 text-sm">
+        <p className="text-acento-foreground/90 mt-0.5 flex items-center gap-1.5 text-sm">
           <MapPin className="size-3.5 shrink-0" />
           {lugar}
         </p>

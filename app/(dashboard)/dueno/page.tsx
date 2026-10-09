@@ -3,8 +3,8 @@ import { redirect } from 'next/navigation'
 import { ArrowRight, Plus } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { pendientesVencidas } from '@/lib/bookings'
-import { diaEnPalabras } from '@/lib/fechas'
+import { dondeProximas } from '@/lib/bookings'
+import { diaEnPalabras, saludoSegunHora } from '@/lib/fechas'
 import { iniciales } from '@/lib/iniciales'
 import { diaDeHoy, diaDeReserva } from '@/lib/time'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,6 @@ export default async function DuenoHomePage() {
   const session = await auth()
   if (!session) redirect('/login')
 
-  const desdeHoy = new Date(diaDeHoy())
   const canchasDelDuenio = { complejo: { duenioId: session.user.id } }
 
   // Las cuatro consultas no dependen entre sí: se hacen a la vez (una sola
@@ -33,17 +32,13 @@ export default async function DuenoHomePage() {
       db.reserva.count({
         where: {
           cancha: canchasDelDuenio,
-          estado: { not: 'CANCELADA' },
-          NOT: pendientesVencidas(),
-          fecha: { gte: desdeHoy },
+          ...dondeProximas(),
         },
       }),
       db.reserva.findMany({
         where: {
           cancha: canchasDelDuenio,
-          estado: { not: 'CANCELADA' },
-          NOT: pendientesVencidas(),
-          fecha: { gte: desdeHoy },
+          ...dondeProximas(),
         },
         include: { cancha: { include: { complejo: true } }, jugador: true },
         orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
@@ -71,7 +66,7 @@ export default async function DuenoHomePage() {
         <div>
           <p className="text-muted-foreground text-sm font-medium">{diaEnPalabras(hoy)}</p>
           <h1 className="font-heading mt-1 text-4xl font-bold tracking-tight">
-            ¡Buenas, {primerNombre}!
+            ¡{saludoSegunHora()}, {primerNombre}!
           </h1>
           <p className="text-muted-foreground mt-1.5">{bajada}</p>
         </div>
@@ -134,7 +129,7 @@ export default async function DuenoHomePage() {
               {otrosTurnos.length > 0 && (
                 <>
                   <div className="mt-7 mb-3.5 flex items-baseline justify-between px-1">
-                    <h2 className="font-heading text-xl font-bold">Después vienen</h2>
+                    <h2 className="font-heading text-xl font-bold">Próximas reservas</h2>
                     <Link
                       href="/dueno/reservas"
                       className="text-primary inline-flex items-center gap-1.5 text-sm font-semibold"
