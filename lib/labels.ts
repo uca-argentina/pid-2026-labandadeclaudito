@@ -53,6 +53,31 @@ export const nombresDeDias = [
 
 export const nombresCortosDeDias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
+export const nombresDeMeses = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+]
+
+// Cuántos juegan por lado, para el cartel de la cancha ilustrada
+export const formatoDeJuego: Record<Deporte, string> = {
+  FUTBOL_5: '5 vs 5',
+  FUTBOL_7: '7 vs 7',
+  FUTBOL_11: '11 vs 11',
+  TENIS: 'Singles o dobles',
+  PADEL: '2 vs 2',
+  BASQUET: '5 vs 5',
+}
+
 export function formatPrecio(precio: number | string): string {
   return `$${Number(precio).toLocaleString('es-AR')}`
 }

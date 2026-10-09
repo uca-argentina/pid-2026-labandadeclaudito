@@ -56,6 +56,14 @@ export function diaDeHoy(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: ZONA_ARGENTINA })
 }
 
+// Suma (o resta, con negativos) días a un día YYYY-MM-DD. Se hace en UTC para
+// que el cambio de horario o la zona del servidor no corran el día.
+export function sumarDias(dia: string, dias: number): string {
+  const fecha = new Date(`${dia}T00:00:00Z`)
+  fecha.setUTCDate(fecha.getUTCDate() + dias)
+  return fecha.toISOString().slice(0, 10)
+}
+
 // Se reserva con hasta 30 días de anticipación: así nadie toma turnos de acá
 // a fin de año. Devuelve ese último día como YYYY-MM-DD.
 export const DIAS_MAXIMOS_DE_ANTICIPACION = 30
