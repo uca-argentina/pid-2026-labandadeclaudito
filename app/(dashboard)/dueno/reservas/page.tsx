@@ -14,6 +14,7 @@ import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import type { Prisma } from '@/lib/generated/prisma/client'
 import { dondeHistorial, dondeProximas } from '@/lib/bookings'
+import { clasesGrillaAdaptable } from '@/lib/grid-columns'
 import { montoDelHistorial } from '@/lib/historial'
 import { estadoDeReserva, venceLaSena } from '@/lib/estado-reserva'
 import { calcularPagina } from '@/lib/paginacion'
@@ -161,11 +162,14 @@ export default async function ReservasDelDuenioPage({
 
           {reservas.length > 0 && vista === 'proximas' && (
             <>
-              {/* Tarjetas de ancho acotado: no se estiran para llenar la fila */}
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(17rem,19rem))] gap-5">
-                {reservas.map((reserva) => (
-                  <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
-                ))}
+              {/* Misma grilla que Mis complejos: hasta 4 tarjetas por fila, que
+                  se reparten todo el ancho (no sobra un hueco a la derecha) */}
+              <div className="@container">
+                <div className={`grid gap-5 ${clasesGrillaAdaptable(reservas.length)}`}>
+                  {reservas.map((reserva) => (
+                    <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
+                  ))}
+                </div>
               </div>
               {/* Con una sola página de tarjetas no hace falta el pie */}
               {totalPaginas > 1 && (
@@ -400,9 +404,10 @@ function TarjetaReserva({
             </>
           ) : (
             // Mismo alto que la cuenta regresiva: un renglón y, donde iría la
-            // barra, una línea divisoria
+            // barra, una línea divisoria. min-h: en tarjetas angostas el texto
+            // ocupa dos renglones y empuja hacia arriba, sin pisar la línea
             <div className="space-y-1.5">
-              <p className="text-muted-foreground flex h-7 items-center text-sm">
+              <p className="text-muted-foreground flex min-h-7 items-center text-sm">
                 {monto?.detalle}
               </p>
               <div className="flex h-1.5 items-center">

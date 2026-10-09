@@ -1,22 +1,11 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import {
-  Activity,
-  Building2,
-  CalendarPlus,
-  CircleDot,
-  IdCard,
-  ShieldCheck,
-  User,
-  UserCog,
-  UserX,
-  Users,
-} from 'lucide-react'
+import { Activity, CalendarPlus, CircleDot, IdCard, User, UserCog } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { iniciales } from '@/lib/iniciales'
 import { calcularPagina } from '@/lib/paginacion'
-import { StatCard } from '@/components/stat-card'
+import { EstadoVacio } from '@/components/estado-vacio'
 import { TituloConIcono } from '@/components/titulo-con-icono'
 import { Paginacion } from '@/components/paginacion'
 import { UserSearch } from '@/components/user-search'
@@ -33,33 +22,25 @@ import {
 
 const USUARIOS_POR_PAGINA = 20
 
-// Cada rol tiene su color: el avatar y la etiqueta.
+// Cada rol tiene su color, el mismo para el avatar y para la etiqueta
 const estiloPorRol = {
-  JUGADOR: {
-    label: 'Jugador',
-    icono: User,
-    avatar: 'bg-emerald-600 text-white',
-    etiqueta: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-  },
-  DUENIO: {
-    label: 'Dueño',
-    icono: Building2,
-    avatar: 'bg-amber-600 text-white',
-    etiqueta: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  },
-  ADMIN: {
-    label: 'Admin',
-    icono: ShieldCheck,
-    avatar: 'bg-violet-600 text-white',
-    etiqueta: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
-  },
+  JUGADOR: { label: 'Jugador', color: 'bg-primary/15 text-primary' },
+  DUENIO: { label: 'Dueño', color: 'bg-clay/15 text-clay-foreground' },
+  ADMIN: { label: 'Admin', color: 'bg-sidebar text-sidebar-foreground' },
 }
 
-// Botón de filtro: relleno si está elegido, con borde si no
-function clasePill(elegido: boolean) {
-  return elegido
-    ? 'bg-primary text-primary-foreground rounded-full px-3 py-1 text-sm'
-    : 'border-border hover:bg-muted rounded-full border px-3 py-1 text-sm'
+// Pestañas del filtro (Todas / Suspendidas), con el mismo estilo que las de
+// Reservas: la elegida va en verde oscuro y su contador en amarillo.
+function clasePestania(elegida: boolean) {
+  return elegida
+    ? 'bg-sidebar text-sidebar-foreground inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold'
+    : 'text-foreground/80 hover:bg-muted inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-medium'
+}
+
+function claseContador(elegida: boolean) {
+  return elegida
+    ? 'bg-highlight text-highlight-foreground inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full px-1.5 text-xs font-bold'
+    : 'bg-muted inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full px-1.5 text-xs font-semibold'
 }
 
 export default async function AdminUsuariosPage({ searchParams }: PageProps<'/admin/usuarios'>) {
@@ -137,55 +118,71 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
     return `/admin/usuarios?${params.toString()}`
   }
 
+  // El total general va en verde y el de suspendidas en rojo
+  const totales = [
+    { label: 'Usuarios', valor: totalUsuarios, detalle: 'En la plataforma', color: 'text-primary' },
+    { label: 'Jugadores', valor: totalJugadores, detalle: 'Reservan canchas', color: '' },
+    { label: 'Dueños', valor: totalDuenios, detalle: 'Administran complejos', color: '' },
+    {
+      label: 'Suspendidas',
+      valor: totalSuspendidos,
+      detalle: 'Sin acceso a la cuenta',
+      color: 'text-destructive',
+    },
+  ]
+
   return (
     <main>
-      <h1 className="text-3xl font-semibold tracking-tight">Usuarios</h1>
-      <p className="text-muted-foreground mt-1 text-sm">
+      <h1 className="font-heading text-4xl font-bold tracking-tight">Usuarios</h1>
+      <p className="text-muted-foreground mt-1.5 max-w-2xl">
         Una cuenta suspendida no puede iniciar sesión, pierde la sesión abierta y se cancelan sus
         reservas futuras.
       </p>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={Users} label="Usuarios" value={totalUsuarios} detalle="En la plataforma" />
-        <StatCard icon={User} label="Jugadores" value={totalJugadores} detalle="Reservan canchas" />
-        <StatCard
-          icon={Building2}
-          label="Dueños"
-          value={totalDuenios}
-          detalle="Administran complejos"
-        />
-        <StatCard
-          icon={UserX}
-          label="Suspendidas"
-          value={totalSuspendidos}
-          detalle="Sin acceso a la cuenta"
-        />
+      {/* Los cuatro totales en una sola tarjeta, separados por una línea */}
+      <div className="bg-card shadow-card divide-border mt-6 grid grid-cols-2 gap-y-2 rounded-3xl py-2 sm:grid-cols-4 sm:divide-x">
+        {totales.map((total) => (
+          <div key={total.label} className="px-6 py-3.5">
+            <p className={`font-heading text-4xl font-bold tracking-tight ${total.color}`}>
+              {total.valor}
+            </p>
+            <p className="text-sm font-semibold">{total.label}</p>
+            <p className="text-muted-foreground text-sm">{total.detalle}</p>
+          </div>
+        ))}
       </div>
 
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-2">
-          <Link href={urlDe({ suspendidas: false })} className={clasePill(!soloSuspendidas)}>
-            Todas ({totalUsuarios})
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-card shadow-soft inline-flex gap-1 rounded-2xl p-1">
+          <Link href={urlDe({ suspendidas: false })} className={clasePestania(!soloSuspendidas)}>
+            Todas
+            <span className={claseContador(!soloSuspendidas)}>{totalUsuarios}</span>
           </Link>
-          <Link href={urlDe({ suspendidas: true })} className={clasePill(soloSuspendidas)}>
-            Suspendidas ({totalSuspendidos})
+          <Link href={urlDe({ suspendidas: true })} className={clasePestania(soloSuspendidas)}>
+            Suspendidas
+            <span className={claseContador(soloSuspendidas)}>{totalSuspendidos}</span>
           </Link>
         </div>
 
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row">
           <RoleFilter rol={rolElegido} />
           <UserSearch busqueda={busqueda} />
         </div>
       </div>
 
       {usuarios.length === 0 ? (
-        <p className="text-muted-foreground mt-8 text-sm">
-          {busqueda
-            ? `Ningún usuario coincide con "${busqueda}".`
-            : 'No hay usuarios con estos filtros.'}
-        </p>
+        <div className="mt-5">
+          <EstadoVacio
+            titulo="No encontramos usuarios"
+            texto={
+              busqueda
+                ? `Ningún usuario coincide con "${busqueda}".`
+                : 'No hay usuarios con estos filtros.'
+            }
+          />
+        </div>
       ) : (
-        <div className="border-border bg-card mt-6 overflow-hidden rounded-2xl border shadow-sm">
+        <div className="bg-card shadow-card mt-5 overflow-hidden rounded-2xl">
           <Table>
             <TableHeader>
               <TableRow>
@@ -195,13 +192,13 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
                 <TableHead className="hidden sm:table-cell">
                   <TituloConIcono icono={IdCard}>Rol</TituloConIcono>
                 </TableHead>
-                <TableHead>
+                <TableHead className="hidden sm:table-cell">
                   <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
                 </TableHead>
-                <TableHead className="hidden lg:table-cell">
+                <TableHead className="hidden xl:table-cell">
                   <TituloConIcono icono={Activity}>Actividad</TituloConIcono>
                 </TableHead>
-                <TableHead className="hidden lg:table-cell">
+                <TableHead className="hidden xl:table-cell">
                   <TituloConIcono icono={CalendarPlus}>Alta</TituloConIcono>
                 </TableHead>
                 <TableHead className="pr-4 text-right">
@@ -212,21 +209,22 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
             <TableBody>
               {usuarios.map((usuario) => {
                 const estilo = estiloPorRol[usuario.rol]
-                const IconoRol = estilo.icono
 
                 return (
                   <TableRow key={usuario.id} className={usuario.activo ? '' : 'bg-destructive/5'}>
                     <TableCell className="pl-4">
-                      <div className="flex items-center gap-3">
+                      {/* Hasta xl el nombre se corta para que el botón de la
+                          derecha entre sin deslizar la tabla */}
+                      <div className="flex max-w-36 items-center gap-3 sm:max-w-48 xl:max-w-none">
                         <div
-                          className={`flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
-                            usuario.activo ? estilo.avatar : 'bg-muted text-muted-foreground'
+                          className={`flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                            usuario.activo ? estilo.color : 'bg-muted text-muted-foreground'
                           }`}
                         >
                           {iniciales(usuario.nombre)}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate font-medium">{usuario.nombre}</p>
+                          <p className="truncate font-semibold">{usuario.nombre}</p>
                           <p className="text-muted-foreground truncate text-xs">{usuario.email}</p>
                         </div>
                       </div>
@@ -234,30 +232,31 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
 
                     <TableCell className="hidden sm:table-cell">
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${estilo.etiqueta}`}
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${estilo.color}`}
                       >
-                        <IconoRol className="size-3" />
                         {estilo.label}
                       </span>
                     </TableCell>
 
-                    <TableCell>
+                    {/* En celular no entra: la fila suspendida ya va en rojo y su
+                        botón dice "Reactivar" */}
+                    <TableCell className="hidden sm:table-cell">
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+                        className={
                           usuario.activo
-                            ? 'bg-green-500/15 text-green-700 dark:text-green-300'
-                            : 'bg-destructive/15 text-destructive'
-                        }`}
+                            ? 'inline-flex items-center gap-1.5 font-medium'
+                            : 'text-destructive inline-flex items-center gap-1.5 font-semibold'
+                        }
                       >
                         <span
-                          className={`size-1.5 rounded-full ${usuario.activo ? 'bg-green-500' : 'bg-destructive'}`}
+                          className={`size-2 rounded-full ${usuario.activo ? 'bg-green-500' : 'bg-destructive'}`}
                         />
                         {usuario.activo ? 'Activa' : 'Suspendida'}
                       </span>
                     </TableCell>
 
                     {/* A un jugador le importan sus reservas, a un dueño sus complejos */}
-                    <TableCell className="text-muted-foreground hidden lg:table-cell">
+                    <TableCell className="text-muted-foreground hidden xl:table-cell">
                       {usuario.rol === 'JUGADOR' &&
                         `${usuario._count.reservas} ${usuario._count.reservas === 1 ? 'reserva' : 'reservas'}`}
                       {usuario.rol === 'DUENIO' &&
@@ -265,7 +264,7 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
                       {usuario.rol === 'ADMIN' && '—'}
                     </TableCell>
 
-                    <TableCell className="text-muted-foreground hidden lg:table-cell">
+                    <TableCell className="text-muted-foreground hidden xl:table-cell">
                       {usuario.createdAt.toLocaleDateString('es-AR', {
                         month: 'short',
                         year: 'numeric',

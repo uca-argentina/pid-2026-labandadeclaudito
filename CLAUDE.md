@@ -200,7 +200,7 @@ components/
                             perfil (nombre/email/avatar) y cerrar sesión abajo
   sign-out-button.tsx       link de logout, va en la tarjeta del perfil del sidebar
   theme-provider.tsx, theme-toggle.tsx   modo claro/oscuro
-  stat-card.tsx             card de métrica (usado en homes de rol)
+  stat-card.tsx             card de métrica (sin uso desde el rebranding)
   estado-vacio.tsx          bloque para pantallas sin nada que mostrar
   franja-de-cancha.tsx      franja con la cancha del deporte, arriba de una tarjeta
   proximo-turno-destacado.tsx  el próximo turno en grande, sobre el verde (Inicio)
@@ -387,10 +387,13 @@ cómo se ve algo, mirar esa página, no adivinar.
 - **Listas del dueño (canchas, precios, bloqueos)**: tabla en `lg` y lista en
   celular, las dos en `bg-card shadow-card rounded-2xl`. Arriba del `h1` va un
   renglón chico con el complejo (y la cancha).
-- **En migración**: las pantallas del jugador, las del dueño, el login y el
-  registro ya están en este estilo. Las del admin heredan la base (colores,
-  botones, campos, sidebar) pero sus tarjetas todavía tienen borde: se pasan
-  en la próxima etapa del rebranding.
+- **Usuarios (admin)**: los cuatro totales van en una sola tarjeta separados
+  por una línea (el general en verde, el de suspendidas en rojo). El filtro
+  Todas/Suspendidas son pestañas como las de Reservas. Cada rol tiene su color,
+  el mismo en el avatar y en la etiqueta: jugador verde, dueño arcilla, admin
+  verde oscuro. La fila de una cuenta suspendida va con fondo rojo suave.
+- Todas las pantallas (jugador, dueño, admin, login y registro) ya están en
+  este estilo: una pantalla nueva arranca copiando la que más se le parezca.
 
 ## Seguridad (no negociable)
 
