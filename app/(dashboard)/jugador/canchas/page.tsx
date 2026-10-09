@@ -8,10 +8,13 @@ import { activeFilterChips, filtersToQueryString, searchComplexes } from '@/lib/
 import { searchCourtsSchema } from '@/lib/validations/court-search'
 import { clasesGrillaAdaptable } from '@/lib/grid-columns'
 import { deportesDistintos, precioMasBajo } from '@/lib/resumen-complejo'
+import { bloqueosDelDia, resumenBloqueosDelComplejo } from '@/lib/blocks'
+import { diaDeHoy } from '@/lib/time'
 import { Button } from '@/components/ui/button'
 import { SearchFiltersSheet } from '@/components/search-filters-sheet'
 import { FiltrosDeBusqueda } from '@/components/filtros-de-busqueda'
 import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
+import { AvisoBloqueo } from '@/components/aviso-bloqueo'
 
 export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/jugador/canchas'>) {
   const session = await auth()
@@ -22,6 +25,16 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
   const complejos = await searchComplexes(filtros, session.user.id)
 
   const filtrosAplicados = activeFilterChips(filtros)
+
+  // Bloqueos del día buscado (o de hoy): un complejo con todas sus canchas
+  // bloqueadas va en gris, y si son algunas se avisa cuántas.
+  const idsDeCanchas: string[] = []
+  for (const complejo of complejos) {
+    for (const cancha of complejo.canchas) {
+      idsDeCanchas.push(cancha.id)
+    }
+  }
+  const bloqueos = await bloqueosDelDia(idsDeCanchas, new Date(filtros.fecha ?? diaDeHoy()))
 
   // En xl el botón "Filtros" se oculta: sin chips, la fila de arriba queda
   // vacía y los resultados suben para quedar alineados con los filtros.
@@ -84,12 +97,24 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
                 {complejos.map((complejo) => {
                   const deportes = deportesDistintos(complejo.canchas)
                   const precioMinimo = precioMasBajo(complejo.canchas)
+                  let canchasBloqueadas = 0
+                  for (const cancha of complejo.canchas) {
+                    if (bloqueos.some((b) => b.courtId === cancha.id)) {
+                      canchasBloqueadas++
+                    }
+                  }
+                  const resumenBloqueos = resumenBloqueosDelComplejo(
+                    canchasBloqueadas,
+                    complejo.canchas.length,
+                  )
+                  const todasBloqueadas =
+                    complejo.canchas.length > 0 && canchasBloqueadas === complejo.canchas.length
 
                   return (
                     <Link
                       key={complejo.id}
                       href={`/jugador/complejos/${complejo.id}${filtersToQueryString(filtros)}`}
-                      className="border-border bg-card hover:bg-accent flex h-full flex-col overflow-hidden rounded-2xl border transition-colors"
+                      className={`border-border bg-card hover:bg-accent flex h-full flex-col overflow-hidden rounded-2xl border transition-colors ${todasBloqueadas ? 'opacity-60 grayscale' : ''}`}
                     >
                       {complejo.imagenes.length > 0 ? (
                         <div className="relative aspect-video shrink-0">
@@ -129,6 +154,11 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
                             ? '1 cancha'
                             : `${complejo.canchas.length} canchas`}
                         </span>
+                        {resumenBloqueos && (
+                          <div className="mt-1.5">
+                            <AvisoBloqueo texto={resumenBloqueos} />
+                          </div>
+                        )}
 
                         <div className="mt-3 mb-4 flex flex-wrap items-center gap-1.5">
                           {deportes.map((deporteDeCancha) => (

@@ -6,6 +6,9 @@ import { ImageIcon, MapPin, Phone, Plus, Shapes } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { clasesGrillaAdaptable } from '@/lib/grid-columns'
+import { bloqueosDelDia, resumenBloqueosDelComplejo } from '@/lib/blocks'
+import { diaDeHoy } from '@/lib/time'
+import { AvisoBloqueo } from '@/components/aviso-bloqueo'
 import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -21,8 +24,30 @@ export default async function MisComplejosPage() {
   const complejosDelDuenio = await db.complejo.findMany({
     where: { duenioId: session.user.id, activo: true },
     orderBy: { createdAt: 'desc' },
-    include: { imagenes: { where: { activo: true }, orderBy: { orden: 'asc' }, take: 1 } },
+    include: {
+      imagenes: { where: { activo: true }, orderBy: { orden: 'asc' }, take: 1 },
+      canchas: { where: { activo: true }, select: { id: true } },
+    },
   })
+
+  // Bloqueos de hoy: un complejo con todas sus canchas bloqueadas va en gris
+  const idsDeCanchas: string[] = []
+  for (const complejo of complejosDelDuenio) {
+    for (const cancha of complejo.canchas) {
+      idsDeCanchas.push(cancha.id)
+    }
+  }
+  const bloqueos = await bloqueosDelDia(idsDeCanchas, new Date(diaDeHoy()))
+
+  function bloqueadasDe(canchas: { id: string }[]) {
+    let bloqueadas = 0
+    for (const cancha of canchas) {
+      if (bloqueos.some((b) => b.courtId === cancha.id)) {
+        bloqueadas++
+      }
+    }
+    return bloqueadas
+  }
 
   return (
     <main>
@@ -52,53 +77,67 @@ export default async function MisComplejosPage() {
       {complejosDelDuenio.length > 0 && (
         <div className="@container">
           <div className={`grid gap-5 ${clasesGrillaAdaptable(complejosDelDuenio.length)}`}>
-            {complejosDelDuenio.map((complejo) => (
-              <Card key={complejo.id} className="h-full gap-0 pt-0">
-                {/* Foto y datos abren el detalle; "Ver canchas" queda afuera para no anidar
+            {complejosDelDuenio.map((complejo) => {
+              const bloqueadas = bloqueadasDe(complejo.canchas)
+              const resumenBloqueos = resumenBloqueosDelComplejo(
+                bloqueadas,
+                complejo.canchas.length,
+              )
+              const todasBloqueadas =
+                complejo.canchas.length > 0 && bloqueadas === complejo.canchas.length
+              return (
+                <Card
+                  key={complejo.id}
+                  className={`h-full gap-0 pt-0 ${todasBloqueadas ? 'opacity-60 grayscale' : ''}`}
+                >
+                  {/* Foto y datos abren el detalle; "Ver canchas" queda afuera para no anidar
                   links. flex-1 en el Link: así "Ver canchas" queda a la misma altura en
                   toda la fila, aunque el nombre ocupe distinta cantidad de líneas. */}
-                <Link
-                  href={`/dueno/complejos/${complejo.id}`}
-                  className="hover:bg-accent flex flex-1 flex-col gap-4 pb-4 transition-colors"
-                >
-                  {complejo.imagenes.length > 0 ? (
-                    <div className="relative aspect-video">
-                      <Image
-                        src={complejo.imagenes[0].url}
-                        alt={`Foto de ${complejo.nombre}`}
-                        fill
-                        sizes="(min-width: 640px) 50vw, 100vw"
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="bg-muted text-muted-foreground flex aspect-video flex-col items-center justify-center gap-1 text-sm">
-                      <ImageIcon className="size-5" />
-                      Sin fotos
-                    </div>
-                  )}
-                  <CardHeader>
-                    <CardTitle className="font-semibold">{complejo.nombre}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-muted-foreground space-y-1 text-sm">
-                    <p className="flex items-center gap-2">
-                      <MapPin className="size-4 shrink-0" /> {complejo.direccion} · {complejo.zona}
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Phone className="size-4 shrink-0" /> {complejo.contacto}
-                    </p>
-                  </CardContent>
-                </Link>
-                <CardFooter>
                   <Link
-                    href={`/dueno/complejos/${complejo.id}/canchas`}
-                    className={buttonVariants({ variant: 'outline', className: 'w-full' })}
+                    href={`/dueno/complejos/${complejo.id}`}
+                    className="hover:bg-accent flex flex-1 flex-col gap-4 pb-4 transition-colors"
                   >
-                    <Shapes /> Ver canchas
+                    {complejo.imagenes.length > 0 ? (
+                      <div className="relative aspect-video">
+                        <Image
+                          src={complejo.imagenes[0].url}
+                          alt={`Foto de ${complejo.nombre}`}
+                          fill
+                          sizes="(min-width: 640px) 50vw, 100vw"
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="bg-muted text-muted-foreground flex aspect-video flex-col items-center justify-center gap-1 text-sm">
+                        <ImageIcon className="size-5" />
+                        Sin fotos
+                      </div>
+                    )}
+                    <CardHeader>
+                      <CardTitle className="font-semibold">{complejo.nombre}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-muted-foreground space-y-1 text-sm">
+                      <p className="flex items-center gap-2">
+                        <MapPin className="size-4 shrink-0" /> {complejo.direccion} ·{' '}
+                        {complejo.zona}
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <Phone className="size-4 shrink-0" /> {complejo.contacto}
+                      </p>
+                      {resumenBloqueos && <AvisoBloqueo texto={`${resumenBloqueos} hoy`} />}
+                    </CardContent>
                   </Link>
-                </CardFooter>
-              </Card>
-            ))}
+                  <CardFooter>
+                    <Link
+                      href={`/dueno/complejos/${complejo.id}/canchas`}
+                      className={buttonVariants({ variant: 'outline', className: 'w-full' })}
+                    >
+                      <Shapes /> Ver canchas
+                    </Link>
+                  </CardFooter>
+                </Card>
+              )
+            })}
           </div>
         </div>
       )}

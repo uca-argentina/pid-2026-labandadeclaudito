@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { TimeSelect } from '@/components/time-select'
+import { VistaPreviaCancha } from '@/components/vista-previa-cancha'
 import type { Deporte, TipoSuperficie } from '@/lib/generated/prisma/client'
 import { createCourtSchema } from '@/lib/validations/court'
 import { deporteLabels, superficieLabels, superficiesPorDeporte } from '@/lib/labels'
@@ -81,162 +82,176 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
   }
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
-      <div className="border-border bg-card rounded-2xl border p-6">
-        <div className="border-border mb-4 flex items-center gap-2 border-b pb-2 text-base font-semibold">
-          <Info className="size-4.5" />
-          Datos de la cancha
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Deporte</Label>
-            <Select
-              value={deporte}
-              onValueChange={(v) => {
-                const nuevoDeporte = v as typeof deporte
-                setDeporte(nuevoDeporte)
-                // Si la superficie elegida no tiene sentido para el nuevo deporte,
-                // se pasa a la primera que sí (ej: fútbol nunca en polvo de ladrillo)
-                if (!superficiesPorDeporte[nuevoDeporte].includes(tipoSuperficie)) {
-                  setTipoSuperficie(superficiesPorDeporte[nuevoDeporte][0])
-                }
-              }}
-            >
-              <SelectTrigger className="w-full" aria-label="Deporte">
-                <SelectValue>{(v: typeof deporte) => deporteLabels[v]}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(deporteLabels).map(([valor, label]) => (
-                  <SelectItem key={valor} value={valor}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="border-border bg-card rounded-2xl border p-6">
+          <div className="border-border mb-4 flex items-center gap-2 border-b pb-2 text-base font-semibold">
+            <Info className="size-4.5" />
+            Datos de la cancha
           </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Deporte</Label>
+              <Select
+                value={deporte}
+                onValueChange={(v) => {
+                  const nuevoDeporte = v as typeof deporte
+                  setDeporte(nuevoDeporte)
+                  // Si la superficie elegida no tiene sentido para el nuevo deporte,
+                  // se pasa a la primera que sí (ej: fútbol nunca en polvo de ladrillo)
+                  if (!superficiesPorDeporte[nuevoDeporte].includes(tipoSuperficie)) {
+                    setTipoSuperficie(superficiesPorDeporte[nuevoDeporte][0])
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full" aria-label="Deporte">
+                  <SelectValue>{(v: typeof deporte) => deporteLabels[v]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(deporteLabels).map(([valor, label]) => (
+                    <SelectItem key={valor} value={valor}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <Label>Superficie</Label>
-            <Select
-              key={deporte}
-              value={tipoSuperficie}
-              onValueChange={(v) => setTipoSuperficie(v as typeof tipoSuperficie)}
-            >
-              <SelectTrigger className="w-full" aria-label="Superficie">
-                <SelectValue>{(v: typeof tipoSuperficie) => superficieLabels[v]}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {superficiesPorDeporte[deporte].map((valor) => (
-                  <SelectItem key={valor} value={valor}>
-                    {superficieLabels[valor]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-2">
+              <Label>Superficie</Label>
+              <Select
+                key={deporte}
+                value={tipoSuperficie}
+                onValueChange={(v) => setTipoSuperficie(v as typeof tipoSuperficie)}
+              >
+                <SelectTrigger className="w-full" aria-label="Superficie">
+                  <SelectValue>{(v: typeof tipoSuperficie) => superficieLabels[v]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {superficiesPorDeporte[deporte].map((valor) => (
+                    <SelectItem key={valor} value={valor}>
+                      {superficieLabels[valor]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="nombrePrefijo">Nombre / prefijo identificador</Label>
-            <Input
-              id="nombrePrefijo"
-              name="nombrePrefijo"
-              placeholder="Cancha"
-              defaultValue="Cancha"
-            />
-            <p className="text-muted-foreground text-xs">
-              Ej: &quot;Cancha&quot; resultará en &quot;Cancha 1&quot;, &quot;Cancha 2&quot;...
-            </p>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="nombrePrefijo">Nombre / prefijo identificador</Label>
+              <Input
+                id="nombrePrefijo"
+                name="nombrePrefijo"
+                placeholder="Cancha"
+                defaultValue="Cancha"
+              />
+              <p className="text-muted-foreground text-xs">
+                Ej: &quot;Cancha&quot; resultará en &quot;Cancha 1&quot;, &quot;Cancha 2&quot;...
+              </p>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="cantidad">Cantidad de canchas a dar de alta</Label>
-            <Input
-              id="cantidad"
-              name="cantidad"
-              type="number"
-              min={1}
-              max={20}
-              value={cantidad}
-              onChange={(e) => setCantidad(Number(e.target.value))}
-            />
-            <p className="text-muted-foreground text-xs">
-              Crea cada registro individual en la base de datos
-            </p>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="cantidad">Cantidad de canchas a dar de alta</Label>
+              <Input
+                id="cantidad"
+                name="cantidad"
+                type="number"
+                min={1}
+                max={20}
+                value={cantidad}
+                onChange={(e) => setCantidad(Number(e.target.value))}
+              />
+              <p className="text-muted-foreground text-xs">
+                Crea cada registro individual en la base de datos
+              </p>
+            </div>
 
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="precioBase">Precio base por turno ($ ARS)</Label>
-            <Input
-              id="precioBase"
-              name="precioBase"
-              type="number"
-              step="0.01"
-              placeholder="24000"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="border-border bg-card rounded-2xl border p-6">
-        <div className="border-border mb-4 flex items-center gap-2 border-b pb-2 text-base font-semibold">
-          <Clock className="size-4.5" />
-          Horarios disponibles
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Apertura</Label>
-            <TimeSelect label="Apertura" value={horaApertura} onChange={setHoraApertura} />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Cierre</Label>
-            <TimeSelect label="Cierre" value={horaCierre} onChange={setHoraCierre} />
-          </div>
-
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="duracionTurnoMin">Duración de turno</Label>
-            <Select value={duracionTurnoMin} onValueChange={(v) => v && setDuracionTurnoMin(v)}>
-              <SelectTrigger className="w-full" aria-label="Duración de turno">
-                <SelectValue>{(v: string) => duracionOpciones[v]}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(duracionOpciones).map(([valor, label]) => (
-                  <SelectItem key={valor} value={valor}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="precioBase">Precio base por turno ($ ARS)</Label>
+              <Input
+                id="precioBase"
+                name="precioBase"
+                type="number"
+                step="0.01"
+                placeholder="24000"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="bg-secondary border-border text-secondary-foreground mt-4 flex items-center gap-2 rounded-lg border px-3.5 py-2.5 text-sm">
-          <CircleCheck className="text-primary size-4 shrink-0" />
-          <span>
-            Se darán de alta{' '}
-            <strong>
-              {cantidad} {cantidad === 1 ? 'cancha individual' : 'canchas individuales'}
-            </strong>{' '}
-            con {turnosPorCancha} turnos de {duracionTurnoMin} min cada una.
-          </span>
+        <div className="border-border bg-card rounded-2xl border p-6">
+          <div className="border-border mb-4 flex items-center gap-2 border-b pb-2 text-base font-semibold">
+            <Clock className="size-4.5" />
+            Horarios disponibles
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Apertura</Label>
+              <TimeSelect label="Apertura" value={horaApertura} onChange={setHoraApertura} />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Cierre</Label>
+              <TimeSelect label="Cierre" value={horaCierre} onChange={setHoraCierre} />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="duracionTurnoMin">Duración de turno</Label>
+              <Select value={duracionTurnoMin} onValueChange={(v) => v && setDuracionTurnoMin(v)}>
+                <SelectTrigger className="w-full" aria-label="Duración de turno">
+                  <SelectValue>{(v: string) => duracionOpciones[v]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(duracionOpciones).map(([valor, label]) => (
+                    <SelectItem key={valor} value={valor}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="bg-secondary border-border text-secondary-foreground mt-4 flex items-center gap-2 rounded-lg border px-3.5 py-2.5 text-sm">
+            <CircleCheck className="text-primary size-4 shrink-0" />
+            <span>
+              Se darán de alta{' '}
+              <strong>
+                {cantidad} {cantidad === 1 ? 'cancha individual' : 'canchas individuales'}
+              </strong>{' '}
+              con {turnosPorCancha} turnos de {duracionTurnoMin} min cada una.
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div className="flex justify-end gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          render={<a href={`/dueno/complejos/${complejoId}/canchas`} />}
-        >
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={cargando}>
-          {cargando ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          {cargando ? 'Guardando...' : 'Guardar canchas'}
-        </Button>
-      </div>
+        <div className="flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            render={<a href={`/dueno/complejos/${complejoId}/canchas`} />}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={cargando}>
+            {cargando ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            {cargando ? 'Guardando...' : 'Guardar canchas'}
+          </Button>
+        </div>
 
-      {error && <p className="text-destructive text-sm">{error}</p>}
-    </form>
+        {error && <p className="text-destructive text-sm">{error}</p>}
+      </form>
+
+      <aside className="order-first lg:sticky lg:top-6 lg:order-none lg:self-start">
+        {/* El nombre usa "Cancha" fijo: el prefijo es un input no controlado */}
+        <VistaPreviaCancha
+          nombre={cantidad > 1 ? `Cancha 1 a ${cantidad}` : 'Cancha 1'}
+          deporte={deporte}
+          tipoSuperficie={tipoSuperficie}
+          horaApertura={horaApertura}
+          horaCierre={horaCierre}
+          detalle={`${turnosPorCancha} turnos de ${duracionTurnoMin} min por cancha.`}
+        />
+      </aside>
+    </div>
   )
 }

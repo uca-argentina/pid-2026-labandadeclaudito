@@ -161,7 +161,7 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
 
           {reservas.length > 0 && vista === 'proximas' && (
             <>
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
                 {reservas.map((reserva) => (
                   <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
                 ))}

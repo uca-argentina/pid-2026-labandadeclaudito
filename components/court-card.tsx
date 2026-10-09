@@ -3,19 +3,26 @@ import type { CourtWithPrice } from '@/lib/court-search'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { CourtBookingSheet } from '@/components/court-booking-sheet'
 import { DibujoDeCancha } from '@/components/dibujo-de-cancha'
+import { AvisoBloqueo } from '@/components/aviso-bloqueo'
 
 // Card de una cancha en el detalle del complejo. A la izquierda, una franja
 // recortada en diagonal con un dibujo de la cancha según el deporte; a la
 // derecha, los datos y el botón.
+// bloqueo: el texto del bloqueo de ese día, si tiene; la card va en gris (se
+// puede seguir reservando en los horarios u otros días que estén libres).
 export function CourtCard({
   cancha,
   fechaInicial,
+  bloqueo,
 }: {
   cancha: CourtWithPrice
   fechaInicial?: string
+  bloqueo?: string
 }) {
   return (
-    <div className="border-border bg-card relative min-h-39 overflow-hidden rounded-2xl border">
+    <div
+      className={`border-border bg-card relative min-h-39 overflow-hidden rounded-2xl border ${bloqueo ? 'opacity-60 grayscale' : ''}`}
+    >
       <div className="absolute inset-y-0 left-0 w-25 opacity-75 [clip-path:polygon(0_0,58%_0,100%_100%,0_100%)] [mask-image:linear-gradient(90deg,black_40%,rgb(0_0_0/0.3)_100%)]">
         <DibujoDeCancha deporte={cancha.deporte} />
       </div>
@@ -50,6 +57,11 @@ export function CourtCard({
             <Clock className="size-3.5 shrink-0" />
             {cancha.horaApertura} a {cancha.horaCierre} hs
           </p>
+          {bloqueo && (
+            <div className="mt-1.5">
+              <AvisoBloqueo texto={bloqueo} />
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap items-end justify-between gap-3">

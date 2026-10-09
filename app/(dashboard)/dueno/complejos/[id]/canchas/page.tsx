@@ -17,6 +17,9 @@ import {
 } from '@/components/ui/table'
 import { CourtRowActions } from '@/components/court-row-actions'
 import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
+import { AvisoBloqueo } from '@/components/aviso-bloqueo'
+import { bloqueosDelDia, textoDelBloqueo } from '@/lib/blocks'
+import { diaDeHoy } from '@/lib/time'
 
 export default async function ListadoCanchasPage({
   params,
@@ -32,6 +35,18 @@ export default async function ListadoCanchasPage({
     where: { complejoId: id, activo: true },
     orderBy: { nombre: 'asc' },
   })
+
+  // Bloqueos de hoy: la cancha bloqueada va en gris, con la franja y el motivo
+  const idsDeCanchas: string[] = []
+  for (const cancha of canchas) {
+    idsDeCanchas.push(cancha.id)
+  }
+  const bloqueos = await bloqueosDelDia(idsDeCanchas, new Date(diaDeHoy()))
+
+  function textoDeBloqueoDe(canchaId: string): string | null {
+    const bloqueosDeLaCancha = bloqueos.filter((b) => b.courtId === canchaId)
+    return bloqueosDeLaCancha.length > 0 ? textoDelBloqueo(bloqueosDeLaCancha, true) : null
+  }
 
   return (
     <main>
@@ -68,28 +83,43 @@ export default async function ListadoCanchasPage({
         <>
           {/* Mobile y tablet: una tarjeta por cancha, porque la tabla no entra */}
           <div className="border-border bg-card divide-border mt-8 divide-y rounded-2xl border lg:hidden">
-            {canchas.map((cancha) => (
-              <div key={cancha.id} className="space-y-3 p-4">
-                <div>
-                  <p className="font-semibold">{cancha.nombre}</p>
-                  <p className="text-muted-foreground text-sm">
-                    {deporteLabels[cancha.deporte]} · {superficieLabels[cancha.tipoSuperficie]}
-                  </p>
+            {canchas.map((cancha) => {
+              const bloqueo = textoDeBloqueoDe(cancha.id)
+              return (
+                <div
+                  key={cancha.id}
+                  className={`space-y-3 p-4 ${bloqueo ? 'opacity-60 grayscale' : ''}`}
+                >
+                  <div>
+                    <p className="font-semibold">{cancha.nombre}</p>
+                    <p className="text-muted-foreground text-sm">
+                      {deporteLabels[cancha.deporte]} · {superficieLabels[cancha.tipoSuperficie]}
+                    </p>
+                    {bloqueo && (
+                      <div className="mt-1">
+                        <AvisoBloqueo texto={bloqueo} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm">
+                      <span className="font-semibold">
+                        {formatPrecio(cancha.precioBase.toString())}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {' '}
+                        · {cancha.horaApertura} – {cancha.horaCierre}
+                      </span>
+                    </p>
+                    <CourtRowActions
+                      complejoId={id}
+                      courtId={cancha.id}
+                      courtName={cancha.nombre}
+                    />
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm">
-                    <span className="font-semibold">
-                      {formatPrecio(cancha.precioBase.toString())}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {' '}
-                      · {cancha.horaApertura} – {cancha.horaCierre}
-                    </span>
-                  </p>
-                  <CourtRowActions complejoId={id} courtId={cancha.id} courtName={cancha.nombre} />
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           {/* Desktop: tabla */}
@@ -105,30 +135,41 @@ export default async function ListadoCanchasPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {canchas.map((cancha) => (
-                  <TableRow key={cancha.id}>
-                    <TableCell className="whitespace-normal">
-                      <span className="mb-1 block font-semibold">{cancha.nombre}</span>
-                      <EtiquetaDeporte deporte={cancha.deporte} />
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{superficieLabels[cancha.tipoSuperficie]}</Badge>
-                    </TableCell>
-                    <TableCell className="font-semibold">
-                      {formatPrecio(cancha.precioBase.toString())}
-                    </TableCell>
-                    <TableCell>
-                      {cancha.horaApertura} – {cancha.horaCierre}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <CourtRowActions
-                        complejoId={id}
-                        courtId={cancha.id}
-                        courtName={cancha.nombre}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {canchas.map((cancha) => {
+                  const bloqueo = textoDeBloqueoDe(cancha.id)
+                  return (
+                    <TableRow
+                      key={cancha.id}
+                      className={bloqueo ? 'opacity-60 grayscale' : undefined}
+                    >
+                      <TableCell className="whitespace-normal">
+                        <span className="mb-1 block font-semibold">{cancha.nombre}</span>
+                        <EtiquetaDeporte deporte={cancha.deporte} />
+                        {bloqueo && (
+                          <div className="mt-1.5">
+                            <AvisoBloqueo texto={bloqueo} />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{superficieLabels[cancha.tipoSuperficie]}</Badge>
+                      </TableCell>
+                      <TableCell className="font-semibold">
+                        {formatPrecio(cancha.precioBase.toString())}
+                      </TableCell>
+                      <TableCell>
+                        {cancha.horaApertura} – {cancha.horaCierre}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <CourtRowActions
+                          complejoId={id}
+                          courtId={cancha.id}
+                          courtName={cancha.nombre}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>

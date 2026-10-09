@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { FormNuevoComplejo } from '@/components/form-nuevo-complejo'
+import { AyudaComplejo } from '@/components/ayuda-complejo'
 
 export const metadata: Metadata = {
   title: 'Crear complejo | TocaYJuga',
@@ -21,7 +22,12 @@ export default function CrearComplejoPage() {
         Cargá los datos del complejo. Después vas a poder agregar sus canchas.
       </p>
 
-      <FormNuevoComplejo />
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <FormNuevoComplejo />
+        <aside className="lg:sticky lg:top-6 lg:self-start">
+          <AyudaComplejo />
+        </aside>
+      </div>
     </main>
   )
 }

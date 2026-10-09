@@ -6,6 +6,8 @@ import { getComplexDetail, filtersToQueryString } from '@/lib/court-search'
 import { searchCourtsSchema } from '@/lib/validations/court-search'
 import { formatPrecio } from '@/lib/labels'
 import { deportesDistintos, precioMasBajo } from '@/lib/resumen-complejo'
+import { bloqueosDelDia, textoDelBloqueo } from '@/lib/blocks'
+import { diaDeHoy } from '@/lib/time'
 import { CourtCard } from '@/components/court-card'
 import { ComplexGallery } from '@/components/complex-gallery'
 import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
@@ -24,6 +26,13 @@ export default async function ComplejoDetallePage({
   if (!complejo) notFound()
 
   const precioDesde = precioMasBajo(complejo.canchas)
+
+  // Bloqueos del día que se está mirando: el de la búsqueda o, si no hay, hoy
+  const idsDeCanchas: string[] = []
+  for (const cancha of complejo.canchas) {
+    idsDeCanchas.push(cancha.id)
+  }
+  const bloqueos = await bloqueosDelDia(idsDeCanchas, new Date(filtros.fecha ?? diaDeHoy()))
 
   return (
     <main>
@@ -64,14 +73,28 @@ export default async function ComplejoDetallePage({
 
           {complejo.canchas.length === 0 ? (
             <p className="text-muted-foreground mt-4 text-sm">
-              Este complejo todavía no cargó canchas.
+              {filtersToQueryString(filtros) === ''
+                ? 'Este complejo todavía no cargó canchas.'
+                : 'Ninguna cancha de este complejo cumple los filtros de tu búsqueda.'}
             </p>
           ) : (
             // Dos por fila recién en 2xl: al lado de la ficha, en lg la columna es angosta
             <div className="mt-6 grid gap-5 2xl:grid-cols-2">
-              {complejo.canchas.map((cancha) => (
-                <CourtCard key={cancha.id} cancha={cancha} fechaInicial={filtros.fecha} />
-              ))}
+              {complejo.canchas.map((cancha) => {
+                const bloqueosDeLaCancha = bloqueos.filter((b) => b.courtId === cancha.id)
+                return (
+                  <CourtCard
+                    key={cancha.id}
+                    cancha={cancha}
+                    fechaInicial={filtros.fecha}
+                    bloqueo={
+                      bloqueosDeLaCancha.length > 0
+                        ? textoDelBloqueo(bloqueosDeLaCancha, false)
+                        : undefined
+                    }
+                  />
+                )
+              })}
             </div>
           )}
         </section>

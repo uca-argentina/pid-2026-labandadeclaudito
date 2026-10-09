@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { blockOverlapsBooking, blocksOverlap, isSlotBlocked } from './blocks'
+import {
+  blockOverlapsBooking,
+  blocksOverlap,
+  isSlotBlocked,
+  resumenBloqueosDelComplejo,
+  textoDelBloqueo,
+} from './blocks'
 
 describe('blocksOverlap', () => {
   it('se solapan cuando comparten día y horario', () => {
@@ -166,5 +172,50 @@ describe('isSlotBlocked', () => {
   it('el turno de las 23:00 (termina a medianoche) se bloquea si el bloqueo llega hasta las 23:59', () => {
     const bloqueoDeNoche = [{ startTime: '22:00', endTime: '23:59' }]
     expect(isSlotBlocked('23:00', '00:00', bloqueoDeNoche)).toBe(true)
+  })
+})
+
+describe('textoDelBloqueo', () => {
+  const mantenimiento = { startTime: '14:00', endTime: '18:00', reason: 'Mantenimiento' }
+
+  it('al jugador le muestra solo la franja, nunca el motivo', () => {
+    expect(textoDelBloqueo([mantenimiento], false)).toBe('Bloqueada de 14:00 a 18:00')
+  })
+
+  it('al dueño le suma el motivo', () => {
+    expect(textoDelBloqueo([mantenimiento], true)).toBe(
+      'Bloqueada de 14:00 a 18:00 · Mantenimiento',
+    )
+  })
+
+  it('sin motivo cargado, solo la franja aunque sea el dueño', () => {
+    expect(textoDelBloqueo([{ startTime: '08:00', endTime: '10:00', reason: null }], true)).toBe(
+      'Bloqueada de 08:00 a 10:00',
+    )
+  })
+
+  it('varios bloqueos el mismo día: junta las franjas y los motivos', () => {
+    const torneo = { startTime: '08:00', endTime: '10:00', reason: 'Torneo' }
+    expect(textoDelBloqueo([torneo, mantenimiento], true)).toBe(
+      'Bloqueada de 08:00 a 10:00 y de 14:00 a 18:00 · Torneo, Mantenimiento',
+    )
+  })
+})
+
+describe('resumenBloqueosDelComplejo', () => {
+  it('sin canchas bloqueadas, nada', () => {
+    expect(resumenBloqueosDelComplejo(0, 3)).toBeNull()
+  })
+
+  it('una de varias', () => {
+    expect(resumenBloqueosDelComplejo(1, 3)).toBe('1 de 3 canchas bloqueada')
+  })
+
+  it('varias de varias', () => {
+    expect(resumenBloqueosDelComplejo(2, 3)).toBe('2 de 3 canchas bloqueadas')
+  })
+
+  it('todas', () => {
+    expect(resumenBloqueosDelComplejo(3, 3)).toBe('Todas las canchas bloqueadas')
   })
 })

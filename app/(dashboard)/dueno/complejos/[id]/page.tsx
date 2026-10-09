@@ -16,6 +16,8 @@ import { db } from '@/lib/db'
 import { pendientesVencidas } from '@/lib/bookings'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { diaDeHoy, diaDeReserva, formatAdvanceTime } from '@/lib/time'
+import { bloqueosDelDia, textoDelBloqueo } from '@/lib/blocks'
+import { AvisoBloqueo } from '@/components/aviso-bloqueo'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { ComplexGallery } from '@/components/complex-gallery'
 import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
@@ -54,6 +56,13 @@ export default async function DetalleComplejoDuenoPage({
   ])
   if (!complejo) notFound()
 
+  // Bloqueos de hoy: la fila de una cancha bloqueada va en gris, con el motivo
+  const idsDeCanchas: string[] = []
+  for (const cancha of complejo.canchas) {
+    idsDeCanchas.push(cancha.id)
+  }
+  const bloqueos = await bloqueosDelDia(idsDeCanchas, new Date(diaDeHoy()))
+
   return (
     <main>
       <Link
@@ -65,7 +74,19 @@ export default async function DetalleComplejoDuenoPage({
       </Link>
 
       <div className="mb-7">
-        <h1 className="text-3xl font-semibold">{complejo.nombre}</h1>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <h1 className="text-3xl font-semibold">{complejo.nombre}</h1>
+          {/* En celular la ficha con las acciones queda al final de la página:
+              editar se repite acá arriba para tenerlo a mano */}
+          <Button
+            variant="outline"
+            className="lg:hidden"
+            render={<Link href={`/dueno/complejos/${id}/editar`} />}
+          >
+            <Pencil className="size-3.5" />
+            Editar complejo
+          </Button>
+        </div>
         {/* En lg dirección y contacto están en la ficha del costado */}
         <div className="text-muted-foreground mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm lg:hidden">
           <p className="flex items-center gap-1.5">
@@ -120,23 +141,31 @@ export default async function DetalleComplejoDuenoPage({
             </div>
           ) : (
             <div className="border-border bg-card mb-10 divide-y rounded-2xl border">
-              {complejo.canchas.map((cancha) => (
-                <div
-                  key={cancha.id}
-                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
-                >
-                  <div>
-                    <span className="font-semibold">{cancha.nombre}</span>
-                    <p className="text-muted-foreground text-sm">
-                      {deporteLabels[cancha.deporte]} · {superficieLabels[cancha.tipoSuperficie]} ·{' '}
-                      {cancha.horaApertura} a {cancha.horaCierre} hs
-                    </p>
+              {complejo.canchas.map((cancha) => {
+                const bloqueosDeLaCancha = bloqueos.filter((b) => b.courtId === cancha.id)
+                return (
+                  <div
+                    key={cancha.id}
+                    className={`flex flex-wrap items-center justify-between gap-3 px-5 py-4 ${bloqueosDeLaCancha.length > 0 ? 'opacity-60 grayscale' : ''}`}
+                  >
+                    <div>
+                      <span className="font-semibold">{cancha.nombre}</span>
+                      <p className="text-muted-foreground text-sm">
+                        {deporteLabels[cancha.deporte]} · {superficieLabels[cancha.tipoSuperficie]}{' '}
+                        · {cancha.horaApertura} a {cancha.horaCierre} hs
+                      </p>
+                      {bloqueosDeLaCancha.length > 0 && (
+                        <div className="mt-1">
+                          <AvisoBloqueo texto={textoDelBloqueo(bloqueosDeLaCancha, true)} />
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-primary font-bold">
+                      {formatPrecio(cancha.precioBase.toString())}
+                    </span>
                   </div>
-                  <span className="text-primary font-bold">
-                    {formatPrecio(cancha.precioBase.toString())}
-                  </span>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 
