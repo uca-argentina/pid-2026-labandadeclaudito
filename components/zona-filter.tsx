@@ -21,7 +21,15 @@ const selectClassName =
 // recién cuando se elige una provincia aparece "Zona" con los barrios o
 // localidades de esa provincia. Antes de elegir provincia no tiene sentido
 // mostrar una lista de zonas, así que ese segundo select ni se muestra.
-export function ZonaFilter({ zonaInicial }: { zonaInicial?: string }) {
+export function ZonaFilter({
+  zonaInicial,
+  idPrefijo,
+}: {
+  zonaInicial?: string
+  // Los filtros se dibujan dos veces (al costado y en el sheet del celular):
+  // el prefijo evita ids repetidos, así cada label enfoca su propio campo.
+  idPrefijo: string
+}) {
   const [provincia, setProvincia] = useState<Provincia>(
     zonaInicial === undefined ? '' : provinciaDeZona(zonaInicial),
   )
@@ -38,12 +46,12 @@ export function ZonaFilter({ zonaInicial }: { zonaInicial?: string }) {
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="provincia" className="flex items-center gap-1.5">
+        <Label htmlFor={`${idPrefijo}provincia`} className="flex items-center gap-1.5">
           <MapPin className="size-3.5" />
           Provincia
         </Label>
         <select
-          id="provincia"
+          id={`${idPrefijo}provincia`}
           value={provincia}
           onChange={(e) => setProvincia(e.target.value as Provincia)}
           className={selectClassName}
@@ -56,13 +64,13 @@ export function ZonaFilter({ zonaInicial }: { zonaInicial?: string }) {
 
       {provincia !== '' && (
         <div className="space-y-2">
-          <Label htmlFor="zona" className="flex items-center gap-1.5">
+          <Label htmlFor={`${idPrefijo}zona`} className="flex items-center gap-1.5">
             <MapPin className="size-3.5" />
             Zona
           </Label>
           <select
             key={provincia}
-            id="zona"
+            id={`${idPrefijo}zona`}
             name="zona"
             defaultValue={zonaPorDefecto}
             className={selectClassName}

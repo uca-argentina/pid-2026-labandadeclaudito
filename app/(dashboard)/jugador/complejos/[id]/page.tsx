@@ -1,11 +1,14 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { ArrowLeft, BadgeCheck, MapPin, Phone } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, MapPin, Phone, Shapes, Wallet } from 'lucide-react'
 import { getComplexDetail, filtersToQueryString } from '@/lib/court-search'
 import { searchCourtsSchema } from '@/lib/validations/court-search'
+import { formatPrecio } from '@/lib/labels'
+import { deportesDistintos, precioMasBajo } from '@/lib/resumen-complejo'
 import { CourtCard } from '@/components/court-card'
 import { ComplexGallery } from '@/components/complex-gallery'
+import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
 
 export default async function ComplejoDetallePage({
   params,
@@ -19,6 +22,8 @@ export default async function ComplejoDetallePage({
 
   const complejo = await getComplexDetail(id, filtros, session.user.id)
   if (!complejo) notFound()
+
+  const precioDesde = precioMasBajo(complejo.canchas)
 
   return (
     <main>
@@ -38,7 +43,8 @@ export default async function ComplejoDetallePage({
             Verificado
           </span>
         </div>
-        <p className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        {/* En lg dirección y contacto están en la ficha del costado */}
+        <p className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm lg:hidden">
           <span className="flex items-center gap-1.5">
             <MapPin className="size-3.5 shrink-0" />
             {complejo.direccion} · {complejo.zona}
@@ -50,21 +56,57 @@ export default async function ComplejoDetallePage({
         </p>
       </div>
 
-      <ComplexGallery imagenes={complejo.imagenes} nombreComplejo={complejo.nombre} />
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <section>
+          <ComplexGallery imagenes={complejo.imagenes} nombreComplejo={complejo.nombre} />
 
-      <h2 className="mb-4 text-lg font-semibold">Canchas disponibles en este complejo</h2>
+          <h2 className="mb-4 text-lg font-semibold">Canchas disponibles en este complejo</h2>
 
-      {complejo.canchas.length === 0 ? (
-        <p className="text-muted-foreground mt-4 text-sm">
-          Este complejo todavía no cargó canchas.
-        </p>
-      ) : (
-        <div className="mt-6 grid gap-5 lg:grid-cols-2">
-          {complejo.canchas.map((cancha) => (
-            <CourtCard key={cancha.id} cancha={cancha} fechaInicial={filtros.fecha} />
-          ))}
-        </div>
-      )}
+          {complejo.canchas.length === 0 ? (
+            <p className="text-muted-foreground mt-4 text-sm">
+              Este complejo todavía no cargó canchas.
+            </p>
+          ) : (
+            // Dos por fila recién en 2xl: al lado de la ficha, en lg la columna es angosta
+            <div className="mt-6 grid gap-5 2xl:grid-cols-2">
+              {complejo.canchas.map((cancha) => (
+                <CourtCard key={cancha.id} cancha={cancha} fechaInicial={filtros.fecha} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+          <div className="border-border bg-card space-y-4 rounded-2xl border p-5 text-sm">
+            <p className="flex items-start gap-2">
+              <MapPin className="text-muted-foreground mt-0.5 size-4 shrink-0" />
+              {complejo.direccion} · {complejo.zona}
+            </p>
+            <p className="flex items-center gap-2">
+              <Phone className="text-muted-foreground size-4 shrink-0" />
+              {complejo.contacto}
+            </p>
+            <p className="flex items-center gap-2">
+              <Shapes className="text-muted-foreground size-4 shrink-0" />
+              {complejo.canchas.length === 1 ? '1 cancha' : `${complejo.canchas.length} canchas`}
+            </p>
+            {complejo.canchas.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {deportesDistintos(complejo.canchas).map((deporte) => (
+                  <EtiquetaDeporte key={deporte} deporte={deporte} />
+                ))}
+              </div>
+            )}
+            {precioDesde !== null && (
+              <div className="border-border flex items-center gap-1.5 border-t pt-4">
+                <Wallet className="text-primary size-4 shrink-0" />
+                <span className="text-muted-foreground text-xs">desde</span>
+                <span className="text-primary text-lg font-bold">{formatPrecio(precioDesde)}</span>
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
     </main>
   )
 }
