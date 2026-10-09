@@ -48,7 +48,7 @@ export function CuentaRegresivaSena({ venceEn }: { venceEn: string }) {
           <Hourglass className="size-3.5 shrink-0" />
           {vencida ? 'Se venció el plazo de la seña' : 'Tiempo para pagar la seña'}
         </span>
-        <span className={`text-xl font-bold tabular-nums ${colorTexto}`}>
+        <span className={`font-heading text-xl font-bold tabular-nums ${colorTexto}`}>
           {msRestantes === null ? '--:--' : formatearTiempoRestante(restante)}
         </span>
       </div>

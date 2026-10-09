@@ -2,6 +2,7 @@ import { Clock } from 'lucide-react'
 import type { CourtWithPrice } from '@/lib/court-search'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { CourtBookingSheet } from '@/components/court-booking-sheet'
+import { colorPorDeporte } from '@/components/etiqueta-deporte'
 import { DibujoDeCancha } from '@/components/dibujo-de-cancha'
 import { AvisoBloqueo } from '@/components/aviso-bloqueo'
 
@@ -21,7 +22,7 @@ export function CourtCard({
 }) {
   return (
     <div
-      className={`border-border bg-card relative min-h-39 overflow-hidden rounded-2xl border ${bloqueo ? 'opacity-60 grayscale' : ''}`}
+      className={`bg-card shadow-card relative min-h-31 overflow-hidden rounded-2xl ${bloqueo ? 'opacity-60 grayscale' : ''}`}
     >
       <div className="absolute inset-y-0 left-0 w-25 opacity-75 [clip-path:polygon(0_0,58%_0,100%_100%,0_100%)] [mask-image:linear-gradient(90deg,black_40%,rgb(0_0_0/0.3)_100%)]">
         <DibujoDeCancha deporte={cancha.deporte} />
@@ -44,16 +45,18 @@ export function CourtCard({
         />
       </svg>
 
-      {/* Sin alto fijo: si el botón no entra al lado del precio (pantallas
-          chicas), baja a otra línea y la card crece. min-h-31 = h-39 menos
-          los márgenes de arriba y abajo. */}
-      <div className="relative my-4 mr-5 ml-28 flex min-h-31 flex-col justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-primary truncate text-[11px] font-semibold tracking-wide uppercase">
+      {/* Los datos a la izquierda y, a la derecha, el precio pegado al botón.
+          Si no entran en una línea (pantallas chicas), precio y botón bajan
+          juntos: el precio queda a la izquierda y el botón a la derecha. */}
+      <div className="relative ml-28 flex min-h-31 flex-wrap items-center gap-x-5 gap-y-3 py-4 pr-5">
+        <div className="min-w-0 flex-[999_1_12rem]">
+          <p
+            className={`truncate text-[11px] font-bold tracking-wider uppercase ${colorPorDeporte[cancha.deporte]}`}
+          >
             {deporteLabels[cancha.deporte]} · {superficieLabels[cancha.tipoSuperficie]}
           </p>
-          <h3 className="truncate text-lg font-bold">{cancha.nombre}</h3>
-          <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+          <h3 className="font-heading truncate text-xl font-bold">{cancha.nombre}</h3>
+          <p className="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-sm">
             <Clock className="size-3.5 shrink-0" />
             {cancha.horaApertura} a {cancha.horaCierre} hs
           </p>
@@ -64,25 +67,24 @@ export function CourtCard({
           )}
         </div>
 
-        <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-auto items-center justify-between gap-5">
           <div>
             <p className="text-muted-foreground text-xs">desde</p>
-            <p className="text-primary text-xl font-bold">{formatPrecio(cancha.priceFrom)}</p>
+            <p className="font-heading text-primary text-2xl leading-tight font-bold">
+              {formatPrecio(cancha.priceFrom)}
+            </p>
             <p className="text-muted-foreground text-xs whitespace-nowrap">
               por turno de {cancha.duracionTurnoMin} min
             </p>
           </div>
-          {/* ml-auto: si el botón baja de línea, queda a la derecha igual */}
-          <div className="ml-auto">
-            <CourtBookingSheet
-              courtId={cancha.id}
-              courtName={cancha.nombre}
-              deporte={cancha.deporte}
-              precioBase={cancha.precioBase.toString()}
-              duracionTurnoMin={cancha.duracionTurnoMin}
-              fechaInicial={fechaInicial}
-            />
-          </div>
+          <CourtBookingSheet
+            courtId={cancha.id}
+            courtName={cancha.nombre}
+            deporte={cancha.deporte}
+            precioBase={cancha.precioBase.toString()}
+            duracionTurnoMin={cancha.duracionTurnoMin}
+            fechaInicial={fechaInicial}
+          />
         </div>
       </div>
     </div>

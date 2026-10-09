@@ -68,7 +68,6 @@ export function FiltrosDeBusqueda({
               step={1}
               placeholder="Sin mínimo"
               defaultValue={filtros.precioMin ?? ''}
-              className="h-10"
             />
           </div>
 
@@ -82,7 +81,6 @@ export function FiltrosDeBusqueda({
               step={1}
               placeholder="Sin máximo"
               defaultValue={filtros.precioMax ?? ''}
-              className="h-10"
             />
           </div>
         </div>
@@ -106,7 +104,6 @@ export function FiltrosDeBusqueda({
             min={diaDeHoy()}
             max={ultimoDiaParaReservar()}
             defaultValue={filtros.fecha ?? ''}
-            className="h-10"
           />
         </div>
 
@@ -125,8 +122,8 @@ export function FiltrosDeBusqueda({
           con todos los filtros abiertos, el panel es más alto que la pantalla
           y los botones quedarían fuera de la vista. */}
       <div className="border-border bg-card sticky bottom-0 flex justify-end gap-2 border-t py-4">
-        <Button type="button" variant="ghost" onClick={limpiarFiltros}>
-          Limpiar filtros
+        <Button type="button" variant="ghost" className="px-3" onClick={limpiarFiltros}>
+          Limpiar
         </Button>
         <Button type="submit">
           <Search className="size-4" />

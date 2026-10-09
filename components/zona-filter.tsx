@@ -15,7 +15,7 @@ function provinciaDeZona(zona: string): Provincia {
 // Mismo aspecto que el Input de shadcn, para que los <select> nativos no desentonen
 // (igual al de search-filters-sheet.tsx).
 const selectClassName =
-  'border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 h-10 w-full rounded-lg border bg-transparent px-3 text-sm outline-none focus-visible:ring-3'
+  'border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 bg-background/50 h-11 w-full rounded-xl border px-3.5 text-base outline-none focus-visible:ring-3'
 
 // Filtro de zona del buscador: arranca en "Todas" (como el de Deporte) y
 // recién cuando se elige una provincia aparece "Zona" con los barrios o

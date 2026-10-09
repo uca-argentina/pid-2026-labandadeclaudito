@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { X } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,12 +17,18 @@ import { Button } from '@/components/ui/button'
 
 // avisoSena: qué pasa con la seña si cancela ahora (lo calcula el server).
 // null cuando la reserva no tiene seña pagada.
+// corto: dice solo "Cancelar", para cuando comparte la fila con otro botón.
+// className va al contenedor: la tarjeta decide cuánto ancho le da al botón.
 export function CancelBookingButton({
   bookingId,
   avisoSena,
+  corto = false,
+  className,
 }: {
   bookingId: string
   avisoSena: string | null
+  corto?: boolean
+  className?: string
 }) {
   const router = useRouter()
   const [cancelando, setCancelando] = useState(false)
@@ -46,11 +51,10 @@ export function CancelBookingButton({
   }
 
   return (
-    <div className="text-right">
+    <div className={className}>
       <AlertDialog>
-        <AlertDialogTrigger render={<Button variant="destructive" size="sm" />}>
-          <X className="size-3.5" />
-          Cancelar reserva
+        <AlertDialogTrigger render={<Button variant="destructive" size="sm" className="w-full" />}>
+          {corto ? 'Cancelar' : 'Cancelar reserva'}
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>

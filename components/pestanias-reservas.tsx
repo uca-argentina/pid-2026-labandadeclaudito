@@ -37,20 +37,32 @@ export function PestaniasDeReservas({
   const todas: VistaDeReservas[] = ['proximas', 'historial', 'canceladas']
 
   return (
-    <div className="mb-6 flex flex-wrap gap-2">
-      {todas.map((pestania) => (
-        <Link
-          key={pestania}
-          href={urlDeReservas(ruta, pestania, 1)}
-          className={
-            pestania === vista
-              ? 'bg-primary text-primary-foreground rounded-full px-3 py-1 text-sm'
-              : 'border-border hover:bg-muted rounded-full border px-3 py-1 text-sm'
-          }
-        >
-          {nombres[pestania]} ({totales[pestania]})
-        </Link>
-      ))}
+    <div className="bg-card shadow-soft mb-6 inline-flex flex-wrap gap-1 rounded-2xl p-1">
+      {todas.map((pestania) => {
+        const elegida = pestania === vista
+        return (
+          <Link
+            key={pestania}
+            href={urlDeReservas(ruta, pestania, 1)}
+            className={
+              elegida
+                ? 'bg-sidebar text-sidebar-foreground inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold'
+                : 'text-foreground/80 hover:bg-muted inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-medium'
+            }
+          >
+            {nombres[pestania]}
+            <span
+              className={
+                elegida
+                  ? 'bg-highlight text-highlight-foreground inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full px-1.5 text-xs font-bold'
+                  : 'bg-muted inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full px-1.5 text-xs font-semibold'
+              }
+            >
+              {totales[pestania]}
+            </span>
+          </Link>
+        )
+      })}
     </div>
   )
 }

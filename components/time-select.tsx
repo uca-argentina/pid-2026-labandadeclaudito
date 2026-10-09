@@ -4,7 +4,7 @@ const HORAS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'))
 const MINUTOS = Array.from({ length: 60 }, (_, m) => String(m).padStart(2, '0'))
 
 const selectClassName =
-  'border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 h-9 w-16 rounded-lg border bg-transparent px-1.5 text-center text-sm outline-none focus-visible:ring-3'
+  'border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 bg-background/50 h-11 w-16 rounded-xl border px-1.5 text-center text-base outline-none focus-visible:ring-3'
 
 // Reemplaza <input type="time">: ese input nativo muestra 12h con AM/PM o
 // 24h según el idioma/región del sistema operativo de quien lo usa, así que

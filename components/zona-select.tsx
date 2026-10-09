@@ -13,7 +13,7 @@ function provinciaDeZona(zona: string): Provincia {
 }
 
 const nativeSelectClassName =
-  'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30'
+  'h-11 w-full min-w-0 rounded-xl border border-input bg-background/50 px-3.5 py-1 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30'
 
 // Select de zona del alta/edición de complejo: primero se elige la
 // provincia (CABA o provincia de Buenos Aires) y después aparece la zona
