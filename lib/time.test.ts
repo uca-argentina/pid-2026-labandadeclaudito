@@ -281,6 +281,9 @@ describe('sumarDias', () => {
 
   test('tiene en cuenta los años bisiestos', () => {
     expect(sumarDias('2028-02-28', 1)).toBe('2028-02-29')
+  })
+})
+
 describe('ultimoDiaParaReservar', () => {
   test('30 días después de hoy', () => {
     expect(ultimoDiaParaReservar('2026-10-07')).toBe('2026-11-06')
