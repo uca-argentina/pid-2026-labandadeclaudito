@@ -29,27 +29,30 @@ export default async function DetalleComplejoDuenoPage({
 
   const { id } = await params
 
-  // Filtrar por duenioId hace de chequeo de ownership: si es de otro dueño, no aparece
-  const complejo = await db.complejo.findFirst({
-    where: { id, duenioId: session.user.id, activo: true },
-    include: {
-      imagenes: { where: { activo: true }, orderBy: { orden: 'asc' } },
-      canchas: { where: { activo: true }, orderBy: { nombre: 'asc' } },
-    },
-  })
+  // Las dos consultas se hacen a la vez. Filtrar por duenioId hace de chequeo
+  // de ownership: si el complejo es de otro dueño no aparece, y se corta con
+  // notFound() antes de mostrar nada (incluidos sus turnos).
+  const [complejo, proximosTurnos] = await Promise.all([
+    db.complejo.findFirst({
+      where: { id, duenioId: session.user.id, activo: true },
+      include: {
+        imagenes: { where: { activo: true }, orderBy: { orden: 'asc' } },
+        canchas: { where: { activo: true }, orderBy: { nombre: 'asc' } },
+      },
+    }),
+    db.reserva.findMany({
+      where: {
+        cancha: { complejoId: id },
+        estado: { not: 'CANCELADA' },
+        NOT: pendientesVencidas(),
+        fecha: { gte: new Date(diaDeHoy()) },
+      },
+      include: { cancha: true, jugador: true },
+      orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
+      take: 5,
+    }),
+  ])
   if (!complejo) notFound()
-
-  const proximosTurnos = await db.reserva.findMany({
-    where: {
-      cancha: { complejoId: id },
-      estado: { not: 'CANCELADA' },
-      NOT: pendientesVencidas(),
-      fecha: { gte: new Date(diaDeHoy()) },
-    },
-    include: { cancha: true, jugador: true },
-    orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
-    take: 5,
-  })
 
   return (
     <main className="max-w-4xl px-6 pt-6 pb-12 md:pt-4">

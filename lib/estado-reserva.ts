@@ -38,17 +38,27 @@ export function estadoDeReserva(
 
 export const MINUTOS_PARA_PAGAR_SENA = 15
 
-export const MENSAJE_SENA_VENCIDA =
-  'Se venció el plazo de 15 minutos para pagar la seña. Reservá el turno de nuevo.'
+// Armado con la constante: si cambia el plazo, el mensaje lo acompaña
+export const MENSAJE_SENA_VENCIDA = `Se venció el plazo de ${MINUTOS_PARA_PAGAR_SENA} minutos para pagar la seña. Reservá el turno de nuevo.`
 
-// Una reserva pendiente tiene 15 minutos desde que se pidió para pagar la
-// seña. Pasado ese plazo deja de ocupar el turno y no se muestra más.
+// Una reserva pendiente tiene MINUTOS_PARA_PAGAR_SENA minutos desde que se
+// pidió para pagar la seña. Pasado ese plazo deja de ocupar el turno y no se
+// muestra más.
 export function venceLaSena(creadaEn: Date): Date {
   return new Date(creadaEn.getTime() + MINUTOS_PARA_PAGAR_SENA * 60 * 1000)
 }
 
 export function senaVencida(creadaEn: Date, ahora: Date = new Date()): boolean {
   return ahora > venceLaSena(creadaEn)
+}
+
+// Lo que falta para que venza la seña, como "MM:SS" para la cuenta regresiva.
+// Redondea para arriba (con 14,2 segundos muestra 00:15) y nunca es negativo.
+export function formatearTiempoRestante(msRestantes: number): string {
+  const segundos = Math.max(Math.ceil(msRestantes / 1000), 0)
+  const minutos = Math.floor(segundos / 60)
+  const resto = segundos % 60
+  return `${String(minutos).padStart(2, '0')}:${String(resto).padStart(2, '0')}`
 }
 
 // Terminado el turno, lo que manda es si el dueño marcó la asistencia.

@@ -16,7 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { diaDeHoy } from '@/lib/time'
+import { diaDeHoy, ultimoDiaParaReservar } from '@/lib/time'
 import { SportSurfaceFilter } from '@/components/sport-surface-filter'
 import { TimeRangeFilter } from '@/components/time-range-filter'
 import { ZonaFilter } from '@/components/zona-filter'
@@ -128,6 +128,7 @@ export function SearchFiltersSheet({
                   name="fecha"
                   type="date"
                   min={diaDeHoy()}
+                  max={ultimoDiaParaReservar()}
                   defaultValue={filtros.fecha ?? ''}
                   className="h-10"
                 />
