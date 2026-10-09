@@ -20,9 +20,9 @@ export function FechaDelTurno({
 
   return (
     <div className="flex items-center gap-3">
-      <div className="bg-primary/10 text-primary flex w-11 shrink-0 flex-col items-center rounded-lg py-1 leading-tight">
+      <div className="bg-primary/10 text-primary flex w-11 shrink-0 flex-col items-center rounded-xl py-1 leading-tight">
         <span className="text-[10px] font-semibold uppercase">{mesesCortos[Number(mes) - 1]}</span>
-        <span className="text-lg font-bold">{Number(diaDelMes)}</span>
+        <span className="font-heading text-lg font-bold">{Number(diaDelMes)}</span>
       </div>
       <div>
         <p className="font-medium">

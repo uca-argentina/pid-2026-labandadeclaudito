@@ -1,16 +1,6 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import {
-  ArrowLeft,
-  CalendarClock,
-  ImageIcon,
-  ImagePlus,
-  MapPin,
-  Pencil,
-  Phone,
-  Plus,
-  Shapes,
-} from 'lucide-react'
+import { ArrowLeft, ImageIcon, ImagePlus, MapPin, Pencil, Phone, Plus, Shapes } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { pendientesVencidas } from '@/lib/bookings'
@@ -18,10 +8,12 @@ import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { diaDeHoy, diaDeReserva, formatAdvanceTime } from '@/lib/time'
 import { bloqueosDelDia, textoDelBloqueo } from '@/lib/blocks'
 import { AvisoBloqueo } from '@/components/aviso-bloqueo'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { ComplexGallery } from '@/components/complex-gallery'
-import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
-import { FechaDelTurno } from '@/components/fecha-del-turno'
+import { colorPorDeporte } from '@/components/etiqueta-deporte'
+import { EstadoVacio } from '@/components/estado-vacio'
+import { FilaDeTurno } from '@/components/fila-de-turno'
+import { QuienReservo } from '@/components/quien-reservo'
 
 export default async function DetalleComplejoDuenoPage({
   params,
@@ -63,52 +55,55 @@ export default async function DetalleComplejoDuenoPage({
   }
   const bloqueos = await bloqueosDelDia(idsDeCanchas, new Date(diaDeHoy()))
 
+  const hoy = diaDeHoy()
+
   return (
     <main>
       <Link
         href="/dueno/complejos"
-        className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"
+        className="text-muted-foreground hover:text-foreground mb-1 inline-flex h-11 items-center gap-2 text-sm font-medium"
       >
-        <ArrowLeft className="size-3.5" />
+        <ArrowLeft className="size-4" />
         Volver a mis complejos
       </Link>
 
-      <div className="mb-7">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <h1 className="text-3xl font-semibold">{complejo.nombre}</h1>
-          {/* En celular la ficha con las acciones queda al final de la página:
-              editar se repite acá arriba para tenerlo a mano */}
-          <Button
-            variant="outline"
-            className="lg:hidden"
-            render={<Link href={`/dueno/complejos/${id}/editar`} />}
-          >
-            <Pencil className="size-3.5" />
-            Editar complejo
-          </Button>
-        </div>
-        {/* En lg dirección y contacto están en la ficha del costado */}
-        <div className="text-muted-foreground mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm lg:hidden">
-          <p className="flex items-center gap-1.5">
-            <MapPin className="size-4 shrink-0" /> {complejo.direccion} · {complejo.zona}
+      {/* Con fotos, el nombre va escrito sobre la portada; sin fotos, arriba */}
+      {complejo.imagenes.length > 0 ? (
+        <ComplexGallery imagenes={complejo.imagenes} nombreComplejo={complejo.nombre}>
+          <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+            {complejo.nombre}
+          </h1>
+          <p className="mt-1.5 flex items-center gap-1.5">
+            <MapPin className="size-4 shrink-0" />
+            {complejo.direccion} · {complejo.zona}
           </p>
-          <p className="flex items-center gap-1.5">
-            <Phone className="size-4 shrink-0" /> {complejo.contacto}
-          </p>
-        </div>
-      </div>
+        </ComplexGallery>
+      ) : (
+        <h1 className="font-heading mb-7 text-4xl font-bold tracking-tight">{complejo.nombre}</h1>
+      )}
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <section>
-          {complejo.imagenes.length > 0 ? (
-            <ComplexGallery imagenes={complejo.imagenes} nombreComplejo={complejo.nombre} />
-          ) : (
+      {/* En celular la ficha con las acciones queda al final de la página:
+          editar se repite acá arriba para tenerlo a mano */}
+      <Button
+        variant="outline"
+        className="mb-6 lg:hidden"
+        render={<Link href={`/dueno/complejos/${id}/editar`} />}
+      >
+        <Pencil className="size-4" />
+        Editar complejo
+      </Button>
+
+      <div className="grid gap-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        {/* min-w-0: sin esto, en celular la columna se ensancha hasta el texto
+            más largo de las filas y la página se desborda de costado */}
+        <section className="min-w-0">
+          {complejo.imagenes.length === 0 && (
             // Sin fotos: en lugar de la portada, una invitación a cargarlas
-            <div className="border-border bg-muted/30 mb-6 flex h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-6 text-center">
-              <ImageIcon className="text-muted-foreground size-8" />
+            <div className="bg-sand/60 mb-7 flex flex-col items-center gap-3 rounded-3xl px-6 py-9 text-center">
+              <ImageIcon className="text-clay size-8" />
               <div>
-                <p className="font-medium">Tu complejo todavía no tiene fotos</p>
-                <p className="text-muted-foreground mt-1 text-sm">
+                <p className="font-heading text-lg font-bold">Tu complejo todavía no tiene fotos</p>
+                <p className="text-foreground/80 mt-1 text-sm">
                   Se muestran en la búsqueda y en la página del complejo que ven los jugadores.
                 </p>
               </div>
@@ -119,40 +114,44 @@ export default async function DetalleComplejoDuenoPage({
             </div>
           )}
 
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold">Canchas</h2>
-            <Link href={`/dueno/complejos/${id}/canchas`} className={buttonVariants()}>
-              <Shapes /> Gestionar canchas
-            </Link>
+          <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3 px-1">
+            <h2 className="font-heading text-xl font-bold">Canchas</h2>
+            <Button render={<Link href={`/dueno/complejos/${id}/canchas`} />}>
+              <Shapes className="size-4" />
+              Gestionar canchas
+            </Button>
           </div>
 
           {complejo.canchas.length === 0 ? (
-            <div className="border-border mb-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed p-10 text-center">
-              <p className="font-medium">Todavía no cargaste canchas</p>
-              <p className="text-muted-foreground text-sm">
-                Sin canchas, el complejo no aparece en la búsqueda de los jugadores.
-              </p>
-              <Link
-                href={`/dueno/complejos/${id}/canchas/nueva`}
-                className={buttonVariants({ variant: 'outline' })}
+            <div className="mb-9">
+              <EstadoVacio
+                titulo="Todavía no cargaste ninguna cancha"
+                texto="Sin canchas, el complejo no aparece en la búsqueda de los jugadores."
               >
-                <Plus /> Cargar primera cancha
-              </Link>
+                <Button render={<Link href={`/dueno/complejos/${id}/canchas/nueva`} />}>
+                  <Plus className="size-4" />
+                  Cargar mi primera cancha
+                </Button>
+              </EstadoVacio>
             </div>
           ) : (
-            <div className="border-border bg-card mb-10 divide-y rounded-2xl border">
+            <div className="bg-card shadow-card divide-border mb-9 divide-y rounded-3xl">
               {complejo.canchas.map((cancha) => {
                 const bloqueosDeLaCancha = bloqueos.filter((b) => b.courtId === cancha.id)
                 return (
                   <div
                     key={cancha.id}
-                    className={`flex flex-wrap items-center justify-between gap-3 px-5 py-4 ${bloqueosDeLaCancha.length > 0 ? 'opacity-60 grayscale' : ''}`}
+                    className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-4 ${bloqueosDeLaCancha.length > 0 ? 'opacity-60 grayscale' : ''}`}
                   >
                     <div>
-                      <span className="font-semibold">{cancha.nombre}</span>
+                      <p
+                        className={`text-[11px] font-bold tracking-wider uppercase ${colorPorDeporte[cancha.deporte]}`}
+                      >
+                        {deporteLabels[cancha.deporte]} · {superficieLabels[cancha.tipoSuperficie]}
+                      </p>
+                      <p className="font-semibold">{cancha.nombre}</p>
                       <p className="text-muted-foreground text-sm">
-                        {deporteLabels[cancha.deporte]} · {superficieLabels[cancha.tipoSuperficie]}{' '}
-                        · {cancha.horaApertura} a {cancha.horaCierre} hs
+                        {cancha.horaApertura} a {cancha.horaCierre} hs
                       </p>
                       {bloqueosDeLaCancha.length > 0 && (
                         <div className="mt-1">
@@ -160,7 +159,7 @@ export default async function DetalleComplejoDuenoPage({
                         </div>
                       )}
                     </div>
-                    <span className="text-primary font-bold">
+                    <span className="font-heading text-primary text-xl font-bold">
                       {formatPrecio(cancha.precioBase.toString())}
                     </span>
                   </div>
@@ -169,81 +168,79 @@ export default async function DetalleComplejoDuenoPage({
             </div>
           )}
 
-          <h2 className="mb-4 text-xl font-semibold">Próximos turnos</h2>
+          <h2 className="font-heading mb-3.5 px-1 text-xl font-bold">Próximos turnos</h2>
 
           {proximosTurnos.length === 0 ? (
-            <div className="border-border bg-card rounded-2xl border p-10 text-center">
-              <CalendarClock className="text-muted-foreground mx-auto mb-4 size-8" />
-              <p className="font-medium">No hay turnos reservados en este complejo</p>
-              <p className="text-muted-foreground mt-1.5 text-sm">
-                Cuando un jugador reserve una de estas canchas, va a aparecer acá.
-              </p>
-            </div>
+            <EstadoVacio
+              titulo="No hay turnos reservados en este complejo"
+              texto="Cuando un jugador reserve una de estas canchas, va a aparecer acá."
+            />
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {proximosTurnos.map((reserva) => (
-                <div
+                <FilaDeTurno
                   key={reserva.id}
-                  className="border-border bg-card flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border p-5"
+                  href="/dueno/reservas"
+                  dia={diaDeReserva(reserva.fecha)}
+                  hoy={hoy}
+                  horaInicio={reserva.horaInicio}
+                  horaFin={reserva.horaFin}
+                  deporte={reserva.cancha.deporte}
+                  detalle={reserva.cancha.nombre}
                 >
-                  <FechaDelTurno
-                    dia={diaDeReserva(reserva.fecha)}
-                    horaInicio={reserva.horaInicio}
-                    horaFin={reserva.horaFin}
-                  />
-                  <div className="border-border hidden h-10 border-l sm:block" />
-                  <div>
-                    <div className="flex items-center gap-2.5">
-                      <span className="font-semibold">{reserva.cancha.nombre}</span>
-                      <EtiquetaDeporte deporte={reserva.cancha.deporte} />
-                    </div>
-                    <p className="text-muted-foreground mt-1.5 text-sm">
-                      Reservó {reserva.jugador.nombre}
-                    </p>
-                  </div>
-                </div>
+                  <QuienReservo nombre={reserva.jugador.nombre} />
+                </FilaDeTurno>
               ))}
             </div>
           )}
         </section>
 
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-          <div className="border-border bg-card space-y-3 rounded-2xl border p-5 text-sm">
-            <p className="flex items-start gap-2">
-              <MapPin className="text-muted-foreground mt-0.5 size-4 shrink-0" />
-              {complejo.direccion} · {complejo.zona}
-            </p>
-            <p className="flex items-center gap-2">
-              <Phone className="text-muted-foreground size-4 shrink-0" />
-              {complejo.contacto}
-            </p>
-            <div className="border-border space-y-1.5 border-t pt-3">
-              <p>
-                <span className="text-muted-foreground">Seña: </span>
-                {complejo.porcentajeSenaDefault}%
+          <div className="bg-card shadow-card rounded-3xl p-6">
+            <div className="space-y-3.5">
+              <p className="flex items-center gap-3">
+                <span className="bg-muted flex size-9.5 shrink-0 items-center justify-center rounded-xl">
+                  <MapPin className="size-4.5" />
+                </span>
+                {complejo.direccion} · {complejo.zona}
               </p>
-              <p>
-                <span className="text-muted-foreground">Cancelación con devolución: </span>
-                hasta {complejo.cancellationHours} hs antes
+              <p className="flex items-center gap-3">
+                <span className="bg-muted flex size-9.5 shrink-0 items-center justify-center rounded-xl">
+                  <Phone className="size-4.5" />
+                </span>
+                {complejo.contacto}
               </p>
-              <p>
-                <span className="text-muted-foreground">Anticipación mínima: </span>
-                {formatAdvanceTime(complejo.minAdvanceMinutesDefault)}
-              </p>
+            </div>
+            <div className="border-border mt-5 space-y-3 border-t pt-4">
+              <div>
+                <p className="text-muted-foreground text-sm">Seña</p>
+                <p className="font-semibold">{complejo.porcentajeSenaDefault}% del turno</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-sm">Cancelación con devolución</p>
+                <p className="font-semibold">Hasta {complejo.cancellationHours} hs antes</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-sm">Anticipación mínima</p>
+                <p className="font-semibold">
+                  {formatAdvanceTime(complejo.minAdvanceMinutesDefault)}
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5">
             <Button variant="outline" render={<Link href={`/dueno/complejos/${id}/editar`} />}>
-              <Pencil className="size-3.5" />
+              <Pencil className="size-4" />
               Editar complejo
             </Button>
-            <Link
-              href={`/dueno/complejos/${id}/canchas/nueva`}
-              className={buttonVariants({ variant: 'outline' })}
+            <Button
+              variant="outline"
+              render={<Link href={`/dueno/complejos/${id}/canchas/nueva`} />}
             >
-              <Plus /> Nueva cancha
-            </Link>
+              <Plus className="size-4" />
+              Nueva cancha
+            </Button>
           </div>
         </aside>
       </div>

@@ -112,10 +112,10 @@ export function CourtEditForm({
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-      <div className="space-y-8">
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div className="grid gap-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="space-y-6">
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          <div className="bg-card shadow-card grid grid-cols-1 gap-4 rounded-3xl p-6 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="nombre">Nombre identificador</Label>
               <Input
@@ -286,7 +286,7 @@ export function CourtEditForm({
 
           {error && <p className="text-destructive text-sm">{error}</p>}
           {aviso && (
-            <div role="status" className="border-border space-y-3 rounded-lg border p-4 text-sm">
+            <div role="status" className="bg-muted space-y-3 rounded-xl p-4 text-sm">
               <p>{aviso}</p>
               <Button
                 type="button"
@@ -299,11 +299,11 @@ export function CourtEditForm({
           )}
         </form>
 
-        <div className="border-destructive/40 flex items-center justify-between gap-4 rounded-2xl border border-dashed p-5">
+        <div className="bg-destructive/8 flex flex-wrap items-center justify-between gap-4 rounded-3xl p-6">
           <div>
-            <strong className="text-destructive text-sm">Eliminar esta cancha puntual</strong>
-            <p className="text-muted-foreground mt-1 text-xs">
-              Eliminará únicamente &quot;{cancha.nombre}&quot; sin afectar a las demás.
+            <p className="text-destructive font-semibold">Eliminar esta cancha</p>
+            <p className="text-foreground/80 mt-1 text-sm">
+              Se elimina solo “{cancha.nombre}”, sin afectar a las demás.
             </p>
           </div>
           <DeleteCourtDialog

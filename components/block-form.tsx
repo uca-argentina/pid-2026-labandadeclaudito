@@ -116,100 +116,104 @@ export function BlockForm({
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <p className="text-muted-foreground text-sm">
-          Esta cancha abre de {horaApertura} a {horaCierre}.
-        </p>
+    <div className="grid gap-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <form className="space-y-5" onSubmit={handleSubmit}>
+        <div className="bg-card shadow-card space-y-4 rounded-3xl p-6">
+          <p className="text-muted-foreground text-sm">
+            Esta cancha abre de {horaApertura} a {horaCierre}.
+          </p>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Desde</Label>
+              <Input
+                id="startDate"
+                name="startDate"
+                type="date"
+                defaultValue={block?.startDate}
+                aria-invalid={!!fieldErrors.startDate}
+                className={
+                  fieldErrors.startDate
+                    ? 'border-destructive ring-destructive/20 ring-3'
+                    : undefined
+                }
+              />
+              {fieldErrors.startDate && (
+                <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                  <AlertCircle className="size-3.5" />
+                  {fieldErrors.startDate}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endDate">Hasta</Label>
+              <Input
+                id="endDate"
+                name="endDate"
+                type="date"
+                defaultValue={block?.endDate}
+                aria-invalid={!!fieldErrors.endDate}
+                className={
+                  fieldErrors.endDate ? 'border-destructive ring-destructive/20 ring-3' : undefined
+                }
+              />
+              {fieldErrors.endDate && (
+                <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                  <AlertCircle className="size-3.5" />
+                  {fieldErrors.endDate}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Horario desde</Label>
+              <TimeSelect
+                label="Horario desde"
+                value={horaDesde}
+                onChange={setHoraDesde}
+                invalid={!!fieldErrors.startTime}
+              />
+              {fieldErrors.startTime && (
+                <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                  <AlertCircle className="size-3.5" />
+                  {fieldErrors.startTime}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Horario hasta</Label>
+              <TimeSelect
+                label="Horario hasta"
+                value={horaHasta}
+                onChange={setHoraHasta}
+                invalid={!!fieldErrors.endTime}
+              />
+              {fieldErrors.endTime && (
+                <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                  <AlertCircle className="size-3.5" />
+                  {fieldErrors.endTime}
+                </p>
+              )}
+            </div>
+          </div>
+
           <div className="space-y-2">
-            <Label htmlFor="startDate">Desde</Label>
+            <Label htmlFor="reason">Motivo (Unicamente visible para su rol)</Label>
             <Input
-              id="startDate"
-              name="startDate"
-              type="date"
-              defaultValue={block?.startDate}
-              aria-invalid={!!fieldErrors.startDate}
-              className={
-                fieldErrors.startDate ? 'border-destructive ring-destructive/20 ring-3' : undefined
-              }
+              id="reason"
+              name="reason"
+              placeholder="Ej: mantenimiento de red"
+              defaultValue={block?.reason}
             />
-            {fieldErrors.startDate && (
-              <p className="text-destructive flex items-center gap-1 text-xs font-medium">
-                <AlertCircle className="size-3.5" />
-                {fieldErrors.startDate}
-              </p>
-            )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="endDate">Hasta</Label>
-            <Input
-              id="endDate"
-              name="endDate"
-              type="date"
-              defaultValue={block?.endDate}
-              aria-invalid={!!fieldErrors.endDate}
-              className={
-                fieldErrors.endDate ? 'border-destructive ring-destructive/20 ring-3' : undefined
-              }
-            />
-            {fieldErrors.endDate && (
-              <p className="text-destructive flex items-center gap-1 text-xs font-medium">
-                <AlertCircle className="size-3.5" />
-                {fieldErrors.endDate}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Horario desde</Label>
-            <TimeSelect
-              label="Horario desde"
-              value={horaDesde}
-              onChange={setHoraDesde}
-              invalid={!!fieldErrors.startTime}
-            />
-            {fieldErrors.startTime && (
-              <p className="text-destructive flex items-center gap-1 text-xs font-medium">
-                <AlertCircle className="size-3.5" />
-                {fieldErrors.startTime}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Horario hasta</Label>
-            <TimeSelect
-              label="Horario hasta"
-              value={horaHasta}
-              onChange={setHoraHasta}
-              invalid={!!fieldErrors.endTime}
-            />
-            {fieldErrors.endTime && (
-              <p className="text-destructive flex items-center gap-1 text-xs font-medium">
-                <AlertCircle className="size-3.5" />
-                {fieldErrors.endTime}
-              </p>
-            )}
-          </div>
+          <p className="text-muted-foreground text-xs">
+            El horario se bloquea todos los días entre las dos fechas. Si hay reservas en ese rango,
+            antes de guardar te avisamos cuántas se cancelan.
+          </p>
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="reason">Motivo (Unicamente visible para su rol)</Label>
-          <Input
-            id="reason"
-            name="reason"
-            placeholder="Ej: mantenimiento de red"
-            defaultValue={block?.reason}
-          />
-        </div>
-
-        <p className="text-muted-foreground text-xs">
-          El horario se bloquea todos los días entre las dos fechas. Si hay reservas en ese rango,
-          antes de guardar te avisamos cuántas se cancelan.
-        </p>
 
         <div className="flex justify-end gap-3">
           <Button
@@ -257,8 +261,8 @@ export function BlockForm({
       </form>
 
       <aside className="order-first lg:sticky lg:top-6 lg:order-none lg:self-start">
-        <div className="border-border bg-card space-y-4 rounded-2xl border p-5">
-          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        <div className="bg-card shadow-card space-y-4 rounded-3xl p-6">
+          <p className="bg-muted inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold">
             Vista previa
           </p>
           <p className="text-sm">

@@ -15,8 +15,8 @@ export default async function NuevaCanchaPage({
 
   return (
     <main>
-      <h1 className="text-3xl font-semibold">Nueva cancha</h1>
-      <p className="text-muted-foreground mt-1 text-sm">{complejo.nombre}</p>
+      <p className="text-muted-foreground text-sm font-medium">{complejo.nombre}</p>
+      <h1 className="font-heading mt-1 text-4xl font-bold tracking-tight">Nueva cancha</h1>
       <div className="mt-6">
         <CourtBatchForm complejoId={id} />
       </div>

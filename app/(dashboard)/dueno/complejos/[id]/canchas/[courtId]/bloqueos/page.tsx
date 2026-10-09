@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { EstadoVacio } from '@/components/estado-vacio'
 import { BlockRowActions } from '@/components/block-row-actions'
 
 export default async function ListadoBloqueosPage({
@@ -40,16 +41,18 @@ export default async function ListadoBloqueosPage({
     <main>
       <Link
         href={`/dueno/complejos/${id}/canchas`}
-        className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"
+        className="text-muted-foreground hover:text-foreground mb-1 inline-flex h-11 items-center gap-2 text-sm font-medium"
       >
-        <ArrowLeft className="size-3.5" />
+        <ArrowLeft className="size-4" />
         Volver a canchas
       </Link>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <p className="text-muted-foreground text-sm">{complejo.nombre}</p>
-          <h1 className="text-3xl font-semibold">Bloqueos de {cancha.nombre}</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="text-muted-foreground text-sm font-medium">
+            {complejo.nombre} · {cancha.nombre}
+          </p>
+          <h1 className="font-heading mt-1 text-4xl font-bold tracking-tight">Bloqueos</h1>
+          <p className="text-muted-foreground mt-1.5">
             Horarios cerrados por mantenimiento, eventos privados u otros motivos.
           </p>
         </div>
@@ -60,23 +63,23 @@ export default async function ListadoBloqueosPage({
       </div>
 
       {bloqueos.length === 0 ? (
-        <div className="border-border mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed p-14 text-center">
-          <h3 className="text-lg font-semibold">Todavía no cargaste ningún bloqueo</h3>
-          <p className="text-muted-foreground max-w-md text-sm">
-            Cargá un bloqueo para cerrar esta cancha en un rango de fechas y horario, por ejemplo
-            para mantenimiento.
-          </p>
-          <Button
-            render={<Link href={`/dueno/complejos/${id}/canchas/${courtId}/bloqueos/nuevo`} />}
+        <div className="mt-7">
+          <EstadoVacio
+            titulo="Todavía no cargaste ningún bloqueo"
+            texto="Cargá un bloqueo para cerrar esta cancha en un rango de fechas y horario, por ejemplo para mantenimiento."
           >
-            <Plus className="size-4" />
-            Cargar bloqueo
-          </Button>
+            <Button
+              render={<Link href={`/dueno/complejos/${id}/canchas/${courtId}/bloqueos/nuevo`} />}
+            >
+              <Plus className="size-4" />
+              Cargar bloqueo
+            </Button>
+          </EstadoVacio>
         </div>
       ) : (
         <>
           {/* Mobile y tablet: una tarjeta por bloqueo, porque la tabla no entra */}
-          <div className="border-border bg-card divide-border mt-8 divide-y rounded-2xl border lg:hidden">
+          <div className="bg-card shadow-card divide-border mt-7 divide-y rounded-2xl lg:hidden">
             {bloqueos.map((bloqueo) => {
               const desde = formatearDia(diaDeReserva(bloqueo.startDate))
               const hasta = formatearDia(diaDeReserva(bloqueo.endDate))
@@ -101,7 +104,7 @@ export default async function ListadoBloqueosPage({
           </div>
 
           {/* Desktop: tabla */}
-          <div className="border-border bg-card mt-8 hidden overflow-hidden rounded-2xl border lg:block">
+          <div className="bg-card shadow-card mt-7 hidden overflow-hidden rounded-2xl lg:block">
             <Table>
               <TableHeader>
                 <TableRow>

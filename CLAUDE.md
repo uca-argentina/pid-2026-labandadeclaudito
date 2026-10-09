@@ -203,6 +203,9 @@ components/
   stat-card.tsx             card de métrica (usado en homes de rol)
   estado-vacio.tsx          bloque para pantallas sin nada que mostrar
   franja-de-cancha.tsx      franja con la cancha del deporte, arriba de una tarjeta
+  proximo-turno-destacado.tsx  el próximo turno en grande, sobre el verde (Inicio)
+  fila-de-turno.tsx         fila de un turno: cancha en diagonal, día en grande y hora
+  quien-reservo.tsx         iniciales y nombre del jugador, a la derecha de una fila
   complex-gallery.tsx, complex-photos-editor.tsx   galería de imágenes de un complejo
   complex-edit-form.tsx, form-nuevo-complejo.tsx   alta/edición de complejo
   court-edit-form.tsx, court-batch-form.tsx, court-row-actions.tsx, court-slot-picker.tsx
@@ -371,11 +374,23 @@ cómo se ve algo, mirar esa página, no adivinar.
   redondeadas igual que el contenido de la app. Los campos llevan el ícono
   adentro (`left-3.5` + `pl-11` en el `Input`) y el botón es `size="lg"` a todo
   el ancho. Los errores van en una caja `bg-destructive/10` arriba del botón.
-- **En migración**: las pantallas del jugador, el login y el registro ya están
-  en este estilo. Las del dueño y el admin heredan la base (colores, botones,
-  campos, sidebar) pero sus tarjetas todavía tienen borde: se pasan en las
-  próximas etapas del rebranding. Las mini pantallas de la animación del login
-  (`login-hero/scenes/`) también muestran todavía la app vieja.
+- **Inicio (jugador y dueño)**: misma estructura. Arriba, el día, el saludo y
+  una bajada; a la izquierda, `ProximoTurnoDestacado` (el próximo turno sobre
+  el verde) y debajo las filas de `FilaDeTurno`; a la derecha, un número
+  protagonista con dos de apoyo y una tarjeta en arcilla. En las filas del
+  dueño va `QuienReservo` a la derecha (los nombres quedan alineados).
+- **Formularios del dueño**: los campos van adentro de una tarjeta
+  (`bg-card shadow-card rounded-3xl p-6`) con su título en `font-heading`; los
+  botones Cancelar/Guardar, afuera y a la derecha. Al costado, la vista previa
+  (con el cartelito "Vista previa") o `AyudaComplejo`. Lo que borra algo va en
+  una caja `bg-destructive/8`, sin borde.
+- **Listas del dueño (canchas, precios, bloqueos)**: tabla en `lg` y lista en
+  celular, las dos en `bg-card shadow-card rounded-2xl`. Arriba del `h1` va un
+  renglón chico con el complejo (y la cancha).
+- **En migración**: las pantallas del jugador, las del dueño, el login y el
+  registro ya están en este estilo. Las del admin heredan la base (colores,
+  botones, campos, sidebar) pero sus tarjetas todavía tienen borde: se pasan
+  en la próxima etapa del rebranding.
 
 ## Seguridad (no negociable)
 

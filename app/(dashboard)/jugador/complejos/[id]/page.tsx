@@ -82,7 +82,9 @@ export default async function ComplejoDetallePage({
       )}
 
       <div className="grid gap-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <section>
+        {/* min-w-0: sin esto, en celular la columna se ensancha hasta el texto
+            más largo de las filas y la página se desborda de costado */}
+        <section className="min-w-0">
           <h2 className="font-heading mb-3.5 px-1 text-xl font-bold">Elegí tu cancha</h2>
 
           {complejo.canchas.length === 0 ? (

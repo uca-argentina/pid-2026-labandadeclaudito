@@ -3,7 +3,7 @@
 import { useState, type ChangeEvent } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { AlertCircle, ImageIcon, Loader2, Plus } from 'lucide-react'
+import { AlertCircle, Loader2, Plus } from 'lucide-react'
 import { DeleteComplexImageDialog } from '@/components/delete-complex-image-dialog'
 import { complexImageSchema, MAX_IMAGES_PER_COMPLEX } from '@/lib/validations/complex'
 import type { ImagenComplejo } from '@/lib/generated/prisma/client'
@@ -63,11 +63,9 @@ export function ComplexPhotosEditor({
 
   return (
     // id="fotos": el detalle del complejo linkea directo acá ("Cargar fotos")
-    <section id="fotos" className="scroll-mt-6 space-y-4">
+    <section id="fotos" className="bg-card shadow-card scroll-mt-6 space-y-4 rounded-3xl p-6">
       <div>
-        <h2 className="flex items-center gap-2 text-xl font-semibold">
-          <ImageIcon className="size-5" /> Fotos
-        </h2>
+        <h2 className="font-heading text-xl font-bold">Fotos</h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Hasta {MAX_IMAGES_PER_COMPLEX} fotos · JPG, PNG o WebP de 4 MB como máximo. La primera es
           la portada.
@@ -76,7 +74,7 @@ export function ComplexPhotosEditor({
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {imagenes.map((imagen, indice) => (
-          <div key={imagen.id} className="relative aspect-4/3 overflow-hidden rounded-lg border">
+          <div key={imagen.id} className="relative aspect-4/3 overflow-hidden rounded-xl">
             <Image
               src={imagen.url}
               alt={`Foto ${indice + 1} del complejo`}
@@ -102,7 +100,7 @@ export function ComplexPhotosEditor({
         {imagenes.length < MAX_IMAGES_PER_COMPLEX && (
           <label
             htmlFor="fotos-nuevas"
-            className="text-muted-foreground hover:bg-accent flex aspect-4/3 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-sm font-medium"
+            className="text-muted-foreground hover:bg-accent flex aspect-4/3 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed text-sm font-medium"
           >
             {subiendo ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
             {subiendo ? 'Subiendo fotos...' : 'Agregar foto'}

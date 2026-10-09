@@ -1,19 +1,18 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ArrowRight, Clock, MapPin, Search } from 'lucide-react'
+import { ArrowRight, Search } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { pendientesVencidas } from '@/lib/bookings'
 import { venceLaSena } from '@/lib/estado-reserva'
 import { diaCercano, diaEnPalabras, proximoSabado } from '@/lib/fechas'
-import { deporteLabels, mesesCortos, nombresCortosDeDias } from '@/lib/labels'
-import { diaDeHoy, diaDeReserva, diaSemanaDeReserva } from '@/lib/time'
+import { diaDeHoy, diaDeReserva } from '@/lib/time'
 import { Button } from '@/components/ui/button'
-import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
 import { EstadoVacio } from '@/components/estado-vacio'
 import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
 import { RefreshWhenDepositExpires } from '@/components/refresh-when-deposit-expires'
-import { DibujoDeCancha } from '@/components/dibujo-de-cancha'
+import { FilaDeTurno } from '@/components/fila-de-turno'
+import { ProximoTurnoDestacado } from '@/components/proximo-turno-destacado'
 
 export default async function JugadorHomePage() {
   const session = await auth()
@@ -91,7 +90,9 @@ export default async function JugadorHomePage() {
       </div>
 
       <div className="grid gap-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <section>
+        {/* min-w-0: sin esto, en celular la columna se ensancha hasta el texto
+            más largo de las filas y la página se desborda de costado */}
+        <section className="min-w-0">
           {proximoTurno === undefined ? (
             <EstadoVacio
               titulo="No tenés turnos reservados"
@@ -104,79 +105,40 @@ export default async function JugadorHomePage() {
             </EstadoVacio>
           ) : (
             <>
-              {/* Destacado: el próximo partido en grande, sobre el verde de marca */}
-              <div className="fondo-cancha text-primary-foreground shadow-card relative overflow-hidden rounded-3xl p-7 sm:p-8">
-                {/* Franja con la cancha del deporte, recortada en diagonal contra
-                    el borde derecho. Es un detalle: va chica y semitransparente. */}
-                <div
-                  aria-hidden
-                  className="absolute inset-y-0 right-0 hidden w-31 opacity-50 [clip-path:polygon(42%_0,100%_0,100%_100%,0_100%)] [mask-image:linear-gradient(270deg,black_40%,rgb(0_0_0/0.3)_100%)] sm:block"
-                >
-                  <DibujoDeCancha deporte={proximoTurno.cancha.deporte} />
-                </div>
-                {/* Línea sobre el borde del recorte, mismos puntos que el clip-path */}
-                <svg
-                  aria-hidden
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
-                  className="text-primary-foreground/40 absolute inset-y-0 right-0 hidden h-full w-31 sm:block"
-                >
-                  <line
-                    x1="42"
-                    y1="0"
-                    x2="0"
-                    y2="100"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                    vectorEffect="non-scaling-stroke"
-                  />
-                </svg>
-
-                <div className="relative sm:pr-28">
-                  <p className="border-primary-foreground/40 inline-flex h-7 items-center rounded-full border px-3 text-sm font-semibold">
-                    Tu próximo partido{cuando !== null && ` · ${cuando}`}
-                  </p>
-                  <p className="font-heading mt-3.5 text-4xl font-bold tracking-tight">
-                    {diaEnPalabras(diaDeReserva(proximoTurno.fecha))}
-                  </p>
-                  <p className="mt-2 flex items-center gap-2 text-lg font-medium">
-                    <Clock className="size-4.5 shrink-0" />
-                    {proximoTurno.horaInicio} a {proximoTurno.horaFin} hs
-                  </p>
-                  <p className="mt-4 font-semibold">
-                    {proximoTurno.cancha.nombre} · {deporteLabels[proximoTurno.cancha.deporte]}
-                  </p>
-                  <p className="text-primary-foreground/90 mt-0.5 flex items-center gap-1.5 text-sm">
-                    <MapPin className="size-3.5 shrink-0" />
-                    {proximoTurno.cancha.complejo.nombre} · {proximoTurno.cancha.complejo.zona}
-                  </p>
-
-                  {/* Pendiente de seña: la cuenta regresiva va sobre fondo
-                      claro, porque sus colores no se leen sobre el verde */}
-                  {proximoTurno.estado === 'PENDIENTE' ? (
-                    <div className="bg-background text-foreground mt-5 space-y-3 rounded-2xl p-4">
-                      <CuentaRegresivaSena
-                        venceEn={venceLaSena(proximoTurno.createdAt).toISOString()}
-                      />
-                      <RefreshWhenDepositExpires
-                        venceEn={venceLaSena(proximoTurno.createdAt).toISOString()}
-                      />
-                      <Button size="sm" render={<Link href="/jugador/reservas" />}>
-                        Pagar seña
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="secondary"
-                      className="mt-5"
-                      render={<Link href="/jugador/reservas" />}
-                    >
-                      Ver mi reserva
-                      <ArrowRight className="size-4" />
+              <ProximoTurnoDestacado
+                etiqueta={cuando === null ? 'Tu próximo partido' : `Tu próximo partido · ${cuando}`}
+                dia={diaDeReserva(proximoTurno.fecha)}
+                horaInicio={proximoTurno.horaInicio}
+                horaFin={proximoTurno.horaFin}
+                cancha={proximoTurno.cancha.nombre}
+                deporte={proximoTurno.cancha.deporte}
+                lugar={`${proximoTurno.cancha.complejo.nombre} · ${proximoTurno.cancha.complejo.zona}`}
+              >
+                {/* Pendiente de seña: la cuenta regresiva va sobre fondo
+                    claro, porque sus colores no se leen sobre el verde */}
+                {proximoTurno.estado === 'PENDIENTE' ? (
+                  <div className="bg-background text-foreground mt-5 space-y-3 rounded-2xl p-4">
+                    <CuentaRegresivaSena
+                      venceEn={venceLaSena(proximoTurno.createdAt).toISOString()}
+                    />
+                    <RefreshWhenDepositExpires
+                      venceEn={venceLaSena(proximoTurno.createdAt).toISOString()}
+                    />
+                    <Button size="sm" render={<Link href="/jugador/reservas" />}>
+                      Pagar seña
                     </Button>
-                  )}
-                </div>
-              </div>
+                  </div>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    className="mt-5"
+                    render={<Link href="/jugador/reservas" />}
+                  >
+                    Ver mi reserva
+                    <ArrowRight className="size-4" />
+                  </Button>
+                )}
+              </ProximoTurnoDestacado>
 
               {otrosTurnos.length > 0 && (
                 <>
@@ -192,76 +154,22 @@ export default async function JugadorHomePage() {
                   </div>
 
                   <div className="space-y-3">
-                    {otrosTurnos.map((reserva) => {
-                      const dia = diaDeReserva(reserva.fecha)
-                      // Arriba del número va "Hoy", "Mañana" o el día de la semana
-                      const cercano = diaCercano(dia, hoy)
-                      let nombreDelDia = nombresCortosDeDias[diaSemanaDeReserva(reserva.fecha)]
-                      if (cercano === 'hoy') nombreDelDia = 'Hoy'
-                      if (cercano === 'mañana') nombreDelDia = 'Mañana'
-
-                      return (
-                        <Link
-                          key={reserva.id}
-                          href="/jugador/reservas"
-                          className="bg-card shadow-card hover:bg-accent relative flex min-h-22 items-center gap-4 overflow-hidden rounded-2xl py-3 pr-5 pl-22 transition-colors"
-                        >
-                          {/* La cancha del deporte en diagonal, como en la card
-                              de cancha pero más angosta */}
-                          <div
-                            aria-hidden
-                            className="absolute inset-y-0 left-0 w-20 opacity-75 [clip-path:polygon(0_0,58%_0,100%_100%,0_100%)] [mask-image:linear-gradient(90deg,black_40%,rgb(0_0_0/0.3)_100%)]"
-                          >
-                            <DibujoDeCancha deporte={reserva.cancha.deporte} />
-                          </div>
-                          <svg
-                            aria-hidden
-                            viewBox="0 0 100 100"
-                            preserveAspectRatio="none"
-                            className="text-primary/50 absolute inset-y-0 left-0 h-full w-20"
-                          >
-                            <line
-                              x1="58"
-                              y1="0"
-                              x2="100"
-                              y2="100"
-                              stroke="currentColor"
-                              strokeWidth="1"
-                              vectorEffect="non-scaling-stroke"
-                            />
-                          </svg>
-
-                          {/* El día en grande: es lo primero que se busca en esta lista */}
-                          <div className="w-14 shrink-0 text-center">
-                            <p className="text-primary text-xs font-bold uppercase">
-                              {nombreDelDia}
-                            </p>
-                            <p className="font-heading text-3xl leading-none font-bold">
-                              {Number(dia.slice(8))}
-                            </p>
-                            <p className="text-muted-foreground mt-0.5 text-xs uppercase">
-                              {mesesCortos[Number(dia.slice(5, 7)) - 1]}
-                            </p>
-                          </div>
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                              <span className="font-semibold">
-                                {reserva.horaInicio} a {reserva.horaFin} hs
-                              </span>
-                              <EtiquetaDeporte deporte={reserva.cancha.deporte} />
-                            </div>
-                            <p className="text-muted-foreground mt-0.5 truncate text-sm">
-                              {reserva.cancha.nombre} · {reserva.cancha.complejo.nombre},{' '}
-                              {reserva.cancha.complejo.zona}
-                            </p>
-                          </div>
-                          <span className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-full">
-                            <ArrowRight className="size-4" />
-                          </span>
-                        </Link>
-                      )
-                    })}
+                    {otrosTurnos.map((reserva) => (
+                      <FilaDeTurno
+                        key={reserva.id}
+                        href="/jugador/reservas"
+                        dia={diaDeReserva(reserva.fecha)}
+                        hoy={hoy}
+                        horaInicio={reserva.horaInicio}
+                        horaFin={reserva.horaFin}
+                        deporte={reserva.cancha.deporte}
+                        detalle={`${reserva.cancha.nombre} · ${reserva.cancha.complejo.nombre}, ${reserva.cancha.complejo.zona}`}
+                      >
+                        <span className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-full">
+                          <ArrowRight className="size-4" />
+                        </span>
+                      </FilaDeTurno>
+                    ))}
                   </div>
                 </>
               )}

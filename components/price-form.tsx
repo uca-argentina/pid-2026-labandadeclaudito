@@ -113,107 +113,109 @@ export function PriceForm({
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <p className="text-muted-foreground text-sm">
-          Esta cancha abre de {horaApertura} a {horaCierre}.
-        </p>
+    <div className="grid gap-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <form className="space-y-5" onSubmit={handleSubmit}>
+        <div className="bg-card shadow-card space-y-4 rounded-3xl p-6">
+          <p className="text-muted-foreground text-sm">
+            Esta cancha abre de {horaApertura} a {horaCierre}.
+          </p>
 
-        <div className="space-y-2">
-          <Label>Día</Label>
-          <Select value={diaSemana} onValueChange={(v) => v && setDiaSemana(v)}>
-            <SelectTrigger className="w-full" aria-label="Día">
-              <SelectValue>
-                {(v: string) =>
-                  v === TODOS_LOS_DIAS ? 'Todos los días' : nombresDeDias[Number(v)]
-                }
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={TODOS_LOS_DIAS}>Todos los días</SelectItem>
-              {nombresDeDias.map((nombre, indice) => (
-                <SelectItem key={indice} value={String(indice)}>
-                  {nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2 font-normal">
-            <input
-              type="checkbox"
-              checked={conFranjaHoraria}
-              onChange={(e) => setConFranjaHoraria(e.target.checked)}
-              className="accent-primary size-4"
-            />
-            Solo en una franja horaria (si no, aplica todo el día)
-          </Label>
-        </div>
-
-        {conFranjaHoraria && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Desde</Label>
-              <TimeSelect
-                label="Desde"
-                value={horaInicio}
-                onChange={setHoraInicio}
-                invalid={!!fieldErrors.horaInicio}
-              />
-              {fieldErrors.horaInicio && (
-                <p className="text-destructive flex items-center gap-1 text-xs font-medium">
-                  <AlertCircle className="size-3.5" />
-                  {fieldErrors.horaInicio}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Hasta</Label>
-              <TimeSelect
-                label="Hasta"
-                value={horaFin}
-                onChange={setHoraFin}
-                invalid={!!fieldErrors.horaFin}
-              />
-              {fieldErrors.horaFin && (
-                <p className="text-destructive flex items-center gap-1 text-xs font-medium">
-                  <AlertCircle className="size-3.5" />
-                  {fieldErrors.horaFin}
-                </p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <Label>Día</Label>
+            <Select value={diaSemana} onValueChange={(v) => v && setDiaSemana(v)}>
+              <SelectTrigger className="w-full" aria-label="Día">
+                <SelectValue>
+                  {(v: string) =>
+                    v === TODOS_LOS_DIAS ? 'Todos los días' : nombresDeDias[Number(v)]
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TODOS_LOS_DIAS}>Todos los días</SelectItem>
+                {nombresDeDias.map((nombre, indice) => (
+                  <SelectItem key={indice} value={String(indice)}>
+                    {nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        )}
 
-        <div className="space-y-2">
-          <Label htmlFor="precio">Precio del turno ($ ARS)</Label>
-          <Input
-            id="precio"
-            name="precio"
-            type="number"
-            step="0.01"
-            value={precio}
-            onChange={(e) => setPrecio(e.target.value)}
-            aria-invalid={!!fieldErrors.precio}
-            className={
-              fieldErrors.precio ? 'border-destructive ring-destructive/20 ring-3' : undefined
-            }
-          />
-          {fieldErrors.precio && (
-            <p className="text-destructive flex items-center gap-1 text-xs font-medium">
-              <AlertCircle className="size-3.5" />
-              {fieldErrors.precio}
-            </p>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 font-normal">
+              <input
+                type="checkbox"
+                checked={conFranjaHoraria}
+                onChange={(e) => setConFranjaHoraria(e.target.checked)}
+                className="accent-primary size-4"
+              />
+              Solo en una franja horaria (si no, aplica todo el día)
+            </Label>
+          </div>
+
+          {conFranjaHoraria && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Desde</Label>
+                <TimeSelect
+                  label="Desde"
+                  value={horaInicio}
+                  onChange={setHoraInicio}
+                  invalid={!!fieldErrors.horaInicio}
+                />
+                {fieldErrors.horaInicio && (
+                  <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                    <AlertCircle className="size-3.5" />
+                    {fieldErrors.horaInicio}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Hasta</Label>
+                <TimeSelect
+                  label="Hasta"
+                  value={horaFin}
+                  onChange={setHoraFin}
+                  invalid={!!fieldErrors.horaFin}
+                />
+                {fieldErrors.horaFin && (
+                  <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                    <AlertCircle className="size-3.5" />
+                    {fieldErrors.horaFin}
+                  </p>
+                )}
+              </div>
+            </div>
           )}
-        </div>
 
-        <p className="text-muted-foreground text-xs">
-          Si un turno matchea con más de un precio especial, gana el más específico: franja horaria
-          antes que solo día, y solo día antes que &quot;todos los días&quot;.
-        </p>
+          <div className="space-y-2">
+            <Label htmlFor="precio">Precio del turno ($ ARS)</Label>
+            <Input
+              id="precio"
+              name="precio"
+              type="number"
+              step="0.01"
+              value={precio}
+              onChange={(e) => setPrecio(e.target.value)}
+              aria-invalid={!!fieldErrors.precio}
+              className={
+                fieldErrors.precio ? 'border-destructive ring-destructive/20 ring-3' : undefined
+              }
+            />
+            {fieldErrors.precio && (
+              <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                <AlertCircle className="size-3.5" />
+                {fieldErrors.precio}
+              </p>
+            )}
+          </div>
+
+          <p className="text-muted-foreground text-xs">
+            Si un turno matchea con más de un precio especial, gana el más específico: franja
+            horaria antes que solo día, y solo día antes que &quot;todos los días&quot;.
+          </p>
+        </div>
 
         <div className="flex justify-end gap-3">
           <Button
@@ -233,8 +235,8 @@ export function PriceForm({
       </form>
 
       <aside className="order-first lg:sticky lg:top-6 lg:order-none lg:self-start">
-        <div className="border-border bg-card space-y-4 rounded-2xl border p-5">
-          <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        <div className="bg-card shadow-card space-y-4 rounded-3xl p-6">
+          <p className="bg-muted inline-flex h-6 items-center rounded-full px-2.5 text-xs font-semibold">
             Vista previa
           </p>
           <div>
@@ -242,10 +244,10 @@ export function PriceForm({
               {diaSemana === TODOS_LOS_DIAS ? 'Todos los días' : nombresDeDias[Number(diaSemana)]}
               {conFranjaHoraria ? `, de ${horaInicio} a ${horaFin}` : ', todo el día'}
             </p>
-            <p className="text-primary mt-1 text-3xl font-bold">
+            <p className="font-heading text-primary mt-1 text-3xl font-bold">
               {precio === '' ? 'Sin cargar' : formatPrecio(precio)}
             </p>
-            <p className="text-muted-foreground text-xs">por turno</p>
+            <p className="text-muted-foreground text-sm">por turno</p>
           </div>
           <FranjaDelDia
             horaApertura={horaApertura}

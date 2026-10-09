@@ -21,8 +21,10 @@ export default async function NuevoPrecioPage({
 
   return (
     <main>
-      <h1 className="text-3xl font-semibold">Nuevo precio especial</h1>
-      <p className="text-muted-foreground mt-1 text-sm">{cancha.nombre}</p>
+      <p className="text-muted-foreground text-sm font-medium">
+        {complejo.nombre} · {cancha.nombre}
+      </p>
+      <h1 className="font-heading mt-1 text-4xl font-bold tracking-tight">Nuevo precio especial</h1>
       <div className="mt-6">
         <PriceForm
           complejoId={id}

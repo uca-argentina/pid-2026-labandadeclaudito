@@ -25,13 +25,15 @@ export default async function EditarCanchaPage({
     <main>
       <Link
         href={`/dueno/complejos/${id}/canchas`}
-        className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"
+        className="text-muted-foreground hover:text-foreground mb-1 inline-flex h-11 items-center gap-2 text-sm font-medium"
       >
-        <ArrowLeft className="size-3.5" />
+        <ArrowLeft className="size-4" />
         Volver a canchas
       </Link>
-      <p className="text-muted-foreground text-sm">{complejo.nombre}</p>
-      <h1 className="text-3xl font-semibold">Editar cancha: {cancha.nombre}</h1>
+      <p className="text-muted-foreground text-sm font-medium">{complejo.nombre}</p>
+      <h1 className="font-heading mt-1 text-4xl font-bold tracking-tight">
+        Editar {cancha.nombre}
+      </h1>
       <div className="mt-6">
         <CourtEditForm
           complejoId={id}
