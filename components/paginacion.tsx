@@ -47,7 +47,7 @@ export function Paginacion({
 function BotonDePagina({ href, children }: { href: string | null; children: React.ReactNode }) {
   if (href === null) {
     return (
-      <span className="border-border text-muted-foreground inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 opacity-50">
+      <span className="bg-muted text-muted-foreground inline-flex h-9 items-center gap-1 rounded-lg px-3 font-medium opacity-50">
         {children}
       </span>
     )
@@ -55,7 +55,7 @@ function BotonDePagina({ href, children }: { href: string | null; children: Reac
   return (
     <Link
       href={href}
-      className="border-border hover:bg-muted inline-flex items-center gap-1 rounded-lg border px-2.5 py-1"
+      className="bg-muted hover:bg-accent inline-flex h-9 items-center gap-1 rounded-lg px-3 font-medium"
     >
       {children}
     </Link>

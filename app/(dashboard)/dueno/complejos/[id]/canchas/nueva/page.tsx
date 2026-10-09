@@ -14,9 +14,9 @@ export default async function NuevaCanchaPage({
   if (!complejo) redirect('/dueno')
 
   return (
-    <main className="max-w-2xl px-6 pt-6 pb-12 md:pt-4">
-      <h1 className="text-3xl font-semibold">Nueva cancha</h1>
-      <p className="text-muted-foreground mt-1 text-sm">{complejo.nombre}</p>
+    <main>
+      <p className="text-muted-foreground text-sm font-medium">{complejo.nombre}</p>
+      <h1 className="font-heading mt-1 text-4xl font-bold tracking-tight">Nueva cancha</h1>
       <div className="mt-6">
         <CourtBatchForm complejoId={id} />
       </div>

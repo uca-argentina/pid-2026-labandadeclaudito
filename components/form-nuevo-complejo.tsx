@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AlertCircle, Building2, Check, ImageIcon, Plus, Save, Star, X } from 'lucide-react'
+import { AlertCircle, Check, Plus, Save, Star, X } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -160,7 +160,7 @@ export function FormNuevoComplejo() {
             <Check className="size-6" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-2xl font-semibold">Complejo creado</h2>
+            <h2 className="font-heading text-2xl font-bold">Complejo creado</h2>
             <p className="text-muted-foreground max-w-md text-sm">
               “{nombreCreado}” ya está en tu cuenta. Para que aparezca en la búsqueda, cargá al
               menos una cancha.
@@ -195,24 +195,22 @@ export function FormNuevoComplejo() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
       {hayErrores && (
-        <div className="border-destructive/40 bg-destructive/10 text-destructive flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium">
+        <div className="bg-destructive/10 text-destructive flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium">
           <AlertCircle className="size-4 shrink-0" />
           Revisá los campos marcados para poder guardar.
         </div>
       )}
 
       {errorServidor && (
-        <div className="border-destructive/40 bg-destructive/10 text-destructive flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium">
+        <div className="bg-destructive/10 text-destructive flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium">
           <AlertCircle className="size-4 shrink-0" />
           {errorServidor}
         </div>
       )}
 
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-2 font-semibold">
-            <Building2 className="size-4" /> Datos del complejo
-          </CardTitle>
+      <Card className="rounded-3xl [--card-spacing:--spacing(6)]">
+        <CardHeader>
+          <CardTitle className="text-xl">Datos del complejo</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-2">
@@ -312,20 +310,17 @@ export function FormNuevoComplejo() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-2 font-semibold">
-            <ImageIcon className="size-4" /> Fotos
-            <span className="text-muted-foreground text-sm font-medium">· opcional</span>
+      <Card className="rounded-3xl [--card-spacing:--spacing(6)]">
+        <CardHeader>
+          <CardTitle className="text-xl">
+            Fotos{' '}
+            <span className="text-muted-foreground font-sans text-sm font-medium">· opcional</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {fotos.map((foto, indice) => (
-              <div
-                key={foto.preview}
-                className="relative aspect-4/3 overflow-hidden rounded-lg border"
-              >
+              <div key={foto.preview} className="relative aspect-4/3 overflow-hidden rounded-xl">
                 {/* unoptimized: el preview es una URL blob: local del navegador */}
                 <Image
                   src={foto.preview}
@@ -355,7 +350,7 @@ export function FormNuevoComplejo() {
             {fotos.length < MAX_IMAGES_PER_COMPLEX && (
               <label
                 htmlFor="fotos"
-                className="text-muted-foreground hover:bg-accent flex aspect-4/3 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed text-sm font-medium"
+                className="text-muted-foreground hover:bg-accent flex aspect-4/3 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed text-sm font-medium"
               >
                 <Plus className="size-4" />
                 Agregar foto
@@ -374,7 +369,7 @@ export function FormNuevoComplejo() {
             Hasta {MAX_IMAGES_PER_COMPLEX} fotos, JPG, PNG o WebP de 4 MB como máximo.
           </p>
           <MensajeError mensaje={errorFotos} />
-          <div className="bg-muted flex items-center gap-2 rounded-lg border px-4 py-3 text-sm">
+          <div className="bg-muted flex items-center gap-2 rounded-xl px-4 py-3 text-sm">
             <Star className="text-primary size-4 shrink-0" />
             La foto de portada es la que aparece en los resultados de búsqueda.
           </div>

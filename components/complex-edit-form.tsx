@@ -90,8 +90,8 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
   }
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+      <div className="bg-card shadow-card grid grid-cols-1 gap-4 rounded-3xl p-6 sm:grid-cols-2">
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="nombre">Nombre del complejo</Label>
           <Input

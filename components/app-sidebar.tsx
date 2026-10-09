@@ -82,7 +82,7 @@ export function AppSidebar({
   const home = homePorRol(rol)
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="group-data-[side=left]:border-r-0">
       <SidebarHeader className="h-16 justify-center px-2 py-0">
         {/* Sidebar abierto: logo y nombre a la izquierda, y a la derecha el botón
             de plegar (desktop) o una cruz para cerrar (mobile).
@@ -94,9 +94,9 @@ export function AppSidebar({
             className="flex items-center gap-2"
             onClick={() => setOpenMobile(false)}
           >
-            <Logo className="size-8" />
+            <Logo className="size-8" sobreFondoOscuro />
             <span className="font-brand text-xl font-extrabold tracking-tight">
-              Toca<span className="text-primary">Y</span>Juga
+              Toca<span className="text-sidebar-primary">Y</span>Juga
             </span>
           </Link>
           {isMobile ? (
@@ -120,7 +120,7 @@ export function AppSidebar({
             href={home}
             className="flex size-8 items-center justify-center transition-opacity group-hover/logo:opacity-0"
           >
-            <Logo className="size-8" />
+            <Logo className="size-8" sobreFondoOscuro />
           </Link>
           <SidebarTrigger className="absolute inset-0 size-8 opacity-0 transition-opacity group-hover/logo:opacity-100" />
         </div>
@@ -136,7 +136,7 @@ export function AppSidebar({
                     render={<Link href={item.href} onClick={() => setOpenMobile(false)} />}
                     isActive={pathname === item.href}
                     tooltip={item.label}
-                    className="h-10 text-base [&_svg]:size-5 group-data-[collapsible=icon]:p-1.5!"
+                    className="text-sidebar-foreground/80 data-active:[&_svg]:text-sidebar-primary h-11 gap-3 px-3.5 text-base [&_svg]:size-5 group-data-[collapsible=icon]:p-1.5!"
                   >
                     <item.icon />
                     <span>{item.label}</span>
@@ -148,18 +148,21 @@ export function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="gap-2">
-        <div className="flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:justify-center">
-          <Avatar className="size-7 shrink-0">
-            <AvatarFallback>{iniciales(nombre)}</AvatarFallback>
+      <SidebarFooter>
+        {/* Tarjeta del perfil: avatar, nombre, cerrar sesión y tema. Con el
+            sidebar plegado queda solo el avatar con el botón de tema abajo. */}
+        <div className="bg-sidebar-accent flex items-center gap-2.5 rounded-2xl p-2.5 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0">
+          <Avatar className="size-9 shrink-0 group-data-[collapsible=icon]:size-8">
+            <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground font-heading font-bold">
+              {iniciales(nombre)}
+            </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-            <p className="truncate text-sm font-medium">{nombre}</p>
-            <p className="text-muted-foreground truncate text-xs">{email}</p>
+            <p className="truncate text-sm font-semibold" title={email}>
+              {nombre}
+            </p>
+            <SignOutButton />
           </div>
-        </div>
-        <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-          <SignOutButton className="flex-1 group-data-[collapsible=icon]:hidden" />
           <ThemeToggle />
         </div>
       </SidebarFooter>

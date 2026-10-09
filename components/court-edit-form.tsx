@@ -16,6 +16,7 @@ import {
 import { DeleteCourtDialog } from '@/components/delete-court-dialog'
 import { MinAdvanceInput } from '@/components/min-advance-input'
 import { TimeSelect } from '@/components/time-select'
+import { VistaPreviaCancha } from '@/components/vista-previa-cancha'
 import { timeTextToMinutes } from '@/lib/time'
 import { updateCourtSchema } from '@/lib/validations/court'
 import { deporteLabels, superficieLabels, superficiesPorDeporte } from '@/lib/labels'
@@ -111,203 +112,217 @@ export function CourtEditForm({
   }
 
   return (
-    <div className="space-y-8">
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="nombre">Nombre identificador</Label>
-            <Input
-              id="nombre"
-              name="nombre"
-              defaultValue={cancha.nombre}
-              aria-invalid={!!fieldErrors.nombre}
-              className={
-                fieldErrors.nombre ? 'border-destructive ring-destructive/20 ring-3' : undefined
-              }
-            />
-            {fieldErrors.nombre && (
-              <p className="text-destructive flex items-center gap-1 text-xs font-medium">
-                <AlertCircle className="size-3.5" />
-                {fieldErrors.nombre}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Deporte</Label>
-            <Select
-              value={deporte}
-              onValueChange={(v) => {
-                const nuevoDeporte = v as typeof deporte
-                setDeporte(nuevoDeporte)
-                // Si la superficie elegida no tiene sentido para el nuevo deporte,
-                // se pasa a la primera que sí (ej: fútbol nunca en polvo de ladrillo)
-                if (!superficiesPorDeporte[nuevoDeporte].includes(tipoSuperficie)) {
-                  setTipoSuperficie(superficiesPorDeporte[nuevoDeporte][0])
+    <div className="grid gap-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="space-y-6">
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          <div className="bg-card shadow-card grid grid-cols-1 gap-4 rounded-3xl p-6 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="nombre">Nombre identificador</Label>
+              <Input
+                id="nombre"
+                name="nombre"
+                defaultValue={cancha.nombre}
+                aria-invalid={!!fieldErrors.nombre}
+                className={
+                  fieldErrors.nombre ? 'border-destructive ring-destructive/20 ring-3' : undefined
                 }
-              }}
-            >
-              <SelectTrigger className="w-full" aria-label="Deporte">
-                <SelectValue>{(v: typeof deporte) => deporteLabels[v]}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(deporteLabels).map(([valor, label]) => (
-                  <SelectItem key={valor} value={valor}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              />
+              {fieldErrors.nombre && (
+                <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                  <AlertCircle className="size-3.5" />
+                  {fieldErrors.nombre}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label>Superficie</Label>
-            <Select
-              key={deporte}
-              value={tipoSuperficie}
-              onValueChange={(v) => setTipoSuperficie(v as typeof tipoSuperficie)}
-            >
-              <SelectTrigger className="w-full" aria-label="Superficie">
-                <SelectValue>{(v: typeof tipoSuperficie) => superficieLabels[v]}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {superficiesPorDeporte[deporte].map((valor) => (
-                  <SelectItem key={valor} value={valor}>
-                    {superficieLabels[valor]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-2">
+              <Label>Deporte</Label>
+              <Select
+                value={deporte}
+                onValueChange={(v) => {
+                  const nuevoDeporte = v as typeof deporte
+                  setDeporte(nuevoDeporte)
+                  // Si la superficie elegida no tiene sentido para el nuevo deporte,
+                  // se pasa a la primera que sí (ej: fútbol nunca en polvo de ladrillo)
+                  if (!superficiesPorDeporte[nuevoDeporte].includes(tipoSuperficie)) {
+                    setTipoSuperficie(superficiesPorDeporte[nuevoDeporte][0])
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full" aria-label="Deporte">
+                  <SelectValue>{(v: typeof deporte) => deporteLabels[v]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(deporteLabels).map(([valor, label]) => (
+                    <SelectItem key={valor} value={valor}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <Label
-              htmlFor="precioBase"
-              className={fieldErrors.precioBase ? 'text-destructive font-semibold' : undefined}
-            >
-              Precio base por turno ($ ARS) {fieldErrors.precioBase && '*'}
-            </Label>
-            <Input
-              id="precioBase"
-              name="precioBase"
-              type="number"
-              step="0.01"
-              defaultValue={cancha.precioBase}
-              aria-invalid={!!fieldErrors.precioBase}
-              className={
-                fieldErrors.precioBase ? 'border-destructive ring-destructive/20 ring-3' : undefined
-              }
-            />
-            {fieldErrors.precioBase && (
-              <p className="text-destructive flex items-center gap-1 text-xs font-medium">
-                <AlertCircle className="size-3.5" />
-                {fieldErrors.precioBase}
+            <div className="space-y-2">
+              <Label>Superficie</Label>
+              <Select
+                key={deporte}
+                value={tipoSuperficie}
+                onValueChange={(v) => setTipoSuperficie(v as typeof tipoSuperficie)}
+              >
+                <SelectTrigger className="w-full" aria-label="Superficie">
+                  <SelectValue>{(v: typeof tipoSuperficie) => superficieLabels[v]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {superficiesPorDeporte[deporte].map((valor) => (
+                    <SelectItem key={valor} value={valor}>
+                      {superficieLabels[valor]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="precioBase"
+                className={fieldErrors.precioBase ? 'text-destructive font-semibold' : undefined}
+              >
+                Precio base por turno ($ ARS) {fieldErrors.precioBase && '*'}
+              </Label>
+              <Input
+                id="precioBase"
+                name="precioBase"
+                type="number"
+                step="0.01"
+                defaultValue={cancha.precioBase}
+                aria-invalid={!!fieldErrors.precioBase}
+                className={
+                  fieldErrors.precioBase
+                    ? 'border-destructive ring-destructive/20 ring-3'
+                    : undefined
+                }
+              />
+              {fieldErrors.precioBase && (
+                <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                  <AlertCircle className="size-3.5" />
+                  {fieldErrors.precioBase}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Apertura</Label>
+              <TimeSelect label="Apertura" value={horaApertura} onChange={setHoraApertura} />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Cierre</Label>
+              <TimeSelect label="Cierre" value={horaCierre} onChange={setHoraCierre} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="duracionTurnoMin">Duración de turno (min)</Label>
+              <Input
+                id="duracionTurnoMin"
+                name="duracionTurnoMin"
+                type="number"
+                min={30}
+                max={180}
+                defaultValue={cancha.duracionTurnoMin}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="porcentajeSena">Seña propia (%)</Label>
+              <Input
+                id="porcentajeSena"
+                name="porcentajeSena"
+                type="number"
+                min={0}
+                max={100}
+                placeholder="Usa el % del complejo"
+                defaultValue={cancha.porcentajeSena ?? ''}
+                aria-invalid={!!fieldErrors.porcentajeSena}
+                className={
+                  fieldErrors.porcentajeSena
+                    ? 'border-destructive ring-destructive/20 ring-3'
+                    : undefined
+                }
+              />
+              <p className="text-muted-foreground text-xs">
+                Vacío = usa el % de seña por defecto del complejo.
               </p>
-            )}
-          </div>
+              {fieldErrors.porcentajeSena && (
+                <p className="text-destructive flex items-center gap-1 text-xs font-medium">
+                  <AlertCircle className="size-3.5" />
+                  {fieldErrors.porcentajeSena}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label>Apertura</Label>
-            <TimeSelect label="Apertura" value={horaApertura} onChange={setHoraApertura} />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Cierre</Label>
-            <TimeSelect label="Cierre" value={horaCierre} onChange={setHoraCierre} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="duracionTurnoMin">Duración de turno (min)</Label>
-            <Input
-              id="duracionTurnoMin"
-              name="duracionTurnoMin"
-              type="number"
-              min={30}
-              max={180}
-              defaultValue={cancha.duracionTurnoMin}
+            <MinAdvanceInput
+              name="minAdvance"
+              label="Anticipación mínima propia"
+              defaultMinutes={cancha.minAdvanceMinutes}
+              help="Vacío = usa la anticipación mínima por defecto del complejo."
+              error={fieldErrors.minAdvanceMinutes}
+              allowEmpty
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="porcentajeSena">Seña propia (%)</Label>
-            <Input
-              id="porcentajeSena"
-              name="porcentajeSena"
-              type="number"
-              min={0}
-              max={100}
-              placeholder="Usa el % del complejo"
-              defaultValue={cancha.porcentajeSena ?? ''}
-              aria-invalid={!!fieldErrors.porcentajeSena}
-              className={
-                fieldErrors.porcentajeSena
-                  ? 'border-destructive ring-destructive/20 ring-3'
-                  : undefined
-              }
-            />
-            <p className="text-muted-foreground text-xs">
-              Vacío = usa el % de seña por defecto del complejo.
-            </p>
-            {fieldErrors.porcentajeSena && (
-              <p className="text-destructive flex items-center gap-1 text-xs font-medium">
-                <AlertCircle className="size-3.5" />
-                {fieldErrors.porcentajeSena}
-              </p>
-            )}
-          </div>
-
-          <MinAdvanceInput
-            name="minAdvance"
-            label="Anticipación mínima propia"
-            defaultMinutes={cancha.minAdvanceMinutes}
-            help="Vacío = usa la anticipación mínima por defecto del complejo."
-            error={fieldErrors.minAdvanceMinutes}
-            allowEmpty
-          />
-        </div>
-
-        <div className="flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            render={<a href={`/dueno/complejos/${complejoId}/canchas`} />}
-          >
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={cargando}>
-            {cargando ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-            {cargando ? 'Guardando...' : 'Guardar cambios'}
-          </Button>
-        </div>
-
-        {error && <p className="text-destructive text-sm">{error}</p>}
-        {aviso && (
-          <div role="status" className="border-border space-y-3 rounded-lg border p-4 text-sm">
-            <p>{aviso}</p>
+          <div className="flex justify-end gap-3">
             <Button
               type="button"
-              size="sm"
+              variant="outline"
               render={<a href={`/dueno/complejos/${complejoId}/canchas`} />}
             >
-              Volver a canchas
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={cargando}>
+              {cargando ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+              {cargando ? 'Guardando...' : 'Guardar cambios'}
             </Button>
           </div>
-        )}
-      </form>
 
-      <div className="border-destructive/40 flex items-center justify-between gap-4 rounded-2xl border border-dashed p-5">
-        <div>
-          <strong className="text-destructive text-sm">Eliminar esta cancha puntual</strong>
-          <p className="text-muted-foreground mt-1 text-xs">
-            Eliminará únicamente &quot;{cancha.nombre}&quot; sin afectar a las demás.
-          </p>
+          {error && <p className="text-destructive text-sm">{error}</p>}
+          {aviso && (
+            <div role="status" className="bg-muted space-y-3 rounded-xl p-4 text-sm">
+              <p>{aviso}</p>
+              <Button
+                type="button"
+                size="sm"
+                render={<a href={`/dueno/complejos/${complejoId}/canchas`} />}
+              >
+                Volver a canchas
+              </Button>
+            </div>
+          )}
+        </form>
+
+        <div className="bg-destructive/8 flex flex-wrap items-center justify-between gap-4 rounded-3xl p-6">
+          <div>
+            <p className="text-destructive font-semibold">Eliminar esta cancha</p>
+            <p className="text-foreground/80 mt-1 text-sm">
+              Se elimina solo “{cancha.nombre}”, sin afectar a las demás.
+            </p>
+          </div>
+          <DeleteCourtDialog
+            courtId={cancha.id}
+            courtName={cancha.nombre}
+            onDeleted={() => router.push(`/dueno/complejos/${complejoId}/canchas`)}
+          />
         </div>
-        <DeleteCourtDialog
-          courtId={cancha.id}
-          courtName={cancha.nombre}
-          onDeleted={() => router.push(`/dueno/complejos/${complejoId}/canchas`)}
-        />
       </div>
+
+      <aside className="order-first lg:sticky lg:top-6 lg:order-none lg:self-start">
+        <VistaPreviaCancha
+          nombre={cancha.nombre}
+          deporte={deporte}
+          tipoSuperficie={tipoSuperficie}
+          horaApertura={horaApertura}
+          horaCierre={horaCierre}
+        />
+      </aside>
     </div>
   )
 }

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { format, parse } from 'date-fns'
-import { es } from 'date-fns/locale'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -20,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MINUTOS_PARA_PAGAR_SENA, venceLaSena } from '@/lib/estado-reserva'
 import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
+import { diaEnPalabras } from '@/lib/fechas'
 import { formatPrecio, mesesCortos, nombresCortosDeDias } from '@/lib/labels'
 import { diaDeHoy, diasParaReservar, formatAdvanceTime } from '@/lib/time'
 
@@ -33,10 +33,6 @@ const periodosDelDia = [
   { nombre: 'Tarde', icono: Sunset, desde: '12:00', hasta: '19:00' },
   { nombre: 'Noche', icono: Moon, desde: '19:00', hasta: '24:00' },
 ]
-
-function capitalizar(texto: string): string {
-  return texto.charAt(0).toUpperCase() + texto.slice(1)
-}
 
 export function CourtSlotPicker({
   courtId,
@@ -252,10 +248,10 @@ export function CourtSlotPicker({
         }}
         className={
           !slot.disponible
-            ? 'bg-secondary text-muted-foreground flex h-10 cursor-not-allowed flex-col items-center justify-center rounded-lg border text-sm font-medium line-through opacity-45'
+            ? 'bg-muted text-muted-foreground flex h-11 cursor-not-allowed flex-col items-center justify-center rounded-xl text-sm font-medium line-through opacity-60'
             : seleccionado
-              ? 'bg-primary text-primary-foreground border-primary flex h-10 flex-col items-center justify-center rounded-lg border text-sm font-semibold'
-              : 'border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground flex h-10 flex-col items-center justify-center rounded-lg border text-sm font-medium transition-colors'
+              ? 'bg-primary text-primary-foreground shadow-button flex h-11 flex-col items-center justify-center rounded-xl text-sm font-bold'
+              : 'bg-card text-card-foreground shadow-soft hover:bg-accent hover:text-accent-foreground flex h-11 flex-col items-center justify-center rounded-xl text-sm font-semibold transition-colors'
         }
       >
         {slot.horaInicio}
@@ -272,11 +268,12 @@ export function CourtSlotPicker({
     <div className="flex flex-1 flex-col gap-5">
       {/* Tira de días: se desliza de costado y el elegido queda centrado */}
       <div>
-        <p className="mb-2 flex items-center gap-1.5 text-sm font-medium">
+        <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold">
           <Calendar className="size-3.5" />
           Elegí el día
         </p>
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+        {/* py-2: lugar para que la sombra de los días no quede cortada */}
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none]">
           {dias.map((dia, indice) => {
             const elegido = dia === diaElegido
             let nombre = nombresCortosDeDias[new Date(`${dia}T00:00:00Z`).getUTCDay()]
@@ -291,12 +288,14 @@ export function CourtSlotPicker({
                 onClick={() => elegirDia(dia)}
                 className={
                   elegido
-                    ? 'bg-primary text-primary-foreground border-primary flex w-14 shrink-0 flex-col items-center rounded-xl border py-2'
-                    : 'border-border bg-card hover:bg-accent flex w-14 shrink-0 flex-col items-center rounded-xl border py-2 transition-colors'
+                    ? 'bg-primary text-primary-foreground shadow-button flex w-14 shrink-0 flex-col items-center rounded-2xl py-2.5'
+                    : 'bg-card shadow-soft hover:bg-accent flex w-14 shrink-0 flex-col items-center rounded-2xl py-2.5 transition-colors'
                 }
               >
                 <span className="text-[11px] font-medium">{nombre}</span>
-                <span className="text-lg leading-tight font-bold">{Number(dia.slice(8))}</span>
+                <span className="font-heading text-2xl leading-tight font-bold">
+                  {Number(dia.slice(8))}
+                </span>
                 <span className="text-[10px] uppercase opacity-75">
                   {mesesCortos[Number(dia.slice(5, 7)) - 1]}
                 </span>
@@ -308,7 +307,7 @@ export function CourtSlotPicker({
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <p className="flex items-center gap-1.5 text-sm font-medium">
+          <p className="flex items-center gap-1.5 text-sm font-semibold">
             <Clock className="size-3.5" />
             Horarios
           </p>
@@ -328,7 +327,7 @@ export function CourtSlotPicker({
         {cargando ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 rounded-lg" />
+              <Skeleton key={i} className="h-11 rounded-xl" />
             ))}
           </div>
         ) : (
@@ -345,9 +344,13 @@ export function CourtSlotPicker({
                 <p className="text-muted-foreground mb-1.5 flex items-center gap-1.5 text-xs font-medium">
                   <Icono className="size-3.5" />
                   {periodo.nombre}
-                  <span className="opacity-70">
-                    · {libres === 0 ? 'sin turnos libres' : `${libres} libres`}
-                  </span>
+                  {libres === 0 ? (
+                    <span className="opacity-70">· sin turnos libres</span>
+                  ) : (
+                    <span className="bg-primary/15 text-primary rounded-full px-2 py-0.5 font-semibold">
+                      {libres === 1 ? '1 libre' : `${libres} libres`}
+                    </span>
+                  )}
                 </p>
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2">
                   {turnos.map((slot) => botonDeTurno(slot))}
@@ -361,7 +364,7 @@ export function CourtSlotPicker({
       {/* Pie fijo abajo del sheet: resumen para reservar, pago de la seña,
           confirmación o error. mt-auto lo empuja abajo si sobra lugar. */}
       {hayPie && (
-        <div className="bg-popover sticky bottom-0 -mx-4 mt-auto flex flex-col gap-3 border-t px-4 pt-3 pb-4 shadow-[0_-10px_20px_-16px_rgb(0_0_0/0.5)]">
+        <div className="bg-card sticky bottom-0 -mx-4 mt-auto flex flex-col gap-3 rounded-t-3xl px-5 pt-4 pb-5 shadow-[0_-14px_28px_-18px_rgb(0_0_0/0.45)]">
           {turnoElegidoSeOcupo && (
             <p className="text-destructive text-sm">
               Otro jugador acaba de reservar las {horaSeleccionada}. Elegí otro horario.
@@ -369,30 +372,36 @@ export function CourtSlotPicker({
           )}
 
           {horaSeleccionada && slotSeleccionado && !turnoElegidoSeOcupo && (
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold">
-                  {capitalizar(format(fecha, 'EEE dd/MM', { locale: es }))} · {horaSeleccionada} a{' '}
-                  {slotSeleccionado.horaFin} hs
+            <div className="flex flex-col gap-3">
+              <p className="font-heading text-lg font-bold">
+                {diaEnPalabras(diaElegido)} · {horaSeleccionada} a {slotSeleccionado.horaFin} hs
+              </p>
+              {/* El desglose en tres renglones: cuánto sale, cuánto es la seña
+                  y cuánto queda para pagar en la cancha */}
+              <div className="space-y-1.5 text-sm">
+                <p className="text-muted-foreground flex justify-between gap-3">
+                  <span>
+                    Precio del turno
+                    {slotSeleccionado.precio !== precioBase && ' (precio especial)'}
+                  </span>
+                  <span>{formatPrecio(slotSeleccionado.precio)}</span>
                 </p>
-                <p className="text-muted-foreground text-xs">
-                  Turno {formatPrecio(slotSeleccionado.precio)}
-                  {slotSeleccionado.precio !== precioBase && ' (precio especial)'} · Seña{' '}
-                  {porcentajeSena}%:{' '}
-                  <span className="text-primary font-semibold">
-                    {formatPrecio(montoSenaSeleccionada)}
+                <p className="flex justify-between gap-3 font-semibold">
+                  <span>Seña del {porcentajeSena}% para confirmar</span>
+                  <span className="text-primary">{formatPrecio(montoSenaSeleccionada)}</span>
+                </p>
+                <p className="text-muted-foreground flex justify-between gap-3">
+                  <span>El resto se paga en la cancha</span>
+                  <span>
+                    {formatPrecio(Number(slotSeleccionado.precio) - montoSenaSeleccionada)}
                   </span>
                 </p>
-                <p className="text-muted-foreground text-xs">
-                  El resto ({formatPrecio(Number(slotSeleccionado.precio) - montoSenaSeleccionada)})
-                  se paga en la cancha
-                </p>
               </div>
-              <Button onClick={reservar} disabled={estado === 'reservando'} className="shrink-0">
+              <Button size="lg" onClick={reservar} disabled={estado === 'reservando'}>
                 {estado === 'reservando' ? (
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                 ) : (
-                  <Check className="size-3.5" />
+                  <Check className="size-4" />
                 )}
                 {estado === 'reservando' ? 'Reservando...' : 'Reservar'}
               </Button>

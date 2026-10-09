@@ -22,8 +22,8 @@ export default async function EditarPrecioPage({
   if (!precioEspecial) redirect(`/dueno/complejos/${id}/canchas/${courtId}/precios`)
 
   return (
-    <main className="max-w-2xl px-6 pt-6 pb-12 md:pt-4">
-      <h1 className="text-3xl font-semibold">Editar precio especial</h1>
+    <main>
+      <h1 className="font-heading text-4xl font-bold tracking-tight">Editar precio especial</h1>
       <div className="mt-6">
         <PriceForm
           complejoId={id}

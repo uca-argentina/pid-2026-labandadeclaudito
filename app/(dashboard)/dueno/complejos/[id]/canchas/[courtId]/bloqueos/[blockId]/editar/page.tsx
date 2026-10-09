@@ -23,8 +23,8 @@ export default async function EditarBloqueoPage({
   if (!bloqueo) redirect(`/dueno/complejos/${id}/canchas/${courtId}/bloqueos`)
 
   return (
-    <main className="max-w-2xl px-6 pt-6 pb-12 md:pt-4">
-      <h1 className="text-3xl font-semibold">Editar bloqueo</h1>
+    <main>
+      <h1 className="font-heading text-4xl font-bold tracking-tight">Editar bloqueo</h1>
       <div className="mt-6">
         <BlockForm
           complejoId={id}

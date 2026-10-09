@@ -57,7 +57,7 @@ export function CourtBookingSheet({
         </div>
 
         <SheetHeader className="-mt-6 pt-0">
-          <SheetTitle className="text-xl font-bold">{courtName}</SheetTitle>
+          <SheetTitle className="text-3xl font-bold tracking-tight">{courtName}</SheetTitle>
           <SheetDescription className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <EtiquetaDeporte deporte={deporte} />
             <span className="inline-flex items-center gap-1">

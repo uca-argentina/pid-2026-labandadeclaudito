@@ -12,12 +12,12 @@ export function StatCard({
   detalle: string
 }) {
   return (
-    <div className="border-border bg-card rounded-2xl border p-6">
+    <div className="bg-card shadow-card rounded-2xl p-6">
       <div className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
         <Icon className="size-4" />
         {label}
       </div>
-      <p className="mt-3 text-4xl font-semibold tracking-tight">{value}</p>
+      <p className="font-heading mt-3 text-4xl font-bold tracking-tight">{value}</p>
       <p className="text-muted-foreground mt-1.5 text-sm">{detalle}</p>
     </div>
   )

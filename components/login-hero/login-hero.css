@@ -2068,15 +2068,23 @@ body:has(#hero-pause:checked) .hero-stage * {
 }
 
 /* Mientras se escribe en un campo la animación se frena y se atenúa para no
-   competir con el formulario. */
-.hero-frame {
+   competir con el formulario. Se atenúa con un velo del color del marco
+   encima de las escenas (y no bajando la opacidad del marco): el marco está
+   sobre el panel verde y, si se transparenta, se ve el fondo a través. */
+.hero-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--background);
+  opacity: 0;
   transition: opacity 0.3s;
+  pointer-events: none;
 }
 body:has(input:not(#hero-pause):focus) .hero-stage * {
   animation-play-state: paused;
 }
-body:has(input:not(#hero-pause):focus) .hero-frame {
-  opacity: 0.45;
+body:has(input:not(#hero-pause):focus) .hero-frame::after {
+  opacity: 0.55;
 }
 
 #hero-pause:checked ~ label .hero-pause-on,

@@ -1,12 +1,10 @@
 import { redirect } from 'next/navigation'
 import {
-  CalendarClock,
   CalendarDays,
   CircleDot,
   Clock,
   LandPlot,
   Mail,
-  MapPin,
   Phone,
   User,
   UserCheck,
@@ -16,16 +14,20 @@ import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import type { Prisma } from '@/lib/generated/prisma/client'
 import { dondeHistorial, dondeProximas } from '@/lib/bookings'
+import { clasesGrillaAdaptable } from '@/lib/grid-columns'
 import { montoDelHistorial } from '@/lib/historial'
 import { estadoDeReserva, venceLaSena } from '@/lib/estado-reserva'
 import { calcularPagina } from '@/lib/paginacion'
 import { iniciales } from '@/lib/iniciales'
-import { diaDeReserva, formatearDia, momentoActual, turnoYaPaso } from '@/lib/time'
+import { diaEnPalabras } from '@/lib/fechas'
+import { diaDeReserva, momentoActual, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { AttendanceButtons } from '@/components/attendance-buttons'
 import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
 import { CeldaCancha, CeldaMonto } from '@/components/celdas-reserva'
+import { EstadoVacio } from '@/components/estado-vacio'
 import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
+import { FranjaDeCancha } from '@/components/franja-de-cancha'
 import { FechaDelTurno } from '@/components/fecha-del-turno'
 import { TituloConIcono } from '@/components/titulo-con-icono'
 import { Paginacion } from '@/components/paginacion'
@@ -130,22 +132,22 @@ export default async function ReservasDelDuenioPage({
   const nuncaReservaron = totalProximas + totalHistorial + totalCanceladas === 0
 
   return (
-    <main className="max-w-6xl px-6 pt-6 pb-12 md:pt-4">
+    <main>
       <div className="mb-6">
-        <h1 className="text-3xl font-semibold">Reservas</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Los próximos turnos en tus canchas y todo lo que se reservó antes.
+        <h1 className="font-heading text-4xl font-bold tracking-tight">Reservas</h1>
+        <p className="text-muted-foreground mt-1.5">
+          {totalProximas === 0 &&
+            'Los próximos turnos en tus canchas y todo lo que se reservó antes.'}
+          {totalProximas === 1 && '1 turno por jugarse en tus canchas.'}
+          {totalProximas > 1 && `${totalProximas} turnos por jugarse en tus canchas.`}
         </p>
       </div>
 
       {nuncaReservaron ? (
-        <div className="border-border bg-card rounded-2xl border p-8 text-center">
-          <CalendarClock className="text-muted-foreground mx-auto mb-3 size-8" />
-          <p className="font-medium">Todavía no hay turnos reservados</p>
-          <p className="text-muted-foreground mt-1.5 text-sm">
-            Cuando un jugador reserve una de tus canchas, va a aparecer acá.
-          </p>
-        </div>
+        <EstadoVacio
+          titulo="Todavía no hay turnos reservados"
+          texto="Cuando un jugador reserve una de tus canchas, va a aparecer acá."
+        />
       ) : (
         <>
           <PestaniasDeReservas ruta="/dueno/reservas" vista={vista} totales={totales} />
@@ -160,14 +162,18 @@ export default async function ReservasDelDuenioPage({
 
           {reservas.length > 0 && vista === 'proximas' && (
             <>
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {reservas.map((reserva) => (
-                  <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
-                ))}
+              {/* Misma grilla que Mis complejos: hasta 4 tarjetas por fila, que
+                  se reparten todo el ancho (no sobra un hueco a la derecha) */}
+              <div className="@container">
+                <div className={`grid gap-5 ${clasesGrillaAdaptable(reservas.length)}`}>
+                  {reservas.map((reserva) => (
+                    <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
+                  ))}
+                </div>
               </div>
               {/* Con una sola página de tarjetas no hace falta el pie */}
               {totalPaginas > 1 && (
-                <div className="border-border bg-card mt-4 overflow-hidden rounded-2xl border">
+                <div className="bg-card shadow-card mt-4 overflow-hidden rounded-2xl">
                   {paginacion}
                 </div>
               )}
@@ -175,7 +181,7 @@ export default async function ReservasDelDuenioPage({
           )}
 
           {reservas.length > 0 && vista !== 'proximas' && (
-            <div className="border-border bg-card overflow-hidden rounded-2xl border shadow-sm">
+            <div className="bg-card shadow-card overflow-hidden rounded-2xl">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -270,7 +276,7 @@ function FilaReserva({
       </TableCell>
       <TableCell className="hidden lg:table-cell">
         <div className="flex items-center gap-2.5">
-          <div className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+          <div className="bg-primary/15 text-primary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
             {iniciales(reserva.jugador.nombre)}
           </div>
           <div>
@@ -329,81 +335,97 @@ function TarjetaReserva({
     'DUENIO',
   )
 
+  const esperaLaSena = reserva.estado === 'PENDIENTE'
+  const venceSena = venceLaSena(reserva.createdAt).toISOString()
+
   return (
     <div
       className={
         cancelada
-          ? 'border-border bg-card flex h-full flex-col rounded-2xl border p-5 opacity-60'
-          : 'border-border bg-card flex h-full flex-col rounded-2xl border p-5'
+          ? 'bg-card shadow-card flex h-full flex-col overflow-hidden rounded-2xl opacity-60'
+          : 'bg-card shadow-card flex h-full flex-col overflow-hidden rounded-2xl'
       }
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-lg font-bold">{reserva.cancha.nombre}</span>
-        <EtiquetaDeporte deporte={reserva.cancha.deporte} />
-        <BookingStatusBadge
-          estado={reserva.estado}
-          asistio={reserva.asistio}
-          dia={dia}
-          horaInicio={reserva.horaInicio}
-          horaFin={reserva.horaFin}
-          ahoraInicial={ahora}
-        />
-      </div>
+      <FranjaDeCancha deporte={reserva.cancha.deporte} />
 
-      <div className="text-muted-foreground mt-2 space-y-1.5 text-sm">
-        <p className="flex items-center gap-1.5">
-          <MapPin className="size-3.5 shrink-0" />
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <BookingStatusBadge
+            estado={reserva.estado}
+            asistio={reserva.asistio}
+            dia={dia}
+            horaInicio={reserva.horaInicio}
+            horaFin={reserva.horaFin}
+            ahoraInicial={ahora}
+          />
+          <EtiquetaDeporte deporte={reserva.cancha.deporte} />
+        </div>
+
+        <p className="font-heading mt-2 text-lg font-bold">{diaEnPalabras(dia)}</p>
+        <p className="flex items-center gap-1.5 text-sm font-medium">
+          <Clock className="size-3.5 shrink-0" />
+          {reserva.horaInicio} a {reserva.horaFin} hs
+        </p>
+        <p className="text-muted-foreground mt-2 truncate text-sm">
+          <span className="text-foreground font-semibold">{reserva.cancha.nombre}</span> ·{' '}
           {reserva.cancha.complejo.nombre}
         </p>
-        <p className="flex items-center gap-1.5">
-          <Clock className="size-3.5 shrink-0" />
-          {formatearDia(dia)} · {reserva.horaInicio} a {reserva.horaFin} hs
-        </p>
-      </div>
 
-      {/* Quién reservó: nombre arriba, y el contacto cada uno en su renglón */}
-      <div className="bg-muted/50 mt-3 mb-4 flex items-center gap-3 rounded-xl p-3">
-        <div className="bg-primary/15 text-primary flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
-          {iniciales(reserva.jugador.nombre)}
-        </div>
-        <div className="min-w-0 text-sm">
-          <p className="font-medium">{reserva.jugador.nombre}</p>
-          <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-            <Mail className="size-3 shrink-0" />
-            <span className="truncate">{reserva.jugador.email}</span>
-          </p>
-          {reserva.jugador.telefono && (
+        {/* Quién reservó: nombre arriba, y el contacto cada uno en su renglón */}
+        <div className="bg-muted/60 mt-3 flex items-center gap-2.5 rounded-xl px-2.5 py-2">
+          <div className="bg-primary/15 text-primary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
+            {iniciales(reserva.jugador.nombre)}
+          </div>
+          <div className="min-w-0 text-sm">
+            <p className="truncate font-semibold">{reserva.jugador.nombre}</p>
             <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-              <Phone className="size-3 shrink-0" />
-              {reserva.jugador.telefono}
+              <Mail className="size-3 shrink-0" />
+              <span className="truncate">{reserva.jugador.email}</span>
             </p>
+            {reserva.jugador.telefono && (
+              <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                <Phone className="size-3 shrink-0" />
+                {reserva.jugador.telefono}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* De acá para abajo todas las tarjetas tienen lo mismo a la misma
+            altura, esté o no pagada la seña: un renglón con su barra y el
+            monto. */}
+        <div className="mt-auto pt-3.5">
+          {esperaLaSena ? (
+            // El dueño ve el mismo reloj que el jugador: cuándo se libera el
+            // turno si no pagan la seña
+            <>
+              <CuentaRegresivaSena venceEn={venceSena} />
+              <RefreshWhenDepositExpires venceEn={venceSena} />
+            </>
+          ) : (
+            // Mismo alto que la cuenta regresiva: un renglón y, donde iría la
+            // barra, una línea divisoria. min-h: en tarjetas angostas el texto
+            // ocupa dos renglones y empuja hacia arriba, sin pisar la línea
+            <div className="space-y-1.5">
+              <p className="text-muted-foreground flex min-h-7 items-center text-sm">
+                {monto?.detalle}
+              </p>
+              <div className="flex h-1.5 items-center">
+                <div className="bg-border h-px flex-1" />
+              </div>
+            </div>
+          )}
+
+          {monto && (
+            <div className="mt-3.5">
+              <p className="text-muted-foreground text-xs">{monto.etiqueta}</p>
+              <p className={`font-heading text-xl leading-tight font-bold ${tonos[monto.tono]}`}>
+                {monto.monto}
+              </p>
+            </div>
           )}
         </div>
       </div>
-      {/* El dueño ve el mismo reloj que el jugador: cuándo se libera el turno
-          si no pagan la seña */}
-      {reserva.estado === 'PENDIENTE' && (
-        <div className="mb-4">
-          <CuentaRegresivaSena venceEn={venceLaSena(reserva.createdAt).toISOString()} />
-          <RefreshWhenDepositExpires venceEn={venceLaSena(reserva.createdAt).toISOString()} />
-        </div>
-      )}
-
-      {/* Footer con borde arriba, separado del cuerpo: precio a la izquierda,
-          acciones a la derecha. Evita que el precio quede flotando en un
-          lugar distinto según cuánto texto tenga el cuerpo de la tarjeta. */}
-      {monto && (
-        <div className="border-border mt-auto flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-          <div>
-            <div className="text-muted-foreground text-xs">{monto.etiqueta}</div>
-            <div className={`flex items-center gap-1.5 text-lg font-bold ${tonos[monto.tono]}`}>
-              <Wallet className="size-4 shrink-0" />
-              {monto.monto}
-            </div>
-            {monto.detalle && <div className="text-muted-foreground text-xs">{monto.detalle}</div>}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
