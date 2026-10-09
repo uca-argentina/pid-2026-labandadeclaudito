@@ -135,12 +135,13 @@ app/                        RUTAS (URL) + UI
                             nada de header ni sidebar (cada grupo pone el suyo)
 
   (public)/                 grupo — NO agrega segmento a la URL. Páginas sin
-                            login: trae el toggle de tema arriba a la derecha
+                            login: trae el botón de tema arriba a la derecha
     layout.tsx                monta <ThemeToggle /> + <main>
     page.tsx                  landing /
     estilo/page.tsx           /estilo — referencia visual
     (auth)/                   grupo anidado — tampoco agrega segmento
       layout.tsx              split screen: <LoginHero /> (solo desktop) + formulario
+                              (en celular, el logo arriba del formulario)
       login/page.tsx          /login — formulario (fetch al endpoint de Auth.js)
       register/page.tsx       /register — formulario (fetch a /api/users)
 
@@ -363,10 +364,18 @@ cómo se ve algo, mirar esa página, no adivinar.
   (array `navPorRol` adentro del componente — agregar el link ahí cuando
   exista la página real, no antes). Abajo, la tarjeta del perfil: avatar con
   iniciales, nombre, "Cerrar sesión" y el botón de tema.
-- **En migración**: las pantallas del jugador ya están en este estilo. Las del
-  dueño, el admin y el login heredan la base (colores, botones, campos,
-  sidebar) pero sus tarjetas todavía tienen borde: se pasan en las próximas
-  etapas del rebranding.
+- **Login y registro**: pantalla partida (`app/(public)/(auth)/layout.tsx`). A
+  la izquierda, el panel en el verde del sidebar (`bg-sidebar`, igual en los
+  dos temas) con el logo, el título y la animación. A la derecha, el
+  formulario en una tarjeta `rounded-3xl`, sobre una "hoja" con las esquinas
+  redondeadas igual que el contenido de la app. Los campos llevan el ícono
+  adentro (`left-3.5` + `pl-11` en el `Input`) y el botón es `size="lg"` a todo
+  el ancho. Los errores van en una caja `bg-destructive/10` arriba del botón.
+- **En migración**: las pantallas del jugador, el login y el registro ya están
+  en este estilo. Las del dueño y el admin heredan la base (colores, botones,
+  campos, sidebar) pero sus tarjetas todavía tienen borde: se pasan en las
+  próximas etapas del rebranding. Las mini pantallas de la animación del login
+  (`login-hero/scenes/`) también muestran todavía la app vieja.
 
 ## Seguridad (no negociable)
 
