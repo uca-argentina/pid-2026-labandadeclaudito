@@ -64,7 +64,10 @@ export default function RegistroPage() {
         <CardDescription>Registrate para reservar o publicar tu complejo.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        {/* method="post": si se envía antes de que la página termine de cargar
+            el JavaScript, el navegador lo manda solo. Con el GET por defecto la
+            contraseña quedaba en la URL (y en el historial). */}
+        <form method="post" className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <Label htmlFor="nombre">Nombre</Label>
             <div className="relative">
