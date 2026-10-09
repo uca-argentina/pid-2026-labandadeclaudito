@@ -32,7 +32,7 @@ export default async function EditarComplejoPage({
   const reservasFuturas = await getUpcomingBookingIds(idsDeCanchas)
 
   return (
-    <main className="max-w-2xl px-6 pt-6 pb-12 md:pt-4">
+    <main>
       <Link
         href={`/dueno/complejos/${id}`}
         className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"

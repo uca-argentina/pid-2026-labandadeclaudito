@@ -50,7 +50,7 @@ export default async function DuenoHomePage() {
   )
 
   return (
-    <div className="max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+    <div>
       <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Hola, {session.user.name}</h1>

@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 // por sección y no uno solo arriba de todo: ese no se vería nunca.
 export function EsqueletoPagina() {
   return (
-    <div className="max-w-5xl px-6 pt-6 pb-12 md:pt-4" aria-busy="true" aria-label="Cargando">
+    <div aria-busy="true" aria-label="Cargando">
       <Skeleton className="h-9 w-56" />
       <Skeleton className="mt-3 h-4 w-80 max-w-full" />
 

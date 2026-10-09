@@ -130,7 +130,7 @@ export default async function ReservasDelDuenioPage({
   const nuncaReservaron = totalProximas + totalHistorial + totalCanceladas === 0
 
   return (
-    <main className="max-w-6xl px-6 pt-6 pb-12 md:pt-4">
+    <main>
       <div className="mb-6">
         <h1 className="text-3xl font-semibold">Reservas</h1>
         <p className="text-muted-foreground mt-1 text-sm">

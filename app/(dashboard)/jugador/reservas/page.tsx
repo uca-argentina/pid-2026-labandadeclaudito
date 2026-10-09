@@ -128,7 +128,7 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
   const noReservoNunca = totalProximas + totalHistorial + totalCanceladas === 0
 
   return (
-    <main className="max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+    <main>
       <div className="mb-6">
         <h1 className="text-3xl font-semibold">Mis reservas</h1>
         <p className="text-muted-foreground mt-1 text-sm">

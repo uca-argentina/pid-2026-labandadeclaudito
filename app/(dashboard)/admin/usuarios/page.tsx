@@ -138,7 +138,7 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
   }
 
   return (
-    <main className="px-6 pt-6 pb-12 md:pt-4">
+    <main>
       <h1 className="text-3xl font-semibold tracking-tight">Usuarios</h1>
       <p className="text-muted-foreground mt-1 text-sm">
         Una cuenta suspendida no puede iniciar sesión, pierde la sesión abierta y se cancelan sus

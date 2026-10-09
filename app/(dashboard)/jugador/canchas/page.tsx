@@ -44,7 +44,7 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
   const filtrosAplicados = activeFilterChips(filtros)
 
   return (
-    <main className="max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+    <main>
       <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Buscar canchas</h1>
         <p className="text-muted-foreground mt-2">
@@ -81,73 +81,75 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
           <p className="text-muted-foreground text-sm">Probá aflojando algún filtro.</p>
         </div>
       ) : (
-        <div className={`mt-8 grid gap-5 ${clasesGrillaAdaptable(complejos.length)}`}>
-          {complejos.map((complejo) => {
-            const deportes = deportesDistintos(complejo.canchas)
-            const precioMinimo = precioMasBajo(complejo.canchas)
+        <div className="@container mt-8">
+          <div className={`grid gap-5 ${clasesGrillaAdaptable(complejos.length)}`}>
+            {complejos.map((complejo) => {
+              const deportes = deportesDistintos(complejo.canchas)
+              const precioMinimo = precioMasBajo(complejo.canchas)
 
-            return (
-              <Link
-                key={complejo.id}
-                href={`/jugador/complejos/${complejo.id}${filtersToQueryString(filtros)}`}
-                className="border-border bg-card hover:bg-accent flex h-full flex-col overflow-hidden rounded-2xl border transition-colors"
-              >
-                {complejo.imagenes.length > 0 ? (
-                  <div className="relative aspect-video shrink-0">
-                    <Image
-                      src={complejo.imagenes[0].url}
-                      alt={`Foto de ${complejo.nombre}`}
-                      fill
-                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="bg-muted text-muted-foreground flex aspect-video shrink-0 flex-col items-center justify-center gap-1 text-sm">
-                    <ImageIcon className="size-5" />
-                    Sin fotos
-                  </div>
-                )}
+              return (
+                <Link
+                  key={complejo.id}
+                  href={`/jugador/complejos/${complejo.id}${filtersToQueryString(filtros)}`}
+                  className="border-border bg-card hover:bg-accent flex h-full flex-col overflow-hidden rounded-2xl border transition-colors"
+                >
+                  {complejo.imagenes.length > 0 ? (
+                    <div className="relative aspect-video shrink-0">
+                      <Image
+                        src={complejo.imagenes[0].url}
+                        alt={`Foto de ${complejo.nombre}`}
+                        fill
+                        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="bg-muted text-muted-foreground flex aspect-video shrink-0 flex-col items-center justify-center gap-1 text-sm">
+                      <ImageIcon className="size-5" />
+                      Sin fotos
+                    </div>
+                  )}
 
-                {/* flex-col + mt-auto en el footer de precio: así queda a la
+                  {/* flex-col + mt-auto en el footer de precio: así queda a la
                     misma altura en toda la fila, aunque el título o la
                     dirección ocupen distinta cantidad de líneas entre
                     tarjetas. El borde de arriba hace que ese espacio se vea
                     a propósito (un "pie" de tarjeta) y no como un hueco
                     vacío cuando el resto del contenido es corto. */}
-                <div className="flex flex-1 flex-col p-5">
-                  <span className="block font-semibold">{complejo.nombre}</span>
-                  <span className="text-muted-foreground mt-1 flex items-center gap-1.5 text-sm">
-                    <MapPin className="size-3.5 shrink-0" />
-                    {complejo.direccion} · {complejo.zona}
-                  </span>
-                  {/* Misma forma que la dirección (ícono + texto): los íconos
+                  <div className="flex flex-1 flex-col p-5">
+                    <span className="block font-semibold">{complejo.nombre}</span>
+                    <span className="text-muted-foreground mt-1 flex items-center gap-1.5 text-sm">
+                      <MapPin className="size-3.5 shrink-0" />
+                      {complejo.direccion} · {complejo.zona}
+                    </span>
+                    {/* Misma forma que la dirección (ícono + texto): los íconos
                       quedan en columna y la cantidad no flota entre los chips
                       de deporte cuando saltan de línea. */}
-                  <span className="text-muted-foreground mt-1 flex items-center gap-1.5 text-sm">
-                    <Shapes className="size-3.5 shrink-0" />
-                    {complejo.canchas.length === 1
-                      ? '1 cancha'
-                      : `${complejo.canchas.length} canchas`}
-                  </span>
-
-                  <div className="mt-3 mb-4 flex flex-wrap items-center gap-1.5">
-                    {deportes.map((deporteDeCancha) => (
-                      <EtiquetaDeporte key={deporteDeCancha} deporte={deporteDeCancha} />
-                    ))}
-                  </div>
-
-                  <div className="border-border mt-auto flex items-center gap-1.5 border-t pt-3">
-                    <Wallet className="text-primary size-4 shrink-0" />
-                    <span className="text-muted-foreground text-xs">desde</span>
-                    <span className="text-primary text-lg font-bold">
-                      {formatPrecio(precioMinimo)}
+                    <span className="text-muted-foreground mt-1 flex items-center gap-1.5 text-sm">
+                      <Shapes className="size-3.5 shrink-0" />
+                      {complejo.canchas.length === 1
+                        ? '1 cancha'
+                        : `${complejo.canchas.length} canchas`}
                     </span>
+
+                    <div className="mt-3 mb-4 flex flex-wrap items-center gap-1.5">
+                      {deportes.map((deporteDeCancha) => (
+                        <EtiquetaDeporte key={deporteDeCancha} deporte={deporteDeCancha} />
+                      ))}
+                    </div>
+
+                    <div className="border-border mt-auto flex items-center gap-1.5 border-t pt-3">
+                      <Wallet className="text-primary size-4 shrink-0" />
+                      <span className="text-muted-foreground text-xs">desde</span>
+                      <span className="text-primary text-lg font-bold">
+                        {formatPrecio(precioMinimo)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            )
-          })}
+                </Link>
+              )
+            })}
+          </div>
         </div>
       )}
     </main>

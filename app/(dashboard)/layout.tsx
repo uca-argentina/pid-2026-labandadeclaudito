@@ -24,7 +24,12 @@ export default async function DashboardLayout({ children }: LayoutProps<'/'>) {
           <header className="border-border flex h-14 items-center border-b px-4 md:hidden">
             <MobileMenuButton />
           </header>
-          {children}
+          {/* Ancho y márgenes de todas las páginas del dashboard: ocupan todo
+              el ancho hasta 1536px y, en pantallas más grandes, se centran.
+              Las páginas no ponen su propio max-w ni padding. */}
+          <div className="mx-auto w-full max-w-(--breakpoint-2xl) px-6 pt-6 pb-12 md:pt-4 lg:px-8">
+            {children}
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>
