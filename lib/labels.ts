@@ -1,4 +1,9 @@
-import type { Deporte, TipoSuperficie } from '@/lib/generated/prisma/client'
+import type {
+  DecisionDisputa,
+  Deporte,
+  EstadoDisputa,
+  TipoSuperficie,
+} from '@/lib/generated/prisma/client'
 import type { EstadoVisible } from '@/lib/estado-reserva'
 
 export const deporteLabels: Record<Deporte, string> = {
@@ -38,6 +43,16 @@ export const estadoVisibleLabels: Record<EstadoVisible, string> = {
   ASISTIO: 'Asistió',
   NO_SHOW: 'No se presentó',
   CANCELADA: 'Cancelada',
+}
+
+export const estadoDisputaLabels: Record<EstadoDisputa, string> = {
+  ABIERTA: 'Disputa abierta',
+  RESUELTA: 'Disputa resuelta',
+}
+
+export const decisionDisputaLabels: Record<DecisionDisputa, string> = {
+  A_FAVOR_JUGADOR: 'A favor del jugador',
+  A_FAVOR_DUENIO: 'A favor del complejo',
 }
 
 // El índice es el día de la semana de Date.getUTCDay(): 0 = domingo

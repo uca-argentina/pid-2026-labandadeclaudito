@@ -402,6 +402,10 @@ function agregarReserva(
     horaFin: turno.horaFin,
     estado: cancelada ? 'CANCELADA' : 'CONFIRMADA',
     asistio,
+    // El dueño marca al otro día. Desde acá corren los 7 días para disputar,
+    // así que los no-shows recientes de la demo se pueden disputar.
+    asistenciaMarcadaEn:
+      asistio === null ? null : new Date(`${dia(diasDesdeHoy + 1)}T12:00:00.000Z`),
     precioTurno,
     createdAt: new Date(Date.now() - diasAntes * 24 * 60 * 60 * 1000),
   })

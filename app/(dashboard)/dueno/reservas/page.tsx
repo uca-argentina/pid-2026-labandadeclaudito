@@ -59,7 +59,12 @@ async function getReservas(
 ) {
   return db.reserva.findMany({
     where,
-    include: { cancha: { include: { complejo: true } }, jugador: true, pago: true },
+    include: {
+      cancha: { include: { complejo: true } },
+      jugador: true,
+      pago: true,
+      disputa: true,
+    },
     orderBy: [{ fecha: orden }, { horaInicio: orden }],
     skip,
     take,
@@ -305,8 +310,15 @@ function FilaReserva({
       </TableCell>
       {conAsistencia && (
         <TableCell className="pr-4 text-right">
-          {seMarcaAsistencia && (
-            <AttendanceButtons bookingId={reserva.id} asistio={reserva.asistio} />
+          {/* Con una disputa la marca queda congelada: la decide el admin */}
+          {reserva.disputa ? (
+            <span className="bg-accent text-accent-foreground rounded-full px-2.5 py-1 text-xs font-medium">
+              En disputa
+            </span>
+          ) : (
+            seMarcaAsistencia && (
+              <AttendanceButtons bookingId={reserva.id} asistio={reserva.asistio} />
+            )
           )}
         </TableCell>
       )}
