@@ -1,5 +1,6 @@
 import type { Deporte, TipoSuperficie } from '@/lib/generated/prisma/client'
 import type { EstadoVisible } from '@/lib/estado-reserva'
+import type { GrupoDeEstado } from '@/lib/admin-bookings'
 
 export const deporteLabels: Record<Deporte, string> = {
   FUTBOL_5: 'Fútbol 5',
@@ -96,3 +97,13 @@ export const mesesCortos = [
   'nov',
   'dic',
 ]
+
+// En plural: son los títulos de las pestañas de conteo de /admin/reservas
+export const grupoDeEstadoLabels: Record<GrupoDeEstado, string> = {
+  PENDIENTE: 'Pendientes',
+  CONFIRMADA: 'Confirmadas',
+  EN_CURSO: 'En curso',
+  FINALIZADA: 'Finalizadas',
+  NO_SHOW: 'Ausentes',
+  CANCELADA: 'Canceladas',
+}
