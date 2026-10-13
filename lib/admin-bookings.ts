@@ -87,13 +87,11 @@ export function urlDeReservasGlobales(filtros: FiltrosDeReservas): string {
 export type ReservaResumida = {
   dia: string
   grupo: GrupoDeEstado
-  precio: number
 }
 
 export type ResumenDeReservas = {
-  // Las que siguen en pie (todas menos las canceladas) y lo que suman
+  // Las que siguen en pie (todas menos las canceladas)
   reservas: number
-  monto: number
   // Canceladas sobre el total, para la tasa de cancelación
   canceladas: number
   total: number
@@ -103,7 +101,7 @@ export type ResumenDeReservas = {
 }
 
 export function resumirReservas(lista: ReservaResumida[]): ResumenDeReservas {
-  const resumen = { reservas: 0, monto: 0, canceladas: 0, total: 0, ausentes: 0, terminadas: 0 }
+  const resumen = { reservas: 0, canceladas: 0, total: 0, ausentes: 0, terminadas: 0 }
 
   for (const reserva of lista) {
     resumen.total++
@@ -114,7 +112,6 @@ export function resumirReservas(lista: ReservaResumida[]): ResumenDeReservas {
     }
 
     resumen.reservas++
-    resumen.monto += reserva.precio
 
     if (reserva.grupo === 'FINALIZADA') {
       resumen.terminadas++
@@ -154,29 +151,4 @@ export function tasa(parte: number, total: number): string {
   const porcentaje = Math.round((parte / total) * 100)
   if (parte > 0 && porcentaje === 0) return '<1%'
   return `${porcentaje}%`
-}
-
-// Cuántos turnos empiezan en cada hora, de la primera a la última hora con
-// turnos (las horas del medio sin turnos van en 0). Sin las canceladas.
-export function turnosPorHora(
-  turnos: { horaInicio: string; grupo: GrupoDeEstado }[],
-): { hora: number; total: number }[] {
-  const horas: number[] = []
-  for (const turno of turnos) {
-    if (turno.grupo === 'CANCELADA') continue
-    horas.push(Number(turno.horaInicio.slice(0, 2)))
-  }
-  if (horas.length === 0) return []
-
-  const primera = Math.min(...horas)
-  const ultima = Math.max(...horas)
-  const resultado: { hora: number; total: number }[] = []
-  for (let hora = primera; hora <= ultima; hora++) {
-    let total = 0
-    for (const horaDelTurno of horas) {
-      if (horaDelTurno === hora) total++
-    }
-    resultado.push({ hora, total })
-  }
-  return resultado
 }
