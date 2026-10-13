@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { diaCercano, diaEnPalabras, diaYNumero, proximoSabado, saludoSegunHora } from './fechas'
+import {
+  diaCercano,
+  diaEnPalabras,
+  diaYNumero,
+  haceCuanto,
+  proximoSabado,
+  saludoSegunHora,
+} from './fechas'
 
 describe('diaEnPalabras', () => {
   test('escribe el día de la semana, el número y el mes', () => {
@@ -59,5 +66,17 @@ describe('saludoSegunHora', () => {
   test('a la noche y de madrugada, buenas noches', () => {
     expect(saludoSegunHora('20:00')).toBe('Buenas noches')
     expect(saludoSegunHora('02:30')).toBe('Buenas noches')
+  })
+})
+
+describe('haceCuanto', () => {
+  test('el mismo día es hoy y el anterior, ayer', () => {
+    expect(haceCuanto('2026-10-13', '2026-10-13')).toBe('hoy')
+    expect(haceCuanto('2026-10-12', '2026-10-13')).toBe('ayer')
+  })
+
+  test('desde dos días cuenta los días, aunque cambie el mes', () => {
+    expect(haceCuanto('2026-10-11', '2026-10-13')).toBe('hace 2 días')
+    expect(haceCuanto('2026-09-28', '2026-10-03')).toBe('hace 5 días')
   })
 })
