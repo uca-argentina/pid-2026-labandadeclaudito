@@ -19,7 +19,7 @@ import { hashPassword } from '@/lib/passwords'
 import { precioDelTurno, precioProporcional } from '@/lib/availability'
 import { diaDeHoy, diaSemanaDeReserva, generateSlots } from '@/lib/time'
 import { Prisma } from '@/lib/generated/prisma/client'
-import type { Deporte, TipoSuperficie } from '@/lib/generated/prisma/client'
+import type { DecisionDisputa, Deporte, TipoSuperficie } from '@/lib/generated/prisma/client'
 
 // Reservas desde hace 3 semanas hasta dentro de 10 días
 const DIAS_DE_HISTORIAL = 21
@@ -39,6 +39,8 @@ function foto(id: string): string {
 }
 
 async function borrarTodo() {
+  await db.evidenciaDisputa.deleteMany()
+  await db.disputa.deleteMany()
   await db.pago.deleteMany()
   await db.reserva.deleteMany()
   await db.block.deleteMany()
@@ -420,6 +422,8 @@ function agregarReserva(
 
   turnosOcupados.add(`${cancha.id} ${fecha} ${turno.horaInicio}`)
   jugadoresOcupados.add(`${jugadorId} ${fecha} ${turno.horaInicio}`)
+
+  return reservaId
 }
 
 // ---------- Seed ----------
@@ -471,7 +475,7 @@ async function main() {
 
   // El admin de la demo y dos cuentas suspendidas para mostrar /admin/usuarios.
   // Las suspendidas no tienen complejos ni reservas.
-  await db.usuario.create({
+  const admin = await db.usuario.create({
     data: { nombre: 'Admin TocaYJuga', email: 'admin@tocayjuga.com', passwordHash, rol: 'ADMIN' },
   })
   await db.usuario.create({
@@ -552,11 +556,17 @@ async function main() {
   const palermo1 = buscarCancha('Distrito Fútbol Palermo', 'Cancha 1')
   const palermo3 = buscarCancha('Distrito Fútbol Palermo', 'Cancha 3')
   const padel1 = buscarCancha('Belgrano Racket Club', 'Pádel 1')
-  agregarReserva(palermo1, juan, -18, '20:00')
-  agregarReserva(buscarCancha('La Redonda Núñez', 'Cancha 1'), juan, -14, '21:00')
+  // Estos tres turnos terminan en disputa, más abajo
+  const turnoDeLaDisputaDelDuenio = agregarReserva(palermo1, juan, -18, '20:00')
+  const turnoDeLaDisputaDelJugador = agregarReserva(
+    buscarCancha('La Redonda Núñez', 'Cancha 1'),
+    juan,
+    -14,
+    '21:00',
+  )
   agregarReserva(buscarCancha('Almagro Fútbol 5', 'Techada'), juan, -9, '21:00', true)
   agregarReserva(palermo3, juan, -7, '20:00')
-  agregarReserva(padel1, juan, -4, '20:00')
+  const turnoDeLaDisputaAbierta = agregarReserva(padel1, juan, -4, '20:00')
   agregarReserva(palermo1, juan, 1, '21:00')
   agregarReserva(padel1, juan, 3, '20:00')
   agregarReserva(buscarCancha('Fútbol Norte Olivos', 'Cancha A'), juan, 6, '19:00')
@@ -592,6 +602,68 @@ async function main() {
     await db.pago.createMany({ data: pagos.slice(i, i + 1000) })
   }
 
+  // ----- Disputas -----
+  // En el relleno la asistencia es al azar, así que los tres turnos que van a
+  // disputa se marcan como no-show a mano. Resolución null = sigue abierta.
+  async function agregarDisputa(
+    reservaId: string,
+    diasDesdeHoy: number,
+    descripcion: string,
+    resolucion: { decision: DecisionDisputa; comentarioAdmin: string } | null,
+  ) {
+    const ganoElJugador = resolucion?.decision === 'A_FAVOR_JUGADOR'
+
+    await db.reserva.update({
+      where: { id: reservaId },
+      data: {
+        asistio: ganoElJugador,
+        asistenciaMarcadaEn: new Date(`${dia(diasDesdeHoy + 1)}T12:00:00.000Z`),
+      },
+    })
+
+    const datos: Prisma.DisputaUncheckedCreateInput = {
+      reservaId,
+      jugadorId: juan,
+      descripcion,
+      createdAt: new Date(`${dia(diasDesdeHoy + 2)}T19:00:00.000Z`),
+    }
+    if (resolucion) {
+      datos.estado = 'RESUELTA'
+      datos.decision = resolucion.decision
+      datos.comentarioAdmin = resolucion.comentarioAdmin
+      datos.adminId = admin.id
+      datos.resueltaEn = new Date(`${dia(diasDesdeHoy + 4)}T11:00:00.000Z`)
+    }
+    await db.disputa.create({ data: datos })
+  }
+
+  await agregarDisputa(
+    turnoDeLaDisputaAbierta,
+    -4,
+    'Llegamos 10 minutos antes y la cancha estaba ocupada por otro grupo. Esperamos media hora y nadie del complejo nos atendió, así que nos fuimos.',
+    null,
+  )
+  await agregarDisputa(
+    turnoDeLaDisputaDelJugador,
+    -14,
+    'Fuimos y jugamos el partido completo. Tengo las fotos del equipo en la cancha a la hora del turno.',
+    {
+      decision: 'A_FAVOR_JUGADOR',
+      comentarioAdmin:
+        'Las fotos tienen la fecha y la hora del turno y se ve la cancha del complejo. Se da de baja la falta.',
+    },
+  )
+  await agregarDisputa(
+    turnoDeLaDisputaDelDuenio,
+    -18,
+    'No pudimos ir porque se nos complicó a última hora, pero avisamos por teléfono el mismo día.',
+    {
+      decision: 'A_FAVOR_DUENIO',
+      comentarioAdmin:
+        'El propio reclamo dice que no fueron al turno. Avisar no reemplaza cancelar con 24 horas, así que la falta queda.',
+    },
+  )
+
   console.log(`
 Seed de demo listo (se borró todo lo que había antes).
 
@@ -601,6 +673,7 @@ Seed de demo listo (se borró todo lo que había antes).
   DUEÑO     dueno@tocayjuga.com     Palermo, Núñez y Almagro
   JUGADOR   jugador@tocayjuga.com   historial de partidos y 3 turnos próximos
   ADMIN     admin@tocayjuga.com     2 cuentas suspendidas en /admin/usuarios
+                                    1 disputa para resolver en /admin/disputas
 `)
 }
 

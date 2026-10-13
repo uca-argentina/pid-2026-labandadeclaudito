@@ -11,6 +11,19 @@ export const createDisputeSchema = z.object({
 
 export type CreateDisputeInput = z.infer<typeof createDisputeSchema>
 
+// La resuelve un admin. El comentario es obligatorio: es la explicación que
+// después leen el jugador y el dueño en su historial.
+export const resolveDisputeSchema = z.object({
+  decision: z.enum(['A_FAVOR_JUGADOR', 'A_FAVOR_DUENIO']),
+  comentarioAdmin: z
+    .string()
+    .trim()
+    .min(20, 'Explicá la decisión, con al menos 20 caracteres.')
+    .max(1000, 'Máximo 1000 caracteres.'),
+})
+
+export type ResolveDisputeInput = z.infer<typeof resolveDisputeSchema>
+
 export const MAX_EVIDENCIAS_POR_DISPUTA = 5
 export const MAX_EVIDENCIA_BYTES = 4 * 1024 * 1024
 
