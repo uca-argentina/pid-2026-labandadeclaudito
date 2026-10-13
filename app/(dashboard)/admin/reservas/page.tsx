@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { CalendarDays, CircleDot, LandPlot, User, Wallet } from 'lucide-react'
+import { CalendarDays, CircleDot, LandPlot, MapPin, User, Wallet } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { pendientesVencidas } from '@/lib/bookings'
@@ -8,7 +8,8 @@ import { estadoDeReserva } from '@/lib/estado-reserva'
 import { montoDelHistorial } from '@/lib/historial'
 import { homePorRol } from '@/lib/home-por-rol'
 import { iniciales } from '@/lib/iniciales'
-import { grupoDeEstadoLabels } from '@/lib/labels'
+import { deporteLabels, grupoDeEstadoLabels } from '@/lib/labels'
+import type { Deporte } from '@/lib/generated/prisma/client'
 import { calcularPagina } from '@/lib/paginacion'
 import { diaDeHoy, diaDeReserva, momentoActual, turnoYaPaso } from '@/lib/time'
 import {
@@ -23,29 +24,24 @@ import {
 import { adminBookingsFiltersSchema } from '@/lib/validations/admin-bookings'
 import { AdminBookingsFilters } from '@/components/admin-bookings-filters'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
-import { CeldaCancha, CeldaMonto } from '@/components/celdas-reserva'
+import { CeldaMonto } from '@/components/celdas-reserva'
+import { DibujoDeCancha } from '@/components/dibujo-de-cancha'
 import { EstadoVacio } from '@/components/estado-vacio'
 import { FechaDelTurno } from '@/components/fecha-del-turno'
 import { Paginacion } from '@/components/paginacion'
 import { TituloConIcono } from '@/components/titulo-con-icono'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 const FILAS_POR_PAGINA = 20
 
 // Pestañas de estado, con el mismo estilo que las de Reservas y Usuarios:
 // la elegida va en verde oscuro y su contador en amarillo. Con px-3 (no
-// px-4) para que las 7 entren en una fila en pantallas anchas.
+// px-4) para que las 7 entren en una fila en pantallas anchas. shrink-0:
+// en celular la fila se desliza de costado en vez de partirse.
 function clasePestania(elegida: boolean) {
   return elegida
-    ? 'bg-sidebar text-sidebar-foreground inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold'
-    : 'text-foreground/80 hover:bg-muted inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-medium'
+    ? 'bg-sidebar text-sidebar-foreground inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-semibold'
+    : 'text-foreground/80 hover:bg-muted inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-medium'
 }
 
 function claseContador(elegida: boolean) {
@@ -95,6 +91,8 @@ export default async function AdminReservasPage({ searchParams }: PageProps<'/ad
   const filtros: FiltrosDeReservas = {
     estado: filtrosDeLaUrl.estado,
     complejoId,
+    deporte: filtrosDeLaUrl.deporte,
+    jugador: filtrosDeLaUrl.jugador,
     desde: rango.desde,
     hasta: rango.hasta,
   }
@@ -102,11 +100,20 @@ export default async function AdminReservasPage({ searchParams }: PageProps<'/ad
   // 1) Todas las reservas del período, solo con lo que hace falta para saber
   // su estado. Los estados En curso, Finalizada y No se presentó no están en
   // la base (salen del reloj y de la asistencia): por eso se calculan acá y no
-  // se pueden filtrar en el where.
+  // se pueden filtrar en el where. El resto de los filtros (complejo, deporte,
+  // jugador) sí los resuelve la base, así se traen menos reservas.
   const reservasDelPeriodo = await db.reserva.findMany({
     where: {
       fecha: { gte: new Date(rango.desde), lte: new Date(rango.hasta) },
-      cancha: { complejoId },
+      cancha: { complejoId, deporte: filtros.deporte },
+      jugador: filtros.jugador
+        ? {
+            OR: [
+              { nombre: { contains: filtros.jugador, mode: 'insensitive' } },
+              { email: { contains: filtros.jugador, mode: 'insensitive' } },
+            ],
+          }
+        : undefined,
       NOT: pendientesVencidas(),
     },
     select: { id: true, estado: true, asistio: true, fecha: true, horaInicio: true, horaFin: true },
@@ -152,62 +159,68 @@ export default async function AdminReservasPage({ searchParams }: PageProps<'/ad
         Todas las reservas de la plataforma en el período elegido.
       </p>
 
-      <AdminBookingsFilters
-        complejos={complejos}
-        complejoId={complejoId}
-        desde={rango.desde}
-        hasta={rango.hasta}
-        estado={filtros.estado}
-      />
-
-      {/* Una pestaña por estado: cada una es un link que filtra y muestra cuántas hay */}
-      <div className="bg-card shadow-soft mt-5 inline-flex flex-wrap gap-1 rounded-2xl p-1">
-        <Link
-          href={urlDeReservasGlobales({ ...filtros, estado: undefined })}
-          className={clasePestania(filtros.estado === undefined)}
-        >
-          Todas
-          <span className={claseContador(filtros.estado === undefined)}>
-            {reservasDelPeriodo.length}
-          </span>
-        </Link>
-        {gruposDeEstado.map((grupo) => (
-          <Link
-            key={grupo}
-            href={urlDeReservasGlobales({ ...filtros, estado: grupo })}
-            className={clasePestania(filtros.estado === grupo)}
-          >
-            {grupoDeEstadoLabels[grupo]}
-            <span className={claseContador(filtros.estado === grupo)}>{conteo[grupo]}</span>
-          </Link>
-        ))}
-      </div>
+      <AdminBookingsFilters complejos={complejos} filtros={filtros} />
 
       {reservas.length === 0 ? (
-        <div className="mt-5">
-          <EstadoVacio
-            titulo="No hay reservas con estos filtros"
-            texto="Probá con otro período, otro complejo u otro estado."
-          />
-        </div>
+        <>
+          <div className="bg-card shadow-soft mt-5 flex flex-wrap gap-1 rounded-2xl p-1">
+            <PestaniasDeEstado
+              filtros={filtros}
+              total={reservasDelPeriodo.length}
+              conteo={conteo}
+            />
+          </div>
+          <div className="mt-5">
+            <EstadoVacio
+              titulo="No hay reservas con estos filtros"
+              texto="Probá con otro período, otro complejo, otro deporte u otro estado."
+            />
+          </div>
+        </>
       ) : (
-        <div className="bg-card shadow-card mt-5 overflow-hidden rounded-2xl">
-          <Table>
-            <TableHeader>
-              <TableRow>
+        // @container: las columnas aparecen según el ancho de la tarjeta, no
+        // de la pantalla (con el sidebar abierto la tarjeta es más angosta).
+        // overflow-clip (no hidden) y sin el <Table> de shadcn (que envuelve
+        // la tabla en un div con overflow-x-auto): cualquier scroll en el
+        // medio hace que el encabezado sticky deje de quedar fijo.
+        <div className="bg-card shadow-card @container mt-5 overflow-clip rounded-2xl">
+          <table className="w-full caption-bottom text-sm">
+            {/* Encabezado fijo al bajar: las pestañas de estado y los títulos
+                de las columnas, así nunca se pierde qué es cada dato. Las
+                líneas van como sombra (inset) y no como border: con la tabla
+                en border-collapse, los bordes no acompañan al sticky */}
+            <TableHeader className="bg-card sticky top-0 z-10">
+              <tr>
+                <th
+                  colSpan={5}
+                  className="p-2 text-left font-normal shadow-[inset_0_-1px_0_var(--color-border)]"
+                >
+                  {/* En celular se desliza de costado; desde @xl se parte en
+                      dos filas si no entra. [contain:inline-size]: que no
+                      ensanche la tabla con su ancho */}
+                  <div className="flex gap-1 overflow-x-auto [contain:inline-size] [scrollbar-width:none] @xl:flex-wrap">
+                    <PestaniasDeEstado
+                      filtros={filtros}
+                      total={reservasDelPeriodo.length}
+                      conteo={conteo}
+                    />
+                  </div>
+                </th>
+              </tr>
+              <TableRow className="border-0 hover:bg-transparent [&>th]:shadow-[inset_0_-1px_0_var(--color-border)]">
                 <TableHead className="pl-4">
                   <TituloConIcono icono={CalendarDays}>Turno</TituloConIcono>
                 </TableHead>
-                <TableHead className="hidden sm:table-cell">
+                <TableHead className="hidden @xl:table-cell">
                   <TituloConIcono icono={LandPlot}>Cancha</TituloConIcono>
                 </TableHead>
-                <TableHead className="hidden lg:table-cell">
+                <TableHead className="hidden @3xl:table-cell">
                   <TituloConIcono icono={User}>Jugador</TituloConIcono>
                 </TableHead>
-                <TableHead>
+                <TableHead className="pr-4 @5xl:pr-2">
                   <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
                 </TableHead>
-                <TableHead className="hidden pr-4 xl:table-cell">
+                <TableHead className="hidden pr-4 @5xl:table-cell">
                   <TituloConIcono icono={Wallet}>Monto</TituloConIcono>
                 </TableHead>
               </TableRow>
@@ -217,7 +230,7 @@ export default async function AdminReservasPage({ searchParams }: PageProps<'/ad
                 <FilaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
               ))}
             </TableBody>
-          </Table>
+          </table>
           <Paginacion
             paginaActual={paginaActual}
             totalPaginas={totalPaginas}
@@ -230,6 +243,51 @@ export default async function AdminReservasPage({ searchParams }: PageProps<'/ad
         </div>
       )}
     </main>
+  )
+}
+
+// Una pestaña por estado: cada una es un link que filtra y muestra cuántas
+// hay. Cambiar de estado vuelve a la página 1 (el link no lleva pagina).
+function PestaniasDeEstado({
+  filtros,
+  total,
+  conteo,
+}: {
+  filtros: FiltrosDeReservas
+  total: number
+  conteo: Record<GrupoDeEstado, number>
+}) {
+  return (
+    <>
+      <Link
+        href={urlDeReservasGlobales({ ...filtros, estado: undefined })}
+        className={clasePestania(filtros.estado === undefined)}
+      >
+        Todas
+        <span className={claseContador(filtros.estado === undefined)}>{total}</span>
+      </Link>
+      {gruposDeEstado.map((grupo) => (
+        <Link
+          key={grupo}
+          href={urlDeReservasGlobales({ ...filtros, estado: grupo })}
+          className={clasePestania(filtros.estado === grupo)}
+        >
+          {grupoDeEstadoLabels[grupo]}
+          <span className={claseContador(filtros.estado === grupo)}>{conteo[grupo]}</span>
+        </Link>
+      ))}
+    </>
+  )
+}
+
+// La cancha del deporte en chiquito: el centro del dibujo (línea del medio,
+// círculo o red). Con tantas filas, un cuadradito se lee mejor que la cancha
+// entera en diagonal, y el color ya dice el deporte.
+function MiniCancha({ deporte, className }: { deporte: Deporte; className: string }) {
+  return (
+    <div aria-hidden className={`shrink-0 overflow-hidden ring-1 ring-black/10 ${className}`}>
+      <DibujoDeCancha deporte={deporte} />
+    </div>
   )
 }
 
@@ -257,19 +315,33 @@ function FilaReserva({
     <TableRow>
       <TableCell className="pl-4">
         <FechaDelTurno dia={dia} horaInicio={reserva.horaInicio} horaFin={reserva.horaFin} />
-        {/* En celular no entra la columna Cancha: se muestra acá abajo */}
-        <p className="text-muted-foreground mt-1.5 text-xs whitespace-normal sm:hidden">
+        {/* Cuando la tarjeta es angosta no entra la columna Cancha: va acá abajo */}
+        <div className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-xs whitespace-normal @xl:hidden">
+          <MiniCancha deporte={reserva.cancha.deporte} className="size-4 rounded" />
           {reserva.cancha.nombre} · {reserva.cancha.complejo.nombre}
-        </p>
+        </div>
       </TableCell>
-      <TableCell className="hidden sm:table-cell">
-        <CeldaCancha
-          nombre={reserva.cancha.nombre}
-          deporte={reserva.cancha.deporte}
-          complejo={reserva.cancha.complejo.nombre}
-        />
+      <TableCell className="hidden @xl:table-cell">
+        <div className="flex items-center gap-3">
+          <MiniCancha deporte={reserva.cancha.deporte} className="size-10 rounded-xl" />
+          <div>
+            {/* El deporte va en texto porque el dibujo de fútbol es el mismo
+                para 5, 7 y 11 */}
+            <p className="font-medium">
+              {reserva.cancha.nombre}
+              <span className="text-muted-foreground font-normal">
+                {' '}
+                · {deporteLabels[reserva.cancha.deporte]}
+              </span>
+            </p>
+            <p className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
+              <MapPin className="size-3 shrink-0" />
+              {reserva.cancha.complejo.nombre}
+            </p>
+          </div>
+        </div>
       </TableCell>
-      <TableCell className="hidden lg:table-cell">
+      <TableCell className="hidden @3xl:table-cell">
         <div className="flex items-center gap-2.5">
           <div className="bg-primary/15 text-primary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
             {iniciales(reserva.jugador.nombre)}
@@ -282,7 +354,7 @@ function FilaReserva({
       </TableCell>
       {/* Muestra el estado real: una "Asistió" se cuenta en Finalizadas, pero
           acá se ve como Asistió */}
-      <TableCell>
+      <TableCell className="pr-4 @5xl:pr-2">
         <BookingStatusBadge
           estado={reserva.estado}
           asistio={reserva.asistio}
@@ -292,7 +364,7 @@ function FilaReserva({
           ahoraInicial={ahora}
         />
       </TableCell>
-      <TableCell className="hidden pr-4 xl:table-cell">
+      <TableCell className="hidden pr-4 @5xl:table-cell">
         <CeldaMonto monto={monto} />
       </TableCell>
     </TableRow>
