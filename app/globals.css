@@ -161,6 +161,32 @@
     }
   }
 
+  /* Campana del panel del admin: se sacude y descansa, para avisar que hay
+     disputas esperando sin molestar todo el tiempo */
+  --animate-campana: campana 2.4s ease-in-out infinite;
+  @keyframes campana {
+    0%,
+    40%,
+    100% {
+      transform: rotate(0deg);
+    }
+    5% {
+      transform: rotate(16deg);
+    }
+    12% {
+      transform: rotate(-14deg);
+    }
+    19% {
+      transform: rotate(10deg);
+    }
+    26% {
+      transform: rotate(-6deg);
+    }
+    33% {
+      transform: rotate(3deg);
+    }
+  }
+
   /* Pelota de básquet: pique */
   --animate-pique: pique 1.2s ease-in infinite alternate;
   @keyframes pique {
@@ -188,14 +214,6 @@
   --color-deporte-tenis: var(--deporte-tenis);
   --color-deporte-padel: var(--deporte-padel);
   --color-deporte-basquet: var(--deporte-basquet);
-  /* Un color por estado de reserva para la barra del panel del admin. En el
-     orden en que van en la barra, validados igual que los de deporte */
-  --color-estado-no-show: var(--estado-no-show);
-  --color-estado-finalizada: var(--estado-finalizada);
-  --color-estado-en-curso: var(--estado-en-curso);
-  --color-estado-confirmada: var(--estado-confirmada);
-  --color-estado-pendiente: var(--estado-pendiente);
-  --color-estado-cancelada: var(--estado-cancelada);
 }
 
 :root {
@@ -206,12 +224,6 @@
   --deporte-tenis: #eb6834;
   --deporte-padel: #2a78d6;
   --deporte-basquet: #eda100;
-  --estado-no-show: oklch(0.62 0.14 42);
-  --estado-finalizada: oklch(0.52 0.12 250);
-  --estado-en-curso: oklch(0.47 0.15 150);
-  --estado-confirmada: oklch(0.7 0.13 165);
-  --estado-pendiente: oklch(0.76 0.15 80);
-  --estado-cancelada: oklch(0.54 0.21 22);
 }
 
 .dark {
@@ -222,12 +234,6 @@
   --deporte-tenis: #d95926;
   --deporte-padel: #3987e5;
   --deporte-basquet: #c98500;
-  --estado-no-show: oklch(0.64 0.13 42);
-  --estado-finalizada: oklch(0.6 0.12 250);
-  --estado-en-curso: oklch(0.5 0.13 150);
-  --estado-confirmada: oklch(0.66 0.12 180);
-  --estado-pendiente: oklch(0.66 0.14 80);
-  --estado-cancelada: oklch(0.58 0.2 22);
 }
 
 .tema-todos {
