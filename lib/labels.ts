@@ -98,12 +98,12 @@ export const mesesCortos = [
   'dic',
 ]
 
-// En plural: son los títulos de las tarjetas de conteo de /admin/reservas
+// En plural: son los títulos de las pestañas de conteo de /admin/reservas
 export const grupoDeEstadoLabels: Record<GrupoDeEstado, string> = {
-  PENDIENTE: 'Pendientes de seña',
+  PENDIENTE: 'Pendientes',
   CONFIRMADA: 'Confirmadas',
   EN_CURSO: 'En curso',
   FINALIZADA: 'Finalizadas',
-  NO_SHOW: 'No se presentaron',
+  NO_SHOW: 'Ausentes',
   CANCELADA: 'Canceladas',
 }

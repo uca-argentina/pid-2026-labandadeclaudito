@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { CalendarClock, CalendarDays, CircleDot, LandPlot, User, Wallet } from 'lucide-react'
+import { CalendarDays, CircleDot, LandPlot, User, Wallet } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { pendientesVencidas } from '@/lib/bookings'
 import { estadoDeReserva } from '@/lib/estado-reserva'
 import { montoDelHistorial } from '@/lib/historial'
 import { homePorRol } from '@/lib/home-por-rol'
+import { iniciales } from '@/lib/iniciales'
 import { grupoDeEstadoLabels } from '@/lib/labels'
 import { calcularPagina } from '@/lib/paginacion'
 import { diaDeHoy, diaDeReserva, momentoActual, turnoYaPaso } from '@/lib/time'
@@ -23,6 +24,7 @@ import { adminBookingsFiltersSchema } from '@/lib/validations/admin-bookings'
 import { AdminBookingsFilters } from '@/components/admin-bookings-filters'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { CeldaCancha, CeldaMonto } from '@/components/celdas-reserva'
+import { EstadoVacio } from '@/components/estado-vacio'
 import { FechaDelTurno } from '@/components/fecha-del-turno'
 import { Paginacion } from '@/components/paginacion'
 import { TituloConIcono } from '@/components/titulo-con-icono'
@@ -36,6 +38,21 @@ import {
 } from '@/components/ui/table'
 
 const FILAS_POR_PAGINA = 20
+
+// Pestañas de estado, con el mismo estilo que las de Reservas y Usuarios:
+// la elegida va en verde oscuro y su contador en amarillo. Con px-3 (no
+// px-4) para que las 7 entren en una fila en pantallas anchas.
+function clasePestania(elegida: boolean) {
+  return elegida
+    ? 'bg-sidebar text-sidebar-foreground inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold'
+    : 'text-foreground/80 hover:bg-muted inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-medium'
+}
+
+function claseContador(elegida: boolean) {
+  return elegida
+    ? 'bg-highlight text-highlight-foreground inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full px-1.5 text-xs font-bold'
+    : 'bg-muted inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full px-1.5 text-xs font-semibold'
+}
 
 // Las reservas de la página, con todo lo que muestra la tabla. Del jugador
 // solo nombre y email: nunca traer el usuario entero (tiene el passwordHash).
@@ -129,13 +146,11 @@ export default async function AdminReservasPage({ searchParams }: PageProps<'/ad
   const reservas = await getReservasPorId(idsDeLaPagina)
 
   return (
-    <main className="max-w-6xl px-6 pt-6 pb-12 md:pt-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-semibold">Reservas</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Todas las reservas de la plataforma en el período elegido.
-        </p>
-      </div>
+    <main>
+      <h1 className="font-heading text-4xl font-bold tracking-tight">Reservas</h1>
+      <p className="text-muted-foreground mt-1.5 max-w-2xl">
+        Todas las reservas de la plataforma en el período elegido.
+      </p>
 
       <AdminBookingsFilters
         complejos={complejos}
@@ -145,35 +160,38 @@ export default async function AdminReservasPage({ searchParams }: PageProps<'/ad
         estado={filtros.estado}
       />
 
-      {/* Tarjetas de conteo: cada una es un link que filtra por ese estado */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-        <TarjetaDeConteo
-          titulo="Todas"
-          cantidad={reservasDelPeriodo.length}
+      {/* Una pestaña por estado: cada una es un link que filtra y muestra cuántas hay */}
+      <div className="bg-card shadow-soft mt-5 inline-flex flex-wrap gap-1 rounded-2xl p-1">
+        <Link
           href={urlDeReservasGlobales({ ...filtros, estado: undefined })}
-          elegida={filtros.estado === undefined}
-        />
+          className={clasePestania(filtros.estado === undefined)}
+        >
+          Todas
+          <span className={claseContador(filtros.estado === undefined)}>
+            {reservasDelPeriodo.length}
+          </span>
+        </Link>
         {gruposDeEstado.map((grupo) => (
-          <TarjetaDeConteo
+          <Link
             key={grupo}
-            titulo={grupoDeEstadoLabels[grupo]}
-            cantidad={conteo[grupo]}
             href={urlDeReservasGlobales({ ...filtros, estado: grupo })}
-            elegida={filtros.estado === grupo}
-          />
+            className={clasePestania(filtros.estado === grupo)}
+          >
+            {grupoDeEstadoLabels[grupo]}
+            <span className={claseContador(filtros.estado === grupo)}>{conteo[grupo]}</span>
+          </Link>
         ))}
       </div>
 
       {reservas.length === 0 ? (
-        <div className="border-border bg-card rounded-2xl border p-8 text-center">
-          <CalendarClock className="text-muted-foreground mx-auto mb-3 size-8" />
-          <p className="font-medium">No hay reservas con estos filtros</p>
-          <p className="text-muted-foreground mt-1.5 text-sm">
-            Probá con otro período, otro complejo u otro estado.
-          </p>
+        <div className="mt-5">
+          <EstadoVacio
+            titulo="No hay reservas con estos filtros"
+            texto="Probá con otro período, otro complejo u otro estado."
+          />
         </div>
       ) : (
-        <div className="border-border bg-card overflow-hidden rounded-2xl border shadow-sm">
+        <div className="bg-card shadow-card mt-5 overflow-hidden rounded-2xl">
           <Table>
             <TableHeader>
               <TableRow>
@@ -215,32 +233,6 @@ export default async function AdminReservasPage({ searchParams }: PageProps<'/ad
   )
 }
 
-function TarjetaDeConteo({
-  titulo,
-  cantidad,
-  href,
-  elegida,
-}: {
-  titulo: string
-  cantidad: number
-  href: string
-  elegida: boolean
-}) {
-  return (
-    <Link
-      href={href}
-      className={
-        elegida
-          ? 'border-primary bg-primary/10 rounded-2xl border p-4'
-          : 'border-border bg-card hover:bg-muted rounded-2xl border p-4'
-      }
-    >
-      <p className="text-muted-foreground text-sm">{titulo}</p>
-      <p className="mt-1 text-2xl font-semibold">{cantidad}</p>
-    </Link>
-  )
-}
-
 function FilaReserva({
   reserva,
   ahora,
@@ -266,7 +258,7 @@ function FilaReserva({
       <TableCell className="pl-4">
         <FechaDelTurno dia={dia} horaInicio={reserva.horaInicio} horaFin={reserva.horaFin} />
         {/* En celular no entra la columna Cancha: se muestra acá abajo */}
-        <p className="text-muted-foreground mt-1.5 text-xs sm:hidden">
+        <p className="text-muted-foreground mt-1.5 text-xs whitespace-normal sm:hidden">
           {reserva.cancha.nombre} · {reserva.cancha.complejo.nombre}
         </p>
       </TableCell>
@@ -278,8 +270,15 @@ function FilaReserva({
         />
       </TableCell>
       <TableCell className="hidden lg:table-cell">
-        <p className="font-medium">{reserva.jugador.nombre}</p>
-        <p className="text-muted-foreground text-xs">{reserva.jugador.email}</p>
+        <div className="flex items-center gap-2.5">
+          <div className="bg-primary/15 text-primary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
+            {iniciales(reserva.jugador.nombre)}
+          </div>
+          <div>
+            <p className="font-medium">{reserva.jugador.nombre}</p>
+            <p className="text-muted-foreground text-xs">{reserva.jugador.email}</p>
+          </div>
+        </div>
       </TableCell>
       {/* Muestra el estado real: una "Asistió" se cuenta en Finalizadas, pero
           acá se ve como Asistió */}
