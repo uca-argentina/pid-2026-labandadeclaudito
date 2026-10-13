@@ -1,3 +1,4 @@
+import type { Deporte } from '@/lib/generated/prisma/client'
 import type { EstadoVisible } from '@/lib/estado-reserva'
 import { sumarDias } from '@/lib/time'
 
@@ -59,6 +60,9 @@ export function rangoDeFechas(
 export type FiltrosDeReservas = {
   estado?: GrupoDeEstado
   complejoId?: string
+  deporte?: Deporte
+  // Texto a buscar en el nombre o el email del jugador
+  jugador?: string
   desde: string
   hasta: string
   pagina?: number
@@ -69,6 +73,8 @@ export function urlDeReservasGlobales(filtros: FiltrosDeReservas): string {
   const params = new URLSearchParams()
   if (filtros.estado !== undefined) params.set('estado', filtros.estado)
   if (filtros.complejoId !== undefined) params.set('complejoId', filtros.complejoId)
+  if (filtros.deporte !== undefined) params.set('deporte', filtros.deporte)
+  if (filtros.jugador !== undefined) params.set('jugador', filtros.jugador)
   params.set('desde', filtros.desde)
   params.set('hasta', filtros.hasta)
   if (filtros.pagina !== undefined && filtros.pagina > 1) {

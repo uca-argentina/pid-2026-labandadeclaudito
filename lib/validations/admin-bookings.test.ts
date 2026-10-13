@@ -30,6 +30,18 @@ describe('adminBookingsFiltersSchema', () => {
     expect(adminBookingsFiltersSchema.parse({ complejoId: '' }).complejoId).toBeUndefined()
   })
 
+  test('deporte: acepta los 6 y "todos" (vacío) o uno inventado se ignoran', () => {
+    expect(adminBookingsFiltersSchema.parse({ deporte: 'PADEL' }).deporte).toBe('PADEL')
+    expect(adminBookingsFiltersSchema.parse({ deporte: '' }).deporte).toBeUndefined()
+    expect(adminBookingsFiltersSchema.parse({ deporte: 'RUGBY' }).deporte).toBeUndefined()
+  })
+
+  test('jugador: se recortan los espacios y vacío = sin buscar', () => {
+    expect(adminBookingsFiltersSchema.parse({ jugador: '  ana  ' }).jugador).toBe('ana')
+    expect(adminBookingsFiltersSchema.parse({ jugador: '   ' }).jugador).toBeUndefined()
+    expect(adminBookingsFiltersSchema.parse({ jugador: 'a'.repeat(101) }).jugador).toBeUndefined()
+  })
+
   test('fechas mal escritas o que no existen se ignoran', () => {
     const filtros = adminBookingsFiltersSchema.parse({ desde: 'ayer', hasta: '2026-02-30' })
     expect(filtros.desde).toBeUndefined()

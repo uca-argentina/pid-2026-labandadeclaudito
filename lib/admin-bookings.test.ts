@@ -94,12 +94,14 @@ describe('urlDeReservasGlobales', () => {
       urlDeReservasGlobales({
         estado: 'NO_SHOW',
         complejoId: 'abc',
+        deporte: 'PADEL',
+        jugador: 'ana',
         desde: '2026-10-01',
         hasta: '2026-10-31',
         pagina: 3,
       }),
     ).toBe(
-      '/admin/reservas?estado=NO_SHOW&complejoId=abc&desde=2026-10-01&hasta=2026-10-31&pagina=3',
+      '/admin/reservas?estado=NO_SHOW&complejoId=abc&deporte=PADEL&jugador=ana&desde=2026-10-01&hasta=2026-10-31&pagina=3',
     )
   })
 
