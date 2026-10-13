@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { EstadoVacio } from '@/components/estado-vacio'
 import { PriceRowActions } from '@/components/price-row-actions'
 
 const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
@@ -39,19 +40,23 @@ export default async function ListadoPreciosPage({
   })
 
   return (
-    <main className="w-full max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+    <main>
       <Link
         href={`/dueno/complejos/${id}/canchas`}
-        className="text-muted-foreground hover:text-foreground mb-2 inline-flex h-8 items-center gap-1.5 text-sm font-medium"
+        className="text-muted-foreground hover:text-foreground mb-1 inline-flex h-11 items-center gap-2 text-sm font-medium"
       >
-        <ArrowLeft className="size-3.5" />
+        <ArrowLeft className="size-4" />
         Volver a canchas
       </Link>
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <p className="text-muted-foreground text-sm">{complejo.nombre}</p>
-          <h1 className="text-3xl font-semibold">Precios especiales de {cancha.nombre}</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="text-muted-foreground text-sm font-medium">
+            {complejo.nombre} · {cancha.nombre}
+          </p>
+          <h1 className="font-heading mt-1 text-4xl font-bold tracking-tight">
+            Precios especiales
+          </h1>
+          <p className="text-muted-foreground mt-1.5">
             Precio base: {formatPrecio(cancha.precioBase.toString())}. Acá podés poner precios
             distintos por día u horario.
           </p>
@@ -63,23 +68,23 @@ export default async function ListadoPreciosPage({
       </div>
 
       {preciosEspeciales.length === 0 ? (
-        <div className="border-border mt-8 flex flex-col items-center gap-3 rounded-2xl border border-dashed p-14 text-center">
-          <h3 className="text-lg font-semibold">Todavía no cargaste ningún precio especial</h3>
-          <p className="text-muted-foreground max-w-md text-sm">
-            Mientras tanto se usa el precio base en todos los turnos. Cargá uno para cobrar
-            distinto, por ejemplo, los fines de semana o en horario pico.
-          </p>
-          <Button
-            render={<Link href={`/dueno/complejos/${id}/canchas/${courtId}/precios/nuevo`} />}
+        <div className="mt-7">
+          <EstadoVacio
+            titulo="Todavía no cargaste ningún precio especial"
+            texto="Mientras tanto se usa el precio base en todos los turnos. Cargá uno para cobrar distinto, por ejemplo, los fines de semana o en horario pico."
           >
-            <Plus className="size-4" />
-            Cargar precio especial
-          </Button>
+            <Button
+              render={<Link href={`/dueno/complejos/${id}/canchas/${courtId}/precios/nuevo`} />}
+            >
+              <Plus className="size-4" />
+              Cargar precio especial
+            </Button>
+          </EstadoVacio>
         </div>
       ) : (
         <>
           {/* Mobile y tablet: una tarjeta por precio, porque la tabla no entra */}
-          <div className="border-border bg-card divide-border mt-8 divide-y rounded-2xl border lg:hidden">
+          <div className="bg-card shadow-card divide-border mt-7 divide-y rounded-2xl lg:hidden">
             {preciosEspeciales.map((precioEspecial) => (
               <div key={precioEspecial.id} className="flex items-center justify-between gap-3 p-4">
                 <div>
@@ -93,7 +98,7 @@ export default async function ListadoPreciosPage({
                       ? `${precioEspecial.horaInicio} – ${precioEspecial.horaFin}`
                       : 'Todo el día'}
                   </p>
-                  <p className="mt-1 font-semibold">
+                  <p className="font-heading text-primary mt-1 font-bold">
                     {formatPrecio(precioEspecial.precio.toString())}
                   </p>
                 </div>
@@ -103,7 +108,7 @@ export default async function ListadoPreciosPage({
           </div>
 
           {/* Desktop: tabla */}
-          <div className="border-border bg-card mt-8 hidden overflow-hidden rounded-2xl border lg:block">
+          <div className="bg-card shadow-card mt-7 hidden overflow-hidden rounded-2xl lg:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -126,7 +131,7 @@ export default async function ListadoPreciosPage({
                         ? `${precioEspecial.horaInicio} – ${precioEspecial.horaFin}`
                         : 'Todo el día'}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-heading text-primary text-base font-bold">
                       {formatPrecio(precioEspecial.precio.toString())}
                     </TableCell>
                     <TableCell className="text-right">

@@ -6,10 +6,14 @@ describe('clasesGrillaAdaptable', () => {
     expect(clasesGrillaAdaptable(1)).toBe('max-w-xs grid-cols-1')
   })
 
-  test('con 4 resultados, llega al ancho máximo de 4 columnas', () => {
+  test('con 4 resultados, sin tope de ancho y hasta 4 columnas según el contenedor', () => {
     expect(clasesGrillaAdaptable(4)).toBe(
-      'max-w-5xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+      'grid-cols-1 @lg:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4',
     )
+  })
+
+  test('las columnas dependen del contenedor, no de la pantalla', () => {
+    expect(clasesGrillaAdaptable(4)).not.toMatch(/(^| )(sm|lg|xl):/)
   })
 
   test('con más de 4 resultados, se queda en 4 columnas (no sigue creciendo)', () => {

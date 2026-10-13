@@ -98,45 +98,47 @@ export async function getAvailableSlots(
   porcentajeSena: number
   minAdvanceMinutes: number
 } | null> {
-  const cancha = await db.cancha.findFirst({
-    where: { id: canchaId, activo: true, complejo: { activo: true, duenio: { activo: true } } },
-    include: {
-      complejo: { select: { porcentajeSenaDefault: true, minAdvanceMinutesDefault: true } },
-      preciosEspeciales: { where: { activo: true } },
-    },
-  })
+  // Las cuatro consultas no dependen entre sí, así que se hacen a la vez: una
+  // sola espera a la base en lugar de cuatro seguidas. Esta grilla se pide al
+  // abrir el sheet y cada pocos segundos mientras está abierto.
+  const [cancha, reservas, bloqueosDelDia, reservasDelJugador] = await Promise.all([
+    db.cancha.findFirst({
+      where: { id: canchaId, activo: true, complejo: { activo: true, duenio: { activo: true } } },
+      include: {
+        complejo: { select: { porcentajeSenaDefault: true, minAdvanceMinutesDefault: true } },
+        preciosEspeciales: { where: { activo: true } },
+      },
+    }),
+    db.reserva.findMany({
+      where: {
+        canchaId,
+        fecha,
+        estado: { not: 'CANCELADA' },
+        NOT: pendientesVencidas(),
+      },
+      select: { horaInicio: true },
+    }),
+    getBlocksOfDay(canchaId, fecha),
+    // Si mira un jugador, también se marcan ocupados los turnos que se cruzan
+    // con otra reserva suya (en cualquier cancha): no puede estar en dos
+    // lados a la vez. POST /api/bookings hace el mismo chequeo.
+    jugadorId
+      ? db.reserva.findMany({
+          where: { jugadorId, fecha, estado: { not: 'CANCELADA' }, NOT: pendientesVencidas() },
+          select: { horaInicio: true, horaFin: true },
+        })
+      : [],
+  ])
   if (!cancha) {
     return null
   }
 
   const turnos = generateSlots(cancha.horaApertura, cancha.horaCierre, cancha.duracionTurnoMin)
-
-  const reservas = await db.reserva.findMany({
-    where: {
-      canchaId,
-      fecha,
-      estado: { not: 'CANCELADA' },
-      NOT: pendientesVencidas(),
-    },
-    select: { horaInicio: true },
-  })
   const horasOcupadas = new Set(reservas.map((r) => r.horaInicio))
-  const bloqueosDelDia = await getBlocksOfDay(canchaId, fecha)
 
   const dia = diaDeReserva(fecha)
   const minAdvanceMinutes = cancha.minAdvanceMinutes ?? cancha.complejo.minAdvanceMinutesDefault
   const diaSemana = diaSemanaDeReserva(fecha)
-
-  // Si mira un jugador, también se marcan ocupados los turnos que se cruzan
-  // con otra reserva suya (en cualquier cancha): no puede estar en dos
-  // lados a la vez. POST /api/bookings hace el mismo chequeo.
-  let reservasDelJugador: { horaInicio: string; horaFin: string }[] = []
-  if (jugadorId) {
-    reservasDelJugador = await db.reserva.findMany({
-      where: { jugadorId, fecha, estado: { not: 'CANCELADA' }, NOT: pendientesVencidas() },
-      select: { horaInicio: true, horaFin: true },
-    })
-  }
 
   const slots = turnos.map(({ horaInicio, horaFin }) => {
     const seCruzaConReservaDelJugador = reservasDelJugador.some((reserva) =>

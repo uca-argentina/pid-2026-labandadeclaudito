@@ -6,13 +6,18 @@ import { precioDelTurno, precioProporcional } from '@/lib/availability'
 import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
 import { pendientesVencidas } from '@/lib/bookings'
 import {
+  DIAS_MAXIMOS_DE_ANTICIPACION,
   diaSemanaDeReserva,
   formatAdvanceTime,
   generateSlots,
   horariosSeSuperponen,
   isTooSoonToBook,
+  ultimoDiaParaReservar,
 } from '@/lib/time'
 import { db } from '@/lib/db'
+
+// Cuántas reservas sin seña pagada puede tener un jugador a la vez
+const MAXIMO_RESERVAS_PENDIENTES = 3
 
 export async function POST(request: Request) {
   const { session, error, status } = await requireRole('JUGADOR')
@@ -28,6 +33,31 @@ export async function POST(request: Request) {
   // No hay cron: se aprovecha cada pedido de reserva para barrerlas. Mientras
   // tanto, el resto de las consultas las ignora con NOT: pendientesVencidas().
   await db.reserva.deleteMany({ where: pendientesVencidas() })
+
+  // Límite 1: no se reserva para dentro de más de 30 días.
+  if (parsed.data.fecha > ultimoDiaParaReservar()) {
+    return NextResponse.json(
+      { error: `Se puede reservar con hasta ${DIAS_MAXIMOS_DE_ANTICIPACION} días de anticipación` },
+      { status: 400 },
+    )
+  }
+
+  // Límite 2: una reserva sin seña bloquea el turno sin poner plata. Para que
+  // nadie tome muchos turnos así, hay un tope de pendientes a la vez; las
+  // confirmadas no cuentan (esas ya pagaron la seña).
+  // ponytail: dos pedidos simultáneos podrían pasarse del tope por uno; si
+  // importa, contar y crear adentro de una transacción.
+  const pendientesDelJugador = await db.reserva.count({
+    where: { jugadorId: session.user.id, estado: 'PENDIENTE' },
+  })
+  if (pendientesDelJugador >= MAXIMO_RESERVAS_PENDIENTES) {
+    return NextResponse.json(
+      {
+        error: `Tenés ${MAXIMO_RESERVAS_PENDIENTES} reservas sin pagar la seña. Pagá o cancelá alguna antes de reservar otra.`,
+      },
+      { status: 409 },
+    )
+  }
 
   const cancha = await db.cancha.findFirst({
     where: {

@@ -104,3 +104,50 @@ export async function findOverlappingBookingIds(courtId: string, range: BlockRan
     )
     .map((booking) => booking.id)
 }
+
+// Los bloqueos de varias canchas que caen en un día, en una sola consulta.
+// Los usan los listados (búsqueda, detalle del complejo, pantallas del dueño)
+// para mostrar en gris las canchas bloqueadas.
+export async function bloqueosDelDia(idsDeCanchas: string[], fecha: Date) {
+  return db.block.findMany({
+    where: { courtId: { in: idsDeCanchas }, startDate: { lte: fecha }, endDate: { gte: fecha } },
+    select: { courtId: true, startTime: true, endTime: true, reason: true },
+    orderBy: { startTime: 'asc' },
+  })
+}
+
+// "Bloqueada de 14:00 a 18:00", y con el motivo si lo ve el dueño. El motivo
+// es una nota interna: al jugador no se le muestra nunca.
+export function textoDelBloqueo(
+  bloqueos: { startTime: string; endTime: string; reason: string | null }[],
+  conMotivo: boolean,
+): string {
+  const franjas: string[] = []
+  const motivos: string[] = []
+  for (const bloqueo of bloqueos) {
+    franjas.push(`de ${bloqueo.startTime} a ${bloqueo.endTime}`)
+    if (bloqueo.reason) {
+      motivos.push(bloqueo.reason)
+    }
+  }
+
+  let texto = `Bloqueada ${franjas.join(' y ')}`
+  if (conMotivo && motivos.length > 0) {
+    texto += ` · ${motivos.join(', ')}`
+  }
+  return texto
+}
+
+// Para la card de un complejo: cuántas de sus canchas están bloqueadas.
+export function resumenBloqueosDelComplejo(bloqueadas: number, total: number): string | null {
+  if (bloqueadas === 0) {
+    return null
+  }
+  if (bloqueadas === total) {
+    return 'Todas las canchas bloqueadas'
+  }
+  if (bloqueadas === 1) {
+    return `1 de ${total} canchas bloqueada`
+  }
+  return `${bloqueadas} de ${total} canchas bloqueadas`
+}

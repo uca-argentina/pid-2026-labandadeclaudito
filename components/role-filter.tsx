@@ -35,7 +35,7 @@ export function RoleFilter({ rol }: { rol: string | undefined }) {
 
   return (
     <Select value={rol ?? TODOS_LOS_ROLES} onValueChange={(v) => v && elegir(v)}>
-      <SelectTrigger className="h-9 w-full sm:w-44" aria-label="Filtrar por rol">
+      <SelectTrigger className="bg-card w-full sm:w-44" aria-label="Filtrar por rol">
         <SelectValue>{(v: keyof typeof roles) => roles[v]}</SelectValue>
       </SelectTrigger>
       <SelectContent>

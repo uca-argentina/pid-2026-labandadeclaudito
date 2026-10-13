@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { estadoDeReserva, senaVencida } from './estado-reserva'
+import { estadoDeReserva, formatearTiempoRestante, senaVencida } from './estado-reserva'
 
 describe('senaVencida', () => {
   const creadaEn = new Date('2026-09-29T15:00:00Z')
@@ -110,5 +110,24 @@ describe('estadoDeReserva con la asistencia marcada', () => {
       { dia, hora: '22:00' },
     )
     expect(cancelada).toBe('CANCELADA')
+  })
+})
+
+describe('formatearTiempoRestante', () => {
+  test('los 15 minutos enteros', () => {
+    expect(formatearTiempoRestante(15 * 60 * 1000)).toBe('15:00')
+  })
+
+  test('minutos y segundos con cero adelante', () => {
+    expect(formatearTiempoRestante((4 * 60 + 7) * 1000)).toBe('04:07')
+  })
+
+  test('un pedazo de segundo cuenta como un segundo entero', () => {
+    expect(formatearTiempoRestante(14_200)).toBe('00:15')
+  })
+
+  test('vencida: nunca muestra tiempo negativo', () => {
+    expect(formatearTiempoRestante(0)).toBe('00:00')
+    expect(formatearTiempoRestante(-5000)).toBe('00:00')
   })
 })

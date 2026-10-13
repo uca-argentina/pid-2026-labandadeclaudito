@@ -9,7 +9,7 @@ import type { Deporte, TipoSuperficie } from '@/lib/generated/prisma/client'
 // Mismo aspecto que el Input de shadcn, para que los <select> nativos no desentonen
 // (igual al de search-filters-sheet.tsx).
 const selectClassName =
-  'border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 h-10 w-full rounded-lg border bg-transparent px-3 text-sm outline-none focus-visible:ring-3'
+  'border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 bg-background/50 h-11 w-full rounded-xl border px-3.5 text-base outline-none focus-visible:ring-3'
 
 // La superficie depende del deporte elegido: no tiene sentido ofrecer una
 // combinación que no existe (ej: fútbol con polvo de ladrillo). Mismo mapa
@@ -17,9 +17,13 @@ const selectClassName =
 export function SportSurfaceFilter({
   deporteInicial,
   tipoSuperficieInicial,
+  idPrefijo,
 }: {
   deporteInicial?: Deporte
   tipoSuperficieInicial?: TipoSuperficie
+  // Los filtros se dibujan dos veces (al costado y en el sheet del celular):
+  // el prefijo evita ids repetidos, así cada label enfoca su propio campo.
+  idPrefijo: string
 }) {
   const [deporte, setDeporte] = useState<Deporte | ''>(deporteInicial ?? '')
 
@@ -32,12 +36,12 @@ export function SportSurfaceFilter({
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="deporte" className="flex items-center gap-1.5">
+        <Label htmlFor={`${idPrefijo}deporte`} className="flex items-center gap-1.5">
           <Trophy className="size-3.5" />
           Deporte
         </Label>
         <select
-          id="deporte"
+          id={`${idPrefijo}deporte`}
           name="deporte"
           value={deporte}
           onChange={(e) => setDeporte(e.target.value as Deporte | '')}
@@ -57,13 +61,13 @@ export function SportSurfaceFilter({
           coherente): se oculta hasta entonces. */}
       {deporte !== '' && (
         <div className="space-y-2">
-          <Label htmlFor="tipoSuperficie" className="flex items-center gap-1.5">
+          <Label htmlFor={`${idPrefijo}tipoSuperficie`} className="flex items-center gap-1.5">
             <Layers className="size-3.5" />
             Superficie
           </Label>
           <select
             key={deporte}
-            id="tipoSuperficie"
+            id={`${idPrefijo}tipoSuperficie`}
             name="tipoSuperficie"
             defaultValue={superficiePorDefecto}
             className={selectClassName}

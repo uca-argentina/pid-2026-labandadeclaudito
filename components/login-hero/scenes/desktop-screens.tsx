@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  CalendarPlus,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -7,20 +8,27 @@ import {
   Home,
   MapPin,
   Search,
-  Shapes,
   SlidersHorizontal,
   Trophy,
-  Wallet,
+  X,
 } from 'lucide-react'
 import { SoccerBall } from './balls'
+import { CardBox, CourtStrip } from './screen-parts'
 
 // Pantalla de la laptop: la web app real vista en escritorio, dibujada con los
-// mismos textos y la misma estructura que el front (sidebar del jugador,
-// "Buscar canchas", panel de filtros con el select de Deporte, card de cancha
-// con "Reservar" y panel de reserva con la grilla de horarios).
+// mismos textos y la misma estructura que el front (sidebar verde del jugador
+// con el contenido en una "hoja" encima, "Buscar canchas", panel de filtros
+// con el select de Deporte, card de cancha con "Reservar" y panel de reserva
+// con los días, los horarios y el resumen con la seña).
 // Las coordenadas son las de la pantalla de la laptop (x 63–337, y 25–181).
 // Cada pieza que cambia con el tiempo es un <g> con su clase hero-d-* (ver
 // login-hero.css, bloque "Grupo A: laptop").
+// OJO al mover cosas: el cursor va a puntos fijos de la pantalla (ver
+// @keyframes hero-cursor). Tienen que seguir cayendo adentro de: el botón
+// "Filtros" (147, 64), el select de Deporte (270, 109) y sus opciones (una cada
+// 7,4 desde y = 121,7), "Ver resultados" (285, 168), el "Reservar" de la
+// cancha (293, 119), el horario 21:00 (208, 101) y el "Reservar" del panel
+// (298, 159).
 const SPORT_OPTIONS = ['Todos', 'Fútbol 5', 'Fútbol 7', 'Fútbol 11', 'Tenis', 'Pádel', 'Básquet']
 
 const COMPLEXES = [
@@ -31,7 +39,7 @@ const COMPLEXES = [
     courts: '3 canchas',
     sports: ['Fútbol 5', 'Fútbol 7'],
     price: '$18.000',
-    photoClass: 'fill-primary/30',
+    photoClass: 'fill-primary/45',
   },
   {
     x: 199,
@@ -40,7 +48,7 @@ const COMPLEXES = [
     courts: '2 canchas',
     sports: ['Pádel', 'Tenis'],
     price: '$24.000',
-    photoClass: 'fill-hero-padel/30',
+    photoClass: 'fill-hero-padel/45',
   },
   {
     x: 267,
@@ -49,20 +57,32 @@ const COMPLEXES = [
     courts: '4 canchas',
     sports: ['Básquet', 'Tenis'],
     price: '$15.000',
-    photoClass: 'fill-hero-orange/30',
+    photoClass: 'fill-hero-orange/45',
   },
 ]
 
+// Tira de días del panel de reserva: el partido es el sábado 3
+const DAYS = [
+  { name: 'Hoy', number: 1 },
+  { name: 'Mañana', number: 2 },
+  { name: 'Sáb', number: 3 },
+  { name: 'Dom', number: 4 },
+  { name: 'Lun', number: 5 },
+  { name: 'Mar', number: 6 },
+]
+const CHOSEN_DAY = 3
+
+// special: turno con precio distinto al base (el front le muestra el precio)
 const SLOT_COLUMNS = [197, 229, 261, 293]
 const SLOTS = [
-  { time: '17:00', x: SLOT_COLUMNS[0], y: 76, free: true, price: '$18.000' },
-  { time: '18:00', x: SLOT_COLUMNS[1], y: 76, free: false, price: '$18.000' },
-  { time: '19:00', x: SLOT_COLUMNS[2], y: 76, free: true, price: '$18.000' },
-  { time: '20:00', x: SLOT_COLUMNS[3], y: 76, free: true, price: '$22.000' },
-  { time: '21:00', x: SLOT_COLUMNS[0], y: 95, free: true, price: '$22.000' },
-  { time: '22:00', x: SLOT_COLUMNS[1], y: 95, free: true, price: '$22.000' },
-  { time: '23:00', x: SLOT_COLUMNS[2], y: 95, free: false, price: '$22.000' },
-  { time: '00:00', x: SLOT_COLUMNS[3], y: 95, free: true, price: '$22.000' },
+  { time: '17:00', x: SLOT_COLUMNS[0], y: 76, free: true, special: false },
+  { time: '18:00', x: SLOT_COLUMNS[1], y: 76, free: false, special: false },
+  { time: '19:00', x: SLOT_COLUMNS[2], y: 76, free: true, special: false },
+  { time: '20:00', x: SLOT_COLUMNS[3], y: 76, free: true, special: true },
+  { time: '21:00', x: SLOT_COLUMNS[0], y: 95, free: true, special: true },
+  { time: '22:00', x: SLOT_COLUMNS[1], y: 95, free: true, special: true },
+  { time: '23:00', x: SLOT_COLUMNS[2], y: 95, free: false, special: true },
+  { time: '00:00', x: SLOT_COLUMNS[3], y: 95, free: true, special: true },
 ]
 
 export function DesktopScreens() {
@@ -75,10 +95,16 @@ export function DesktopScreens() {
         <clipPath id="hero-d-strip">
           <polygon points="131,76 148,76 161,138 131,138" />
         </clipPath>
+        <clipPath id="hero-d-cover">
+          <rect x="131" y="31" width="196" height="42" rx="7" />
+        </clipPath>
       </defs>
 
       <g clipPath="url(#hero-d-screen)">
-        <rect x="63" y="25" width="274" height="156" className="fill-background" />
+        {/* El verde del sidebar de fondo y, encima, la "hoja" del contenido
+            con las esquinas de la izquierda redondeadas */}
+        <rect x="63" y="25" width="274" height="156" className="fill-sidebar" />
+        <rect x="121" y="25" width="230" height="156" rx="7" className="fill-background" />
         <Sidebar />
 
         <g className="hero-d-list">
@@ -89,14 +115,14 @@ export function DesktopScreens() {
         </g>
 
         <g className="hero-d-scrim1">
-          <rect x="122" y="25" width="215" height="156" className="fill-foreground/30" />
+          <rect x="63" y="25" width="274" height="156" className="fill-black/35" />
         </g>
         <g className="hero-d-sheet1">
           <FilterSheet />
         </g>
 
         <g className="hero-d-scrim2">
-          <rect x="122" y="25" width="215" height="156" className="fill-foreground/30" />
+          <rect x="63" y="25" width="274" height="156" className="fill-black/35" />
         </g>
         <g className="hero-d-sheet2">
           <BookingSheet />
@@ -114,49 +140,65 @@ function Sidebar() {
   ]
   return (
     <g>
-      <rect x="63" y="25" width="58" height="156" className="fill-card" />
-      <line x1="121" y1="25" x2="121" y2="181" strokeWidth="1" className="stroke-border" />
-
-      <circle cx="73" cy="37" r="6" className="fill-primary/15" />
-      <SoccerBall cx={73} cy={37} r={4.2} />
-      <text x="82" y="39.5" fontSize="6.4" fontWeight="800" className="fill-foreground">
-        Toca<tspan className="fill-primary">Y</tspan>Juga
+      <SoccerBall cx={73} cy={37} r={4.6} />
+      <text
+        x="81"
+        y="39.5"
+        fontSize="6.4"
+        fontWeight="800"
+        className="font-brand fill-sidebar-foreground"
+      >
+        Toca<tspan className="fill-sidebar-primary">Y</tspan>Juga
       </text>
 
       {items.map((item) => (
         <g key={item.label}>
           {item.active && (
-            <rect x="67" y={item.y} width="50" height="11" rx="3" className="fill-accent" />
+            <rect x="67" y={item.y} width="50" height="11" rx="4" className="fill-sidebar-accent" />
           )}
-          <item.Icon x={71} y={item.y + 3} width={5} height={5} className="stroke-foreground" />
+          <item.Icon
+            x={71}
+            y={item.y + 3}
+            width={5}
+            height={5}
+            className={item.active ? 'stroke-sidebar-primary' : 'stroke-sidebar-foreground/80'}
+          />
           <text
             x="79"
             y={item.y + 7.4}
             fontSize="4.8"
             fontWeight={item.active ? 600 : 400}
-            className="fill-foreground"
+            className={item.active ? 'fill-sidebar-foreground' : 'fill-sidebar-foreground/80'}
           >
             {item.label}
           </text>
         </g>
       ))}
 
-      <circle cx="73" cy="167" r="5" className="fill-muted" />
+      {/* Tarjeta del perfil */}
+      <rect x="66" y="157" width="52" height="20" rx="5" className="fill-sidebar-accent" />
+      <circle cx="75" cy="167" r="5.5" className="fill-sidebar-primary" />
       <text
-        x="73"
-        y="168.4"
-        fontSize="3.8"
-        fontWeight="600"
+        x="75"
+        y="168.5"
+        fontSize="4"
+        fontWeight="700"
         textAnchor="middle"
-        className="fill-foreground"
+        className="font-heading fill-sidebar-primary-foreground"
       >
         JP
       </text>
-      <text x="81" y="166.5" fontSize="4.4" fontWeight="500" className="fill-foreground">
+      <text x="83.5" y="166" fontSize="4.4" fontWeight="600" className="fill-sidebar-foreground">
         Juan Pérez
       </text>
-      <text x="81" y="171.5" fontSize="3.6" className="fill-muted-foreground">
-        juan@mail.com
+      <text
+        x="83.5"
+        y="171.6"
+        fontSize="3.4"
+        textDecoration="underline"
+        className="fill-sidebar-foreground/70"
+      >
+        Cerrar sesión
       </text>
     </g>
   )
@@ -165,24 +207,16 @@ function Sidebar() {
 function ListPage() {
   return (
     <g>
-      <text x="131" y="45" fontSize="10" fontWeight="600" className="fill-foreground">
+      <text x="131" y="45" fontSize="10" fontWeight="700" className="font-heading fill-foreground">
         Buscar canchas
       </text>
       <text x="131" y="53" fontSize="4.2" className="fill-muted-foreground">
-        Filtrá por zona, deporte, superficie, precio, fecha y horario para encontrar una cancha.
+        Decinos dónde y cuándo querés jugar, y te mostramos qué hay libre.
       </text>
 
-      <rect
-        x="131"
-        y="60"
-        width="40"
-        height="13"
-        rx="4"
-        strokeWidth="1"
-        className="fill-background stroke-border"
-      />
+      <CardBox x={131} y={60} width={40} height={13} rx={4.5} />
       <SlidersHorizontal x={136} y={63.5} width={6} height={6} className="stroke-foreground" />
-      <text x="145" y="68.6" fontSize="5.6" fontWeight="500" className="fill-foreground">
+      <text x="145" y="68.6" fontSize="5.6" fontWeight="600" className="fill-foreground">
         Filtros
       </text>
 
@@ -198,24 +232,18 @@ function ComplexCard({ complex }: { complex: (typeof COMPLEXES)[number] }) {
   const y = 80
   return (
     <g>
-      <rect
-        x={x}
-        y={y}
-        width="60"
-        height="98"
-        rx="6"
-        strokeWidth="1"
-        className="fill-card stroke-border"
-      />
+      <CardBox x={x} y={y} width={60} height={92} rx={6} />
+
+      {/* La foto de portada, con los deportes del complejo encima */}
       <path
-        d={`M${x} ${y + 30} V${y + 6} a6 6 0 0 1 6 -6 H${x + 54} a6 6 0 0 1 6 6 V${y + 30} Z`}
+        d={`M${x} ${y + 40} V${y + 6} a6 6 0 0 1 6 -6 H${x + 54} a6 6 0 0 1 6 6 V${y + 40} Z`}
         className={complex.photoClass}
       />
       <rect
         x={x + 8}
         y={y + 6}
         width="44"
-        height="18"
+        height="20"
         rx="1.5"
         strokeWidth="0.8"
         className="stroke-hero-line/70 fill-none"
@@ -224,52 +252,68 @@ function ComplexCard({ complex }: { complex: (typeof COMPLEXES)[number] }) {
         x1={x + 30}
         y1={y + 6}
         x2={x + 30}
-        y2={y + 24}
+        y2={y + 26}
         strokeWidth="0.8"
         className="stroke-hero-line/70"
       />
-
-      <text x={x + 6} y={y + 41} fontSize="5.6" fontWeight="600" className="fill-card-foreground">
-        {complex.name}
-      </text>
-      <MapPin x={x + 6} y={y + 44} width={4} height={4} className="stroke-muted-foreground" />
-      <text x={x + 12} y={y + 47.4} fontSize="3.3" className="fill-muted-foreground">
-        {complex.address}
-      </text>
-      <Shapes x={x + 6} y={y + 50} width={4} height={4} className="stroke-muted-foreground" />
-      <text x={x + 12} y={y + 53.4} fontSize="3.3" className="fill-muted-foreground">
-        {complex.courts}
-      </text>
-
       {complex.sports.map((sport, index) => (
         <g key={sport}>
           <rect
-            x={x + 6 + index * 24}
-            y={y + 59}
+            x={x + 4 + index * 23}
+            y={y + 30}
             width="21"
-            height="7.5"
-            rx="3.75"
-            className="fill-secondary"
+            height="7"
+            rx="3.5"
+            className="fill-card"
           />
           <text
-            x={x + 16.5 + index * 24}
-            y={y + 64.2}
-            fontSize="3.4"
+            x={x + 14.5 + index * 23}
+            y={y + 34.9}
+            fontSize="3.3"
+            fontWeight="600"
             textAnchor="middle"
-            className="fill-secondary-foreground"
+            className="fill-card-foreground"
           >
             {sport}
           </text>
         </g>
       ))}
 
-      <line x1={x} y1={y + 74} x2={x + 60} y2={y + 74} strokeWidth="1" className="stroke-border" />
-      <Wallet x={x + 6} y={y + 78} width={5} height={5} className="stroke-primary" />
-      <text x={x + 13} y={y + 82} fontSize="3.3" className="fill-muted-foreground">
+      <text
+        x={x + 6}
+        y={y + 50.5}
+        fontSize="5.8"
+        fontWeight="700"
+        className="font-heading fill-card-foreground"
+      >
+        {complex.name}
+      </text>
+      <text x={x + 6} y={y + 57} fontSize="3.3" className="fill-muted-foreground">
+        {complex.address}
+      </text>
+
+      <text x={x + 6} y={y + 76} fontSize="3.3" className="fill-muted-foreground">
         desde
       </text>
-      <text x={x + 24} y={y + 83} fontSize="6.4" fontWeight="700" className="fill-primary">
+      <text
+        x={x + 6}
+        y={y + 84.5}
+        fontSize="6.6"
+        fontWeight="700"
+        className="font-heading fill-primary"
+      >
         {complex.price}
+      </text>
+      <rect x={x + 37} y={y + 78.5} width="18.5" height="7" rx="3.5" className="fill-muted" />
+      <text
+        x={x + 46.25}
+        y={y + 83.3}
+        fontSize="3.1"
+        fontWeight="500"
+        textAnchor="middle"
+        className="fill-foreground"
+      >
+        {complex.courts}
       </text>
     </g>
   )
@@ -278,45 +322,61 @@ function ComplexCard({ complex }: { complex: (typeof COMPLEXES)[number] }) {
 function DetailPage() {
   return (
     <g>
-      <text x="131" y="45" fontSize="10" fontWeight="600" className="fill-foreground">
+      {/* Portada del complejo: el nombre va escrito sobre la foto */}
+      <rect x="131" y="31" width="196" height="42" rx="7" className="fill-sidebar" />
+      <g clipPath="url(#hero-d-cover)" strokeWidth="0.8" className="stroke-hero-line/20 fill-none">
+        <rect x="238" y="37" width="110" height="30" />
+        <line x1="293" y1="37" x2="293" y2="67" />
+        <circle cx="293" cy="52" r="8" />
+        <rect x="238" y="44" width="14" height="16" />
+      </g>
+      <rect x="138" y="37" width="25" height="7" rx="3.5" className="fill-highlight" />
+      <text
+        x="150.5"
+        y="41.9"
+        fontSize="3.4"
+        fontWeight="700"
+        textAnchor="middle"
+        className="fill-highlight-foreground"
+      >
+        Verificado
+      </text>
+      <text
+        x="138"
+        y="57.5"
+        fontSize="10"
+        fontWeight="700"
+        className="font-heading fill-sidebar-foreground"
+      >
         Complejo Oeste
       </text>
-      <MapPin x={131} y={48.5} width={4.5} height={4.5} className="stroke-muted-foreground" />
-      <text x="137" y="52.4" fontSize="4.2" className="fill-muted-foreground">
+      <MapPin x={138} y={61.3} width={4.5} height={4.5} className="stroke-sidebar-foreground/80" />
+      <text x="144.5" y="65.2" fontSize="4.2" className="fill-sidebar-foreground/80">
         Rivadavia 4500 · Caballito
       </text>
-      <text x="131" y="68" fontSize="7" fontWeight="600" className="fill-foreground">
-        Canchas
+
+      <text
+        x="132"
+        y="83.5"
+        fontSize="6.4"
+        fontWeight="700"
+        className="font-heading fill-foreground"
+      >
+        Elegí tu cancha
       </text>
 
-      <CourtCard y={76} sport="FÚTBOL 5 · CÉSPED SINTÉTICO" name="Cancha 1" button />
-      <CourtCard y={146} sport="FÚTBOL 7 · CÉSPED SINTÉTICO" name="Cancha 2" />
+      <CourtCard y={88} sport="FÚTBOL 5 · SINTÉTICO" name="Cancha 1" />
+      <CourtCard y={157} sport="FÚTBOL 7 · SINTÉTICO" name="Cancha 2" />
     </g>
   )
 }
 
-function CourtCard({
-  y,
-  sport,
-  name,
-  button = false,
-}: {
-  y: number
-  sport: string
-  name: string
-  button?: boolean
-}) {
+// Card de una cancha: la franja en diagonal con el dibujo de la cancha, los
+// datos y, a la derecha, el precio pegado al botón.
+function CourtCard({ y, sport, name }: { y: number; sport: string; name: string }) {
   return (
     <g>
-      <rect
-        x="131"
-        y={y}
-        width="196"
-        height="62"
-        rx="8"
-        strokeWidth="1"
-        className="fill-card stroke-border"
-      />
+      <CardBox x={131} y={y} width={196} height={62} rx={8} />
       <g transform={`translate(0 ${y - 76})`}>
         <g clipPath="url(#hero-d-strip)" opacity="0.8">
           <rect x="131" y="76" width="30" height="62" className="fill-primary" />
@@ -351,48 +411,63 @@ function CourtCard({
         <line x1="148" y1="76" x2="161" y2="138" strokeWidth="0.8" className="stroke-primary/50" />
       </g>
 
-      <text x="168" y={y + 12} fontSize="3.8" fontWeight="600" className="fill-primary">
+      <text
+        x="168"
+        y={y + 23}
+        fontSize="3.6"
+        fontWeight="700"
+        letterSpacing="0.2"
+        className="fill-primary"
+      >
         {sport}
       </text>
-      <text x="168" y={y + 22} fontSize="8" fontWeight="700" className="fill-card-foreground">
+      <text
+        x="168"
+        y={y + 33.5}
+        fontSize="8.5"
+        fontWeight="700"
+        className="font-heading fill-card-foreground"
+      >
         {name}
       </text>
-      <Clock x={168} y={y + 25.5} width={4} height={4} className="stroke-muted-foreground" />
-      <text x="174" y={y + 29} fontSize="3.8" className="fill-muted-foreground">
+      <Clock x={168} y={y + 37.5} width={4} height={4} className="stroke-muted-foreground" />
+      <text x="174" y={y + 41} fontSize="3.8" className="fill-muted-foreground">
         08:00 a 24:00 hs
       </text>
 
-      <text x="168" y={y + 42} fontSize="3.6" className="fill-muted-foreground">
+      <text x="228" y={y + 23} fontSize="3.4" className="fill-muted-foreground">
         desde
       </text>
-      <text x="168" y={y + 51} fontSize="8.5" fontWeight="700" className="fill-primary">
+      <text
+        x="228"
+        y={y + 33.5}
+        fontSize="8.5"
+        fontWeight="700"
+        className="font-heading fill-primary"
+      >
         $18.000
       </text>
-      <text x="168" y={y + 57} fontSize="3.4" className="fill-muted-foreground">
+      <text x="228" y={y + 40.5} fontSize="3.2" className="fill-muted-foreground">
         por turno de 60 min
       </text>
 
-      {button && (
-        <g>
-          <rect x="275" y={y + 38} width="44" height="14" rx="4" className="fill-primary" />
-          <CalendarDays
-            x={280}
-            y={y + 42}
-            width={6}
-            height={6}
-            className="stroke-primary-foreground"
-          />
-          <text
-            x="289"
-            y={y + 47}
-            fontSize="5.4"
-            fontWeight="500"
-            className="fill-primary-foreground"
-          >
-            Reservar
-          </text>
-        </g>
-      )}
+      <rect x="275" y={y + 24} width="44" height="14" rx="5" className="fill-primary" />
+      <CalendarPlus
+        x={279.5}
+        y={y + 28}
+        width={6}
+        height={6}
+        className="stroke-primary-foreground"
+      />
+      <text
+        x="288.5"
+        y={y + 33}
+        fontSize="5.4"
+        fontWeight="600"
+        className="fill-primary-foreground"
+      >
+        Reservar
+      </text>
     </g>
   )
 }
@@ -400,15 +475,10 @@ function CourtCard({
 function FilterSheet() {
   return (
     <g>
-      <rect
-        x="187"
-        y="25"
-        width="150"
-        height="156"
-        strokeWidth="1"
-        className="fill-background stroke-border"
-      />
-      <text x="197" y="40" fontSize="8.5" fontWeight="600" className="fill-foreground">
+      <rect x="187" y="25" width="150" height="156" className="fill-background" />
+      <circle cx="326" cy="36" r="5.5" className="fill-secondary" />
+      <X x={323} y={33} width={6} height={6} className="stroke-foreground" />
+      <text x="197" y="40" fontSize="8.5" fontWeight="700" className="font-heading fill-foreground">
         Filtros
       </text>
       <text x="197" y="48" fontSize="4" className="fill-muted-foreground">
@@ -419,7 +489,7 @@ function FilterSheet() {
       </text>
 
       <MapPin x={197} y={67.5} width={4.5} height={4.5} className="stroke-foreground" />
-      <text x="203" y="71.5" fontSize="4.6" fontWeight="500" className="fill-foreground">
+      <text x="203" y="71.5" fontSize="4.6" fontWeight="600" className="fill-foreground">
         Zona
       </text>
       <rect
@@ -427,17 +497,17 @@ function FilterSheet() {
         y="75"
         width="130"
         height="13"
-        rx="4"
+        rx="4.5"
         strokeWidth="1"
-        className="fill-background stroke-border"
+        className="fill-card stroke-border"
       />
-      <text x="202" y="83.3" fontSize="5" className="fill-foreground">
+      <text x="203" y="83.3" fontSize="5" className="fill-foreground">
         Todas
       </text>
-      <ChevronDown x={317} y={78.5} width={6} height={6} className="stroke-muted-foreground" />
+      <ChevronDown x={316} y={78.5} width={6} height={6} className="stroke-muted-foreground" />
 
       <Trophy x={197} y={93.5} width={4.5} height={4.5} className="stroke-foreground" />
-      <text x="203" y="97.5" fontSize="4.6" fontWeight="500" className="fill-foreground">
+      <text x="203" y="97.5" fontSize="4.6" fontWeight="600" className="fill-foreground">
         Deporte
       </text>
       <rect
@@ -445,20 +515,20 @@ function FilterSheet() {
         y="102"
         width="130"
         height="14"
-        rx="4"
+        rx="4.5"
         strokeWidth="1"
-        className="fill-background stroke-border"
+        className="fill-card stroke-border"
       />
-      <text x="202" y="110.6" fontSize="5" className="hero-d-val-all fill-foreground">
+      <text x="203" y="110.6" fontSize="5" className="hero-d-val-all fill-foreground">
         Todos
       </text>
-      <text x="202" y="110.6" fontSize="5" className="hero-d-val-f5 fill-foreground">
+      <text x="203" y="110.6" fontSize="5" className="hero-d-val-f5 fill-foreground">
         Fútbol 5
       </text>
-      <ChevronDown x={317} y={106} width={6} height={6} className="stroke-muted-foreground" />
+      <ChevronDown x={316} y={106} width={6} height={6} className="stroke-muted-foreground" />
 
       <g className="hero-d-surf">
-        <text x="203" y="127.5" fontSize="4.6" fontWeight="500" className="fill-foreground">
+        <text x="203" y="127.5" fontSize="4.6" fontWeight="600" className="fill-foreground">
           Superficie
         </text>
         <rect
@@ -466,43 +536,46 @@ function FilterSheet() {
           y="131"
           width="130"
           height="14"
-          rx="4"
+          rx="4.5"
           strokeWidth="1"
-          className="fill-background stroke-border"
+          className="fill-card stroke-border"
         />
-        <text x="202" y="139.6" fontSize="5" className="fill-foreground">
+        <text x="203" y="139.6" fontSize="5" className="fill-foreground">
           Todas
         </text>
-        <ChevronDown x={317} y={135} width={6} height={6} className="stroke-muted-foreground" />
+        <ChevronDown x={316} y={135} width={6} height={6} className="stroke-muted-foreground" />
       </g>
 
+      {/* Pie del panel, fijo abajo */}
+      <rect x="187" y="159" width="150" height="22" className="fill-card" />
       <line x1="187" y1="159" x2="337" y2="159" strokeWidth="1" className="stroke-border" />
-      <text x="203" y="171" fontSize="5" className="fill-foreground">
-        Limpiar filtros
+      <text x="238" y="172.6" fontSize="5" fontWeight="600" className="fill-foreground">
+        Limpiar
       </text>
-      <rect x="262" y="164" width="65" height="13" rx="4" className="fill-primary" />
+      <rect x="262" y="164" width="65" height="13" rx="4.5" className="fill-primary" />
       <Search x={266} y={167.5} width={6} height={6} className="stroke-primary-foreground" />
-      <text x="275" y="172.6" fontSize="5" fontWeight="500" className="fill-primary-foreground">
+      <text x="275" y="172.6" fontSize="5" fontWeight="600" className="fill-primary-foreground">
         Ver resultados
       </text>
 
       {/* Lista del select de Deporte con las 6 opciones reales + "Todos" */}
       <g className="hero-d-dd">
+        <CardBox x={197} y={118} width={130} height={52} rx={4} />
         <rect
           x="197"
           y="118"
           width="130"
           height="52"
-          rx="3"
-          strokeWidth="1"
-          className="fill-card stroke-border"
+          rx="4"
+          strokeWidth="0.6"
+          className="stroke-border fill-none"
         />
         <rect
-          x="198"
+          x="198.5"
           y="118.6"
-          width="128"
+          width="127"
           height="7.2"
-          rx="2"
+          rx="2.5"
           className="hero-d-hl fill-primary/25"
         />
         {SPORT_OPTIONS.map((option, index) => (
@@ -524,82 +597,116 @@ function FilterSheet() {
 function BookingSheet() {
   return (
     <g>
-      <rect
-        x="187"
-        y="25"
-        width="150"
-        height="156"
-        strokeWidth="1"
-        className="fill-background stroke-border"
-      />
-      <text x="197" y="40" fontSize="8.5" fontWeight="600" className="fill-foreground">
+      <rect x="187" y="25" width="150" height="156" className="fill-background" />
+      <CourtStrip x={187} y={25} width={150} height={12} sport="futbol" />
+      <circle cx="327" cy="35" r="5.5" className="fill-secondary" />
+      <X x={324} y={32} width={6} height={6} className="stroke-foreground" />
+
+      <text
+        x="197"
+        y="47.5"
+        fontSize="8.5"
+        fontWeight="700"
+        className="font-heading fill-foreground"
+      >
         Cancha 1
       </text>
-      <text x="197" y="48" fontSize="3.8" className="fill-muted-foreground">
-        Fútbol 5 · Precio base $18.000 por turno de 60 min.
+      <rect x="197" y="50" width="21" height="6.4" rx="3.2" className="fill-primary/15" />
+      <text
+        x="207.5"
+        y="54.5"
+        fontSize="3.3"
+        fontWeight="600"
+        textAnchor="middle"
+        className="fill-primary"
+      >
+        Fútbol 5
       </text>
-      <text x="197" y="53" fontSize="3.8" className="fill-muted-foreground">
-        Algunos turnos pueden tener precio especial.
+      <Clock x={221.5} y={51.2} width={4} height={4} className="stroke-muted-foreground" />
+      <text x="227" y="54.6" fontSize="3.5" className="fill-muted-foreground">
+        Turnos de 60 min · Precio base $18.000
       </text>
 
-      <CalendarDays x={197} y={59} width={5} height={5} className="stroke-foreground" />
-      <text x="204" y="63" fontSize="5" fontWeight="500" className="fill-foreground">
-        Fecha
-      </text>
-      <rect
-        x="224"
-        y="57"
-        width="70"
-        height="11"
-        rx="3"
-        strokeWidth="1"
-        className="fill-background stroke-border"
-      />
-      <text x="229" y="64.4" fontSize="4.6" className="fill-foreground">
-        03/10/2026
-      </text>
+      {/* Tira de días: el elegido va en verde */}
+      {DAYS.map((day, index) => {
+        const x = 197 + index * 22.2
+        const chosen = day.number === CHOSEN_DAY
+        return (
+          <g key={day.number}>
+            <CardBox
+              x={x}
+              y={58.5}
+              width={19}
+              height={14.5}
+              rx={4.5}
+              className={chosen ? 'fill-primary' : 'fill-card'}
+            />
+            <text
+              x={x + 9.5}
+              y={63.4}
+              fontSize="3"
+              fontWeight="500"
+              textAnchor="middle"
+              className={chosen ? 'fill-primary-foreground' : 'fill-foreground'}
+            >
+              {day.name}
+            </text>
+            <text
+              x={x + 9.5}
+              y={70.6}
+              fontSize="6.4"
+              fontWeight="700"
+              textAnchor="middle"
+              className={
+                chosen ? 'font-heading fill-primary-foreground' : 'font-heading fill-foreground'
+              }
+            >
+              {day.number}
+            </text>
+          </g>
+        )
+      })}
 
       {SLOTS.map((slot) => (
         <g key={slot.time}>
-          <rect
-            x={slot.x}
-            y={slot.y}
-            width="28"
-            height="15"
-            rx="4"
-            strokeWidth="1"
-            className={slot.free ? 'fill-background stroke-border' : 'fill-muted stroke-border'}
-          />
+          {slot.free ? (
+            <CardBox x={slot.x} y={slot.y} width={28} height={15} rx={4.5} />
+          ) : (
+            <rect x={slot.x} y={slot.y} width="28" height="15" rx="4.5" className="fill-muted" />
+          )}
           <text
             x={slot.x + 14}
-            y={slot.y + 7}
+            y={slot.free && slot.special ? slot.y + 7.4 : slot.y + 9.4}
             fontSize="5.4"
-            fontWeight="500"
+            fontWeight="600"
             textAnchor="middle"
+            textDecoration={slot.free ? undefined : 'line-through'}
             className={slot.free ? 'fill-foreground' : 'fill-muted-foreground/60'}
           >
             {slot.time}
           </text>
-          <text
-            x={slot.x + 14}
-            y={slot.y + 12.4}
-            fontSize="3.2"
-            textAnchor="middle"
-            className="fill-muted-foreground"
-          >
-            {slot.price}
-          </text>
+          {slot.free && slot.special && (
+            <text
+              x={slot.x + 14}
+              y={slot.y + 12.4}
+              fontSize="3.2"
+              textAnchor="middle"
+              className="fill-muted-foreground"
+            >
+              $22.000
+            </text>
+          )}
         </g>
       ))}
 
       {/* Horario elegido (21:00) */}
       <g className="hero-d-slot">
-        <rect x="197" y="95" width="28" height="15" rx="4" className="fill-primary" />
+        <rect x="197" y="95" width="28" height="15" rx="4.5" className="fill-primary" />
         <text
           x="211"
-          y="102"
+          y="102.4"
           fontSize="5.4"
-          fontWeight="500"
+          fontWeight="700"
           textAnchor="middle"
           className="fill-primary-foreground"
         >
@@ -616,60 +723,88 @@ function BookingSheet() {
         </text>
       </g>
 
+      {/* Pie del panel: el resumen con la seña y el botón */}
       <g className="hero-d-summary">
-        <rect
-          x="197"
-          y="118"
-          width="130"
-          height="30"
-          rx="5"
-          strokeWidth="1"
-          className="fill-secondary stroke-border"
-        />
-        <text x="204" y="128" fontSize="5" fontWeight="500" className="fill-foreground">
-          21:00 a 22:00 hs
-        </text>
-        <text x="204" y="139" fontSize="4.4" className="fill-muted-foreground">
-          Precio del turno:
-        </text>
-        <text x="236" y="139" fontSize="4.8" fontWeight="600" className="fill-foreground">
-          $22.000
-        </text>
-        <rect x="259" y="133" width="42" height="8" rx="4" className="fill-background" />
+        <rect x="187" y="113.2" width="150" height="80" rx="8" className="fill-black/5" />
+        <rect x="187" y="114" width="150" height="80" rx="8" className="fill-card" />
         <text
-          x="280"
-          y="138.6"
-          fontSize="3.6"
-          textAnchor="middle"
-          className="fill-secondary-foreground"
+          x="197"
+          y="125"
+          fontSize="5.2"
+          fontWeight="700"
+          className="font-heading fill-card-foreground"
         >
-          Precio especial
+          Sábado 3 de octubre · 21:00 a 22:00 hs
         </text>
-        <rect x="277" y="154" width="50" height="14" rx="4" className="fill-primary" />
-        <Check x={282} y={157.5} width={6} height={6} className="stroke-primary-foreground" />
-        <text x="291" y="162.6" fontSize="5.2" fontWeight="500" className="fill-primary-foreground">
+        <SummaryLine y={132.6} label="Precio del turno (precio especial)" value="$22.000" />
+        <SummaryLine y={138.4} label="Seña del 30% para confirmar" value="$6.600" strong />
+        <SummaryLine y={144.2} label="El resto se paga en la cancha" value="$15.400" />
+
+        <rect x="197" y="149" width="130" height="18" rx="5.5" className="fill-primary" />
+        <Check x={246.5} y={154.8} width={6.4} height={6.4} className="stroke-primary-foreground" />
+        <text
+          x="255.5"
+          y="160.2"
+          fontSize="5.8"
+          fontWeight="600"
+          className="fill-primary-foreground"
+        >
           Reservar
         </text>
       </g>
 
       <g className="hero-d-confirm">
-        <rect
-          x="197"
-          y="118"
-          width="130"
-          height="30"
-          rx="5"
-          strokeWidth="1"
-          className="fill-primary/10 stroke-primary/30"
-        />
-        <CheckCircle2 x={204} y={126} width={9} height={9} className="stroke-primary" />
-        <text x="217" y="129.6" fontSize="5.6" fontWeight="600" className="fill-foreground">
+        <rect x="187" y="113.2" width="150" height="80" rx="8" className="fill-black/5" />
+        <rect x="187" y="114" width="150" height="80" rx="8" className="fill-card" />
+        <CheckCircle2 x={197} y={121.5} width={11} height={11} className="stroke-primary" />
+        <text x="212" y="127" fontSize="5.8" fontWeight="600" className="fill-card-foreground">
           Reserva confirmada
         </text>
-        <text x="217" y="137" fontSize="3.8" className="fill-muted-foreground">
-          Te esperamos en Complejo Oeste.
+        <text x="212" y="134" fontSize="3.9" className="fill-muted-foreground">
+          Cancha 1 a las 21:00 hs — seña de $6.600 pagada.
+        </text>
+        <text x="212" y="142.5" fontSize="4.4" fontWeight="500" className="fill-primary">
+          Ver mis reservas →
         </text>
       </g>
     </g>
+  )
+}
+
+// Un renglón del desglose: qué es a la izquierda y cuánto a la derecha.
+// strong: el renglón de la seña, que es lo que se paga ahora.
+function SummaryLine({
+  y,
+  label,
+  value,
+  strong = false,
+}: {
+  y: number
+  label: string
+  value: string
+  strong?: boolean
+}) {
+  return (
+    <>
+      <text
+        x="197"
+        y={y}
+        fontSize="3.9"
+        fontWeight={strong ? 600 : 400}
+        className={strong ? 'fill-card-foreground' : 'fill-muted-foreground'}
+      >
+        {label}
+      </text>
+      <text
+        x="327"
+        y={y}
+        fontSize="3.9"
+        fontWeight={strong ? 600 : 400}
+        textAnchor="end"
+        className={strong ? 'fill-primary' : 'fill-muted-foreground'}
+      >
+        {value}
+      </text>
+    </>
   )
 }

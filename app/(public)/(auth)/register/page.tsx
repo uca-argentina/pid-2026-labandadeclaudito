@@ -3,14 +3,16 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, Lock, Mail, User, UserPlus } from 'lucide-react'
+import { Lock, Mail, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Logo } from '@/components/logo'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { registerSchema } from '@/lib/validations/user'
+
+// Cada opción de "Soy": la elegida va en el verde oscuro, como las pestañas
+const claseDeRol =
+  'text-muted-foreground aria-pressed:bg-sidebar aria-pressed:text-sidebar-foreground h-9 flex-auto rounded-lg hover:bg-transparent sm:flex-1 aria-pressed:font-semibold'
 
 export default function RegistroPage() {
   const [rol, setRol] = useState<'JUGADOR' | 'DUENIO'>('JUGADOR')
@@ -57,101 +59,102 @@ export default function RegistroPage() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="items-center text-center">
-        <Logo className="mx-auto mb-1 size-12" />
-        <CardTitle className="text-2xl">Crear cuenta</CardTitle>
-        <CardDescription>Registrate para reservar o publicar tu complejo.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="nombre">Nombre</Label>
-            <div className="relative">
-              <User className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
-              <Input id="nombre" name="nombre" placeholder="Juan Pérez" className="pl-8" />
-            </div>
-          </div>
+    <div className="bg-card shadow-card w-full max-w-100 rounded-3xl p-6 sm:p-8">
+      <h1 className="font-heading text-4xl font-bold tracking-tight">Creá tu cuenta</h1>
+      <p className="text-muted-foreground mt-2 text-base">
+        Para reservar canchas o publicar tu complejo.
+      </p>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <div className="relative">
-              <Mail className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="juan@mail.com"
-                className="pl-8"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
-            <div className="relative">
-              <Lock className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Mínimo 8 caracteres"
-                className="pl-8"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-            <div className="relative">
-              <Lock className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                placeholder="Repetí tu contraseña"
-                className="pl-8"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Soy</Label>
-            <ToggleGroup
-              value={[rol]}
-              onValueChange={(valores) => {
-                if (valores[0]) setRol(valores[0] as 'JUGADOR' | 'DUENIO')
-              }}
-              variant="outline"
-              className="w-full"
-            >
-              <ToggleGroupItem value="JUGADOR" className="flex-1">
-                Jugador
-              </ToggleGroupItem>
-              <ToggleGroupItem value="DUENIO" className="flex-1">
-                Dueño de complejo
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-
-          <Button type="submit" className="w-full" disabled={cargando}>
-            <UserPlus className="size-4" />
-            {cargando ? 'Creando...' : 'Crear cuenta'}
-          </Button>
-        </form>
-
-        {error && <p className="text-destructive mt-4 text-sm">{error}</p>}
-
-        <p className="text-muted-foreground mt-4 text-center text-sm">
-          ¿Ya tenés cuenta?{' '}
-          <Link
-            href="/login"
-            className="text-foreground inline-flex items-center gap-1 underline underline-offset-4"
+      {/* method="post": si se envía antes de que la página termine de cargar
+          el JavaScript, el navegador lo manda solo. Con el GET por defecto la
+          contraseña quedaba en la URL (y en el historial). */}
+      <form method="post" className="mt-6 space-y-4" onSubmit={handleSubmit}>
+        <div className="space-y-2">
+          <Label>Soy</Label>
+          <ToggleGroup
+            value={[rol]}
+            onValueChange={(valores) => {
+              if (valores[0]) setRol(valores[0] as 'JUGADOR' | 'DUENIO')
+            }}
+            spacing={1}
+            className="bg-muted w-full rounded-xl p-1"
           >
-            Iniciar sesión <ArrowRight className="size-3" />
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+            <ToggleGroupItem value="JUGADOR" className={claseDeRol}>
+              Jugador
+            </ToggleGroupItem>
+            <ToggleGroupItem value="DUENIO" className={claseDeRol}>
+              Dueño de complejo
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="nombre">Nombre</Label>
+          <div className="relative">
+            <User className="text-muted-foreground absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2" />
+            <Input id="nombre" name="nombre" placeholder="Juan Pérez" className="pl-11" />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <div className="relative">
+            <Mail className="text-muted-foreground absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2" />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="juan@mail.com"
+              className="pl-11"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Contraseña</Label>
+          <div className="relative">
+            <Lock className="text-muted-foreground absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2" />
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Mínimo 8 caracteres"
+              className="pl-11"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+          <div className="relative">
+            <Lock className="text-muted-foreground absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2" />
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              placeholder="Repetí tu contraseña"
+              className="pl-11"
+            />
+          </div>
+        </div>
+
+        {error && (
+          <p className="bg-destructive/10 text-destructive rounded-xl px-3.5 py-2.5 text-sm font-medium">
+            {error}
+          </p>
+        )}
+
+        <Button type="submit" size="lg" className="w-full" disabled={cargando}>
+          {cargando ? 'Creando...' : 'Crear cuenta'}
+        </Button>
+      </form>
+
+      <p className="text-muted-foreground mt-5 text-center text-sm">
+        ¿Ya tenés cuenta?{' '}
+        <Link href="/login" className="text-primary font-semibold underline underline-offset-4">
+          Iniciá sesión
+        </Link>
+      </p>
+    </div>
   )
 }

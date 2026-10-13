@@ -39,6 +39,16 @@ enum EstadoReserva {
   CANCELADA
 }
 
+enum EstadoDisputa {
+  ABIERTA
+  RESUELTA
+}
+
+enum DecisionDisputa {
+  A_FAVOR_JUGADOR
+  A_FAVOR_DUENIO
+}
+
 model Usuario {
   id           String   @id @default(cuid())
   nombre       String
@@ -51,8 +61,10 @@ model Usuario {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  complejos Complejo[] @relation("DuenioComplejos")
-  reservas  Reserva[]  @relation("JugadorReservas")
+  complejos         Complejo[] @relation("DuenioComplejos")
+  reservas          Reserva[]  @relation("JugadorReservas")
+  disputas          Disputa[]  @relation("DisputasDelJugador")
+  disputasResueltas Disputa[]  @relation("DisputasResueltas")
 }
 
 model Complejo {
@@ -174,9 +186,10 @@ model Reserva {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  cancha  Cancha  @relation(fields: [canchaId], references: [id])
-  jugador Usuario @relation("JugadorReservas", fields: [jugadorId], references: [id])
+  cancha  Cancha   @relation(fields: [canchaId], references: [id])
+  jugador Usuario  @relation("JugadorReservas", fields: [jugadorId], references: [id])
   pago    Pago?
+  disputa Disputa?
 
   // Última defensa contra doble reserva: no puede haber dos reservas activas
   // en la misma cancha, fecha y hora de inicio. Las canceladas no cuentan:
@@ -212,4 +225,32 @@ model Intento {
   createdAt DateTime @default(now())
 
   @@index([clave, createdAt])
+}
+
+// El jugador cuestiona el no-show que le marcó el dueño. La resuelve un admin
+// de la aplicación (no el dueño del complejo) y la decisión queda registrada.
+model Disputa {
+  id          String @id @default(cuid())
+  // Una sola disputa por reserva, incluso si ya se resolvió: no hay reapelación
+  reservaId   String @unique
+  jugadorId   String
+  descripcion String
+  // Simulada: texto o nombre de archivo, sin upload real
+  evidencia   String
+
+  estado          EstadoDisputa    @default(ABIERTA)
+  decision        DecisionDisputa?
+  comentarioAdmin String?
+  // null mientras está ABIERTA: todavía no la resolvió ningún admin
+  adminId         String?
+  resueltaEn      DateTime?
+
+  createdAt DateTime @default(now())
+
+  reserva Reserva  @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+  jugador Usuario  @relation("DisputasDelJugador", fields: [jugadorId], references: [id])
+  admin   Usuario? @relation("DisputasResueltas", fields: [adminId], references: [id])
+
+  // Para el listado del admin, que filtra abiertas o resueltas
+  @@index([estado])
 }

@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import type { Deporte } from '@/lib/generated/prisma/client'
 import { isSlotBlocked } from '@/lib/blocks'
 import { pendientesVencidas } from '@/lib/bookings'
 import { diaDeReserva, diaSemanaDeReserva, generateSlots } from '@/lib/time'
@@ -94,19 +95,19 @@ export function horariosDeMayorDemanda(
   return horarios.sort((a, b) => b.reservas - a.reservas)
 }
 
-// Métricas de un complejo (o de una sola cancha suya) entre desde y hasta
-// (YYYY-MM-DD, incluidos). Quien llama ya chequeó que el complejo es del
-// dueño logueado.
+// Métricas de un complejo entre desde y hasta (YYYY-MM-DD, incluidos). Con
+// filtro, solo las de una cancha suya o las de sus canchas de un deporte.
+// Quien llama ya chequeó que el complejo es del dueño logueado.
 export async function metricasDelComplejo(
   complejoId: string,
   desde: string,
   hasta: string,
-  canchaId?: string,
+  filtro: { canchaId?: string; deporte?: Deporte } = {},
 ): Promise<MetricasComplejo> {
   // Se incluyen las canchas dadas de baja: sus reservas pasadas siguen
   // contando para ingresos y cancelaciones.
   const canchas = await db.cancha.findMany({
-    where: { complejoId, id: canchaId },
+    where: { complejoId, id: filtro.canchaId, deporte: filtro.deporte },
     include: {
       blocks: {
         where: { startDate: { lte: new Date(hasta) }, endDate: { gte: new Date(desde) } },

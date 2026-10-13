@@ -2,16 +2,19 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Wallet } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatPrecio } from '@/lib/labels'
 
+// className va al contenedor: la tarjeta decide cuánto ancho le da al botón.
 export function PayDepositButton({
   bookingId,
   montoSena,
+  className,
 }: {
   bookingId: string
   montoSena: string
+  className?: string
 }) {
   const router = useRouter()
   const [pagando, setPagando] = useState(false)
@@ -37,9 +40,9 @@ export function PayDepositButton({
   }
 
   return (
-    <div className="text-right">
-      <Button size="sm" onClick={pagar} disabled={pagando}>
-        {pagando ? <Loader2 className="size-3.5 animate-spin" /> : <Wallet className="size-3.5" />}
+    <div className={className}>
+      <Button size="sm" className="w-full" onClick={pagar} disabled={pagando}>
+        {pagando && <Loader2 className="size-3.5 animate-spin" />}
         {pagando ? 'Pagando seña...' : `Pagar seña ${formatPrecio(montoSena)}`}
       </Button>
       {error && <p className="text-destructive mt-1 text-xs">{error}</p>}
