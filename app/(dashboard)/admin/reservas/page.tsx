@@ -200,7 +200,7 @@ export default async function AdminReservasPage({ searchParams }: PageProps<'/ad
                   {/* En celular se desliza de costado; desde @xl se parte en
                       dos filas si no entra. [contain:inline-size]: que no
                       ensanche la tabla con su ancho */}
-                  <div className="flex gap-1 overflow-x-auto [contain:inline-size] [scrollbar-width:none] @xl:flex-wrap">
+                  <div className="flex gap-1 overflow-x-auto contain-[inline-size] scrollbar-none @xl:flex-wrap">
                     <PestaniasDeEstado
                       filtros={filtros}
                       total={reservasDelPeriodo.length}
