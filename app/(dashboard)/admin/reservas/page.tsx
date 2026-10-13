@@ -9,7 +9,6 @@ import { montoDelHistorial } from '@/lib/historial'
 import { homePorRol } from '@/lib/home-por-rol'
 import { iniciales } from '@/lib/iniciales'
 import { deporteLabels, grupoDeEstadoLabels } from '@/lib/labels'
-import type { Deporte } from '@/lib/generated/prisma/client'
 import { calcularPagina } from '@/lib/paginacion'
 import { diaDeHoy, diaDeReserva, momentoActual, turnoYaPaso } from '@/lib/time'
 import {
@@ -25,7 +24,7 @@ import { adminBookingsFiltersSchema } from '@/lib/validations/admin-bookings'
 import { AdminBookingsFilters } from '@/components/admin-bookings-filters'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { CeldaMonto } from '@/components/celdas-reserva'
-import { DibujoDeCancha } from '@/components/dibujo-de-cancha'
+import { MiniCancha } from '@/components/mini-cancha'
 import { EstadoVacio } from '@/components/estado-vacio'
 import { FechaDelTurno } from '@/components/fecha-del-turno'
 import { Paginacion } from '@/components/paginacion'
@@ -186,14 +185,17 @@ export default async function AdminReservasPage({ searchParams }: PageProps<'/ad
         <div className="bg-card shadow-card @container mt-5 overflow-clip rounded-2xl">
           <table className="w-full caption-bottom text-sm">
             {/* Encabezado fijo al bajar: las pestañas de estado y los títulos
-                de las columnas, así nunca se pierde qué es cada dato. Las
-                líneas van como sombra (inset) y no como border: con la tabla
-                en border-collapse, los bordes no acompañan al sticky */}
-            <TableHeader className="bg-card sticky top-0 z-10">
+                de las columnas, así nunca se pierde qué es cada dato. Se pega
+                a 16px del borde (top-4) y una franja del color del fondo (el
+                before: de la primera celda) tapa esos 16px, para que no se
+                vean las filas pasando por arriba.
+                La línea de abajo también es una sombra (inset) y no un border:
+                con la tabla en border-collapse, los bordes no acompañan al sticky */}
+            <TableHeader className="bg-card sticky top-4 z-10 [&_tr]:border-0">
               <tr>
                 <th
                   colSpan={5}
-                  className="p-2 text-left font-normal shadow-[inset_0_-1px_0_var(--color-border)]"
+                  className="before:bg-background relative px-2 pt-2 text-left font-normal before:absolute before:inset-x-0 before:bottom-full before:h-4"
                 >
                   {/* En celular se desliza de costado; desde @xl se parte en
                       dos filas si no entra. [contain:inline-size]: que no
@@ -280,17 +282,6 @@ function PestaniasDeEstado({
   )
 }
 
-// La cancha del deporte en chiquito: el centro del dibujo (línea del medio,
-// círculo o red). Con tantas filas, un cuadradito se lee mejor que la cancha
-// entera en diagonal, y el color ya dice el deporte.
-function MiniCancha({ deporte, className }: { deporte: Deporte; className: string }) {
-  return (
-    <div aria-hidden className={`shrink-0 overflow-hidden ring-1 ring-black/10 ${className}`}>
-      <DibujoDeCancha deporte={deporte} />
-    </div>
-  )
-}
-
 function FilaReserva({
   reserva,
   ahora,
@@ -317,13 +308,13 @@ function FilaReserva({
         <FechaDelTurno dia={dia} horaInicio={reserva.horaInicio} horaFin={reserva.horaFin} />
         {/* Cuando la tarjeta es angosta no entra la columna Cancha: va acá abajo */}
         <div className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-xs whitespace-normal @xl:hidden">
-          <MiniCancha deporte={reserva.cancha.deporte} className="size-4 rounded" />
+          <MiniCancha deporte={reserva.cancha.deporte} className="h-3.5 w-5.5 rounded-[3px]" />
           {reserva.cancha.nombre} · {reserva.cancha.complejo.nombre}
         </div>
       </TableCell>
       <TableCell className="hidden @xl:table-cell">
         <div className="flex items-center gap-3">
-          <MiniCancha deporte={reserva.cancha.deporte} className="size-10 rounded-xl" />
+          <MiniCancha deporte={reserva.cancha.deporte} className="h-10 w-16 rounded-lg" />
           <div>
             {/* El deporte va en texto porque el dibujo de fútbol es el mismo
                 para 5, 7 y 11 */}
