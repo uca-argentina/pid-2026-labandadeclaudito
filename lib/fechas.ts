@@ -59,3 +59,16 @@ export function saludoSegunHora(hora: string = momentoActual().hora): string {
   if (hora >= '12:00' && hora < '20:00') return 'Buenas tardes'
   return 'Buenas noches'
 }
+
+// Cuánto pasó desde un día hasta hoy (los dos YYYY-MM-DD): "hoy", "ayer" o
+// "hace 5 días". Para mostrar cuánto hace que algo espera.
+export function haceCuanto(dia: string, hoy: string = diaDeHoy()): string {
+  const MS_POR_DIA = 24 * 60 * 60 * 1000
+  const desde = new Date(`${dia}T00:00:00Z`).getTime()
+  const hasta = new Date(`${hoy}T00:00:00Z`).getTime()
+  const dias = Math.round((hasta - desde) / MS_POR_DIA)
+
+  if (dias <= 0) return 'hoy'
+  if (dias === 1) return 'ayer'
+  return `hace ${dias} días`
+}

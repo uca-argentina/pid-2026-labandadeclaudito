@@ -82,3 +82,73 @@ export function urlDeReservasGlobales(filtros: FiltrosDeReservas): string {
   }
   return `/admin/reservas?${params.toString()}`
 }
+
+// Una reserva reducida a lo que usa el panel del admin
+export type ReservaResumida = {
+  dia: string
+  grupo: GrupoDeEstado
+}
+
+export type ResumenDeReservas = {
+  // Las que siguen en pie (todas menos las canceladas)
+  reservas: number
+  // Canceladas sobre el total, para la tasa de cancelación
+  canceladas: number
+  total: number
+  // Ausentes sobre los turnos que ya terminaron, para la tasa de ausencias
+  ausentes: number
+  terminadas: number
+}
+
+export function resumirReservas(lista: ReservaResumida[]): ResumenDeReservas {
+  const resumen = { reservas: 0, canceladas: 0, total: 0, ausentes: 0, terminadas: 0 }
+
+  for (const reserva of lista) {
+    resumen.total++
+
+    if (reserva.grupo === 'CANCELADA') {
+      resumen.canceladas++
+      continue
+    }
+
+    resumen.reservas++
+
+    if (reserva.grupo === 'FINALIZADA') {
+      resumen.terminadas++
+    }
+    if (reserva.grupo === 'NO_SHOW') {
+      resumen.terminadas++
+      resumen.ausentes++
+    }
+  }
+
+  return resumen
+}
+
+// Cuántas reservas en pie hubo cada día, empezando por desde. Las canceladas
+// no cuentan: el gráfico muestra turnos que se juegan.
+export function reservasDiaPorDia(lista: ReservaResumida[], desde: string, dias: number): number[] {
+  const fechas: string[] = []
+  const totales: number[] = []
+  for (let i = 0; i < dias; i++) {
+    fechas.push(sumarDias(desde, i))
+    totales.push(0)
+  }
+
+  for (const reserva of lista) {
+    if (reserva.grupo === 'CANCELADA') continue
+    const posicion = fechas.indexOf(reserva.dia)
+    if (posicion !== -1) totales[posicion]++
+  }
+
+  return totales
+}
+
+// Un porcentaje para mostrar. Con casos que no llegan al 1% dice "<1%" en vez
+// de "0%" (que haría creer que no hubo ninguno). Sin total no hay tasa: "—".
+export function tasa(parte: number, total: number): string {
+  if (total === 0) return '—'
+  const porcentaje = Math.round((parte / total) * 100)
+  if (parte > 0 && porcentaje === 0) return '<1%'
+  return `${porcentaje}%`
+}

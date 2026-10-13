@@ -2,6 +2,9 @@ import { describe, expect, test } from 'vitest'
 import {
   contarPorGrupo,
   grupoDelEstado,
+  reservasDiaPorDia,
+  resumirReservas,
+  tasa,
   rangoDeFechas,
   urlDeReservasGlobales,
 } from './admin-bookings'
@@ -109,5 +112,72 @@ describe('urlDeReservasGlobales', () => {
     expect(urlDeReservasGlobales({ desde: '2026-10-01', hasta: '2026-10-31', pagina: 1 })).toBe(
       '/admin/reservas?desde=2026-10-01&hasta=2026-10-31',
     )
+  })
+})
+
+describe('resumirReservas', () => {
+  const reservas = [
+    { dia: '2026-10-10', grupo: 'FINALIZADA' as const },
+    { dia: '2026-10-11', grupo: 'NO_SHOW' as const },
+    { dia: '2026-10-12', grupo: 'CANCELADA' as const },
+    { dia: '2026-10-13', grupo: 'CONFIRMADA' as const },
+  ]
+
+  test('las canceladas no cuentan como reservas', () => {
+    expect(resumirReservas(reservas).reservas).toBe(3)
+  })
+
+  test('cuenta las canceladas sobre el total', () => {
+    const resumen = resumirReservas(reservas)
+    expect(resumen.canceladas).toBe(1)
+    expect(resumen.total).toBe(4)
+  })
+
+  test('las ausencias se cuentan sobre los turnos que ya terminaron', () => {
+    const resumen = resumirReservas(reservas)
+    expect(resumen.ausentes).toBe(1)
+    expect(resumen.terminadas).toBe(2)
+  })
+
+  test('sin reservas da todo en cero', () => {
+    expect(resumirReservas([])).toEqual({
+      reservas: 0,
+      canceladas: 0,
+      total: 0,
+      ausentes: 0,
+      terminadas: 0,
+    })
+  })
+})
+
+describe('reservasDiaPorDia', () => {
+  test('cuenta las reservas de cada día desde el primero, sin las canceladas', () => {
+    const reservas = [
+      { dia: '2026-10-11', grupo: 'FINALIZADA' as const },
+      { dia: '2026-10-13', grupo: 'CONFIRMADA' as const },
+      { dia: '2026-10-13', grupo: 'EN_CURSO' as const },
+      { dia: '2026-10-13', grupo: 'CANCELADA' as const },
+    ]
+    expect(reservasDiaPorDia(reservas, '2026-10-11', 3)).toEqual([1, 0, 2])
+  })
+
+  test('ignora las reservas fuera del rango', () => {
+    const reservas = [{ dia: '2026-10-20', grupo: 'CONFIRMADA' as const }]
+    expect(reservasDiaPorDia(reservas, '2026-10-11', 3)).toEqual([0, 0, 0])
+  })
+})
+
+describe('tasa', () => {
+  test('redondea el porcentaje', () => {
+    expect(tasa(157, 753)).toBe('21%')
+  })
+
+  test('si hay casos pero no llegan al 1%, no dice 0%', () => {
+    expect(tasa(1, 557)).toBe('<1%')
+  })
+
+  test('sin casos es 0% y sin total no hay tasa', () => {
+    expect(tasa(0, 50)).toBe('0%')
+    expect(tasa(0, 0)).toBe('—')
   })
 })

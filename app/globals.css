@@ -161,6 +161,32 @@
     }
   }
 
+  /* Campana del panel del admin: se sacude y descansa, para avisar que hay
+     disputas esperando sin molestar todo el tiempo */
+  --animate-campana: campana 2.4s ease-in-out infinite;
+  @keyframes campana {
+    0%,
+    40%,
+    100% {
+      transform: rotate(0deg);
+    }
+    5% {
+      transform: rotate(16deg);
+    }
+    12% {
+      transform: rotate(-14deg);
+    }
+    19% {
+      transform: rotate(10deg);
+    }
+    26% {
+      transform: rotate(-6deg);
+    }
+    33% {
+      transform: rotate(3deg);
+    }
+  }
+
   /* Pelota de básquet: pique */
   --animate-pique: pique 1.2s ease-in infinite alternate;
   @keyframes pique {
