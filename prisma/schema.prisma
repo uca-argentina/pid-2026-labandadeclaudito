@@ -16,6 +16,12 @@ enum Rol {
   ADMIN
 }
 
+enum EstadoAprobacion {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
 enum Deporte {
   FUTBOL_5
   FUTBOL_7
@@ -90,6 +96,10 @@ model Complejo {
   // Horas antes del turno hasta las que se puede cancelar con devolución de
   // la seña. Aplica a todas sus canchas (no hay override por cancha).
   cancellationHours        Int      @default(24)
+  // Un complejo nuevo no lo ven los jugadores hasta que un admin lo aprueba
+  estadoAprobacion         EstadoAprobacion @default(PENDIENTE)
+  // Lo escribe el admin al rechazar; se borra cuando el dueño lo corrige
+  motivoRechazo            String?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 

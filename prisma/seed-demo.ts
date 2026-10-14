@@ -507,6 +507,7 @@ async function main() {
         zona: complejo.zona,
         contacto: complejo.contacto,
         duenioId: idDeDuenio.get(complejo.duenioEmail)!,
+        estadoAprobacion: 'APROBADO',
         porcentajeSenaDefault: complejo.porcentajeSena,
         cancellationHours: complejo.cancellationHours,
         imagenes: {
