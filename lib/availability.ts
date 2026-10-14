@@ -1,6 +1,7 @@
 import { db } from '@/lib/db'
 import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
 import { pendientesVencidas } from '@/lib/bookings'
+import { complejoVisible } from '@/lib/complejos'
 import { Prisma } from '@/lib/generated/prisma/client'
 import {
   diaDeReserva,
@@ -103,7 +104,7 @@ export async function getAvailableSlots(
   // abrir el sheet y cada pocos segundos mientras está abierto.
   const [cancha, reservas, bloqueosDelDia, reservasDelJugador] = await Promise.all([
     db.cancha.findFirst({
-      where: { id: canchaId, activo: true, complejo: { activo: true, duenio: { activo: true } } },
+      where: { id: canchaId, activo: true, complejo: complejoVisible() },
       include: {
         complejo: { select: { porcentajeSenaDefault: true, minAdvanceMinutesDefault: true } },
         preciosEspeciales: { where: { activo: true } },
