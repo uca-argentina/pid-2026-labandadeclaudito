@@ -22,18 +22,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
   }
 
-  // Si el admin lo había rechazado, al corregirlo vuelve a revisión. Uno
-  // aprobado o pendiente se queda como está.
-  let estadoAprobacion = complejo.estadoAprobacion
-  let motivoRechazo = complejo.motivoRechazo
+  // Si el admin lo había rechazado, al corregirlo vuelve a revisión
   if (complejo.estadoAprobacion === 'RECHAZADO') {
-    estadoAprobacion = 'PENDIENTE'
-    motivoRechazo = null
+    const reenviado = await db.complejo.update({
+      where: { id },
+      data: { ...parsed.data, estadoAprobacion: 'PENDIENTE', motivoRechazo: null },
+    })
+    return NextResponse.json({ complejo: reenviado }, { status: 200 })
   }
 
+  // Aprobado o pendiente: el estado no se toca. Así no se pisa una decisión
+  // que el admin tomó mientras el dueño tenía el formulario abierto.
   const actualizado = await db.complejo.update({
     where: { id },
-    data: { ...parsed.data, estadoAprobacion, motivoRechazo },
+    data: parsed.data,
   })
 
   return NextResponse.json({ complejo: actualizado }, { status: 200 })
