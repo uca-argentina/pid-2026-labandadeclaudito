@@ -23,6 +23,8 @@ const BENEFITS = [
 // y se apilan una encima de otra dentro del "escenario"; cada una aparece y
 // desaparece con opacity.
 // El panel queda fijo (sticky) para que no se mueva si el formulario es alto.
+// La animación se achica para entrar en el alto de la pantalla: así el panel
+// no scrollea en notebooks con poca altura.
 // Va en el verde oscuro del sidebar (igual en los dos temas): al entrar, ese
 // mismo verde queda como la barra de la app.
 export function LoginHero() {
@@ -53,7 +55,7 @@ export function LoginHero() {
         </span>
       </div>
 
-      <div className="hero-stage relative m-auto w-full max-w-lg space-y-6 pt-8">
+      <div className="hero-stage relative mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col justify-center gap-6 pt-8">
         <div className="space-y-3">
           <h2 className="font-heading text-5xl font-bold tracking-tight [@media(max-height:820px)]:text-4xl">
             Reservá tu cancha en segundos
@@ -64,17 +66,28 @@ export function LoginHero() {
           </p>
         </div>
 
-        <div
-          aria-hidden="true"
-          className="hero-frame bg-background text-foreground relative aspect-[400/340] w-full overflow-hidden rounded-3xl shadow-2xl"
-        >
-          <PainScene />
-          <LaptopScene />
-          <TimeScene id="a" sport="futbol" title="Fútbol 5 · Sáb 21:00" complex="Complejo Oeste" />
-          <FootballScene />
-          <PhoneScene />
-          <TimeScene id="b" sport="padel" title="Pádel · Dom 20:00" complex="Club Palermo" />
-          <PadelScene />
+        {/* El marco ocupa el lugar que sobra (hasta su alto natural, 27.2rem =
+            32rem de ancho × 340/400) y la animación toma el ancho que le
+            permita ese alto: min(ancho del lugar, alto del lugar × 400/340).
+            cqw/cqh son el ancho y alto de este contenedor. */}
+        <div className="max-h-[27.2rem] min-h-0 flex-1 [container-type:size]">
+          <div
+            aria-hidden="true"
+            className="hero-frame bg-background text-foreground relative mx-auto aspect-[400/340] w-[min(100cqw,calc(100cqh*400/340))] overflow-hidden rounded-3xl shadow-2xl"
+          >
+            <PainScene />
+            <LaptopScene />
+            <TimeScene
+              id="a"
+              sport="futbol"
+              title="Fútbol 5 · Sáb 21:00"
+              complex="Complejo Oeste"
+            />
+            <FootballScene />
+            <PhoneScene />
+            <TimeScene id="b" sport="padel" title="Pádel · Dom 20:00" complex="Club Palermo" />
+            <PadelScene />
+          </div>
         </div>
 
         <ul className="space-y-2 text-sm [@media(max-height:820px)]:hidden">
