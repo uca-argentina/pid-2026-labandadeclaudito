@@ -26,6 +26,8 @@ const vistas: { vista: VistaDelSelector; nombre: string }[] = [
 //   ‹      Octubre de 2026      ›
 //   [Hoy] [Día|Semana|Mes|Rango]
 //   [fechas]  (solo con "Rango")
+// En celulares angostos [Día|Semana|Mes|Rango] no entra al lado de [Hoy] y
+// baja a su propia fila (por eso no lleva min-w-0: si achicara, se saldría).
 // El orden cambia con las clases order-*. Con "Rango" las flechas corren el
 // rango por su largo. No se puede pasar de hoy: no hay datos del futuro.
 export function PeriodPicker({
@@ -131,7 +133,7 @@ export function PeriodPicker({
       )}
 
       <div
-        className="bg-muted order-6 flex min-w-0 flex-1 rounded-full p-1 sm:flex-none"
+        className="bg-muted order-6 flex flex-1 rounded-full p-1 sm:flex-none"
         role="group"
         aria-label="Ver por"
       >

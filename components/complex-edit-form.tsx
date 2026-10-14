@@ -190,7 +190,7 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
         </div>
       </div>
 
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-wrap justify-end gap-3">
         <Button
           type="button"
           variant="outline"

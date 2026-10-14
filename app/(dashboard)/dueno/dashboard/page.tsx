@@ -81,7 +81,7 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
 
   if (complejos.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+      <div className="mx-auto w-full max-w-5xl">
         <h1 className="mb-6 text-3xl font-semibold">Estadísticas</h1>
         <div className="border-border bg-card rounded-2xl border p-10 text-center">
           <Building2 className="text-muted-foreground mx-auto mb-4 size-8" />
@@ -261,7 +261,7 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
 
   return (
     // El tema pinta todo lo de adentro con los colores del deporte elegido
-    <div className={`${temaDelDeporte(deporte)} mx-auto w-full max-w-5xl px-6 pt-6 pb-6 md:pt-4`}>
+    <div className={`${temaDelDeporte(deporte)} mx-auto w-full max-w-5xl`}>
       <DashboardFrame
         complejos={complejos}
         filtros={filtrosValidos}

@@ -376,7 +376,7 @@ export function FormNuevoComplejo() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-wrap justify-end gap-3">
         <Link
           href="/dueno/complejos"
           className={buttonVariants({ variant: 'outline', size: 'lg' })}
