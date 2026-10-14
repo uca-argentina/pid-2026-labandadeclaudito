@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { PATCH as decidir } from '@/app/api/admin/complexes/[id]/route'
 import { POST as reservar } from '@/app/api/bookings/route'
+import { POST as crearComplejo } from '@/app/api/complexes/route'
+import { PATCH as editarComplejo } from '@/app/api/complexes/[id]/route'
 import { db } from '@/lib/db'
 import { getAvailableSlots } from '@/lib/availability'
 import { getComplexDetail, searchComplexes } from '@/lib/court-search'
@@ -156,5 +158,51 @@ describe('El admin decide un complejo (PATCH /api/admin/complexes/[id])', () => 
     )
 
     expect(res.status).toBe(403)
+  })
+})
+
+describe('El dueño y la revisión', () => {
+  test('un complejo nuevo nace pendiente', async () => {
+    const duenio = await crearUsuario('DUENIO')
+    loginComo(duenio)
+
+    const res = await crearComplejo(jsonRequest('POST', datosDeComplejo))
+    const json = await res.json()
+
+    const guardado = await db.complejo.findUnique({ where: { id: json.id } })
+    expect(guardado?.estadoAprobacion).toBe('PENDIENTE')
+  })
+
+  test('editar uno rechazado lo vuelve a pendiente y borra el motivo', async () => {
+    const { duenio, complejo } = await crearComplejoPendiente()
+    await db.complejo.update({
+      where: { id: complejo.id },
+      data: { estadoAprobacion: 'RECHAZADO', motivoRechazo: 'Faltan fotos' },
+    })
+    loginComo(duenio)
+
+    const res = await editarComplejo(
+      jsonRequest('PATCH', { ...datosDeComplejo, nombre: '[TEST] Corregido' }),
+      conParams({ id: complejo.id }),
+    )
+
+    expect(res.status).toBe(200)
+    const guardado = await db.complejo.findUnique({ where: { id: complejo.id } })
+    expect(guardado?.estadoAprobacion).toBe('PENDIENTE')
+    expect(guardado?.motivoRechazo).toBeNull()
+  })
+
+  test('editar uno aprobado no lo manda a revisión', async () => {
+    const duenio = await crearUsuario('DUENIO')
+    const { complejo } = await crearComplejoConCanchas(duenio.id)
+    loginComo(duenio)
+
+    await editarComplejo(
+      jsonRequest('PATCH', { ...datosDeComplejo, nombre: '[TEST] Nuevo nombre' }),
+      conParams({ id: complejo.id }),
+    )
+
+    const guardado = await db.complejo.findUnique({ where: { id: complejo.id } })
+    expect(guardado?.estadoAprobacion).toBe('APROBADO')
   })
 })
