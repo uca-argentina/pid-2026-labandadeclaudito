@@ -546,6 +546,57 @@ async function main() {
     }
   }
 
+  // ----- Complejos esperando revisión (para mostrar /admin/complejos) -----
+  // Sin reservas: un complejo sin aprobar no lo ve ningún jugador.
+  // TENIS no tiene precioNocturno (que no es un campo de Cancha), así que se
+  // puede copiar entero; la de pádel va escrita a mano por la misma razón.
+  const MS_POR_DIA = 24 * 60 * 60 * 1000
+  await db.complejo.create({
+    data: {
+      nombre: 'Colegiales Tenis Club',
+      direccion: 'Av. Federico Lacroze 2650',
+      zona: 'Colegiales',
+      contacto: '11 4553-7788',
+      duenioId: idDeDuenio.get('laura.fernandez@tocayjuga.com')!,
+      createdAt: new Date(Date.now() - 3 * MS_POR_DIA),
+      canchas: { create: [{ nombre: 'Cancha 1', ...TENIS }] },
+    },
+  })
+  await db.complejo.create({
+    data: {
+      nombre: 'Flores Pádel',
+      direccion: 'Av. Rivadavia 7100',
+      zona: 'Flores',
+      contacto: '11 4611-2020',
+      duenioId: idDeDuenio.get('diego.sosa@tocayjuga.com')!,
+      canchas: {
+        create: [
+          {
+            nombre: 'Pádel 1',
+            deporte: 'PADEL',
+            tipoSuperficie: 'CESPED_SINTETICO',
+            capacidad: 4,
+            precioBase: 32000,
+            horaApertura: '08:00',
+            horaCierre: '00:00',
+            duracionTurnoMin: 90,
+          },
+        ],
+      },
+    },
+  })
+  await db.complejo.create({
+    data: {
+      nombre: 'Canchas del Oeste',
+      direccion: 'Calle sin número',
+      zona: 'Floresta',
+      contacto: '11 4567-0000',
+      duenioId: idDeDuenio.get('dueno@tocayjuga.com')!,
+      estadoAprobacion: 'RECHAZADO',
+      motivoRechazo: 'La dirección no es válida: cargá la calle y la altura del complejo.',
+    },
+  })
+
   function buscarCancha(complejo: string, nombre: string): CanchaCreada {
     const cancha = canchas.find((c) => c.complejo === complejo && c.nombre === nombre)
     if (!cancha) throw new Error(`No existe ${complejo} / ${nombre}`)
