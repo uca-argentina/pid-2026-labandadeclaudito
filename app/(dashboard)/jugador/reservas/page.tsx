@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { CalendarDays, CircleDot, Clock, LandPlot, Search, Wallet } from 'lucide-react'
+import { CalendarDays, CircleDot, Clock, LandPlot, Search, ShieldAlert, Wallet } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import type { Prisma } from '@/lib/generated/prisma/client'
 import { dondeHistorial, dondeProximas } from '@/lib/bookings'
+import { sePuedeDisputar } from '@/lib/disputas'
 import { formatPrecio } from '@/lib/labels'
 import { montoDelHistorial } from '@/lib/historial'
 import { venceLaSena } from '@/lib/estado-reserva'
@@ -16,7 +17,9 @@ import { CancelBookingButton } from '@/components/cancel-booking-button'
 import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
 import { CeldaCancha, CeldaMonto } from '@/components/celdas-reserva'
 import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
+import { EstadoDeDisputa } from '@/components/estado-de-disputa'
 import { EstadoVacio } from '@/components/estado-vacio'
+import { DisputeFormDialog } from '@/components/dispute-form-dialog'
 import { FranjaDeCancha } from '@/components/franja-de-cancha'
 import { Button } from '@/components/ui/button'
 import { FechaDelTurno } from '@/components/fecha-del-turno'
@@ -52,7 +55,7 @@ async function getReservas(
 ) {
   return db.reserva.findMany({
     where,
-    include: { cancha: { include: { complejo: true } }, pago: true },
+    include: { cancha: { include: { complejo: true } }, pago: true, disputa: true },
     orderBy: [{ fecha: orden }, { horaInicio: orden }],
     skip,
     take,
@@ -191,11 +194,21 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
                     <TableHead className="hidden pr-4 sm:table-cell">
                       <TituloConIcono icono={Wallet}>Monto</TituloConIcono>
                     </TableHead>
+                    {vista === 'historial' && (
+                      <TableHead className="pr-4 text-right">
+                        <TituloConIcono icono={ShieldAlert}>Disputa</TituloConIcono>
+                      </TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {reservas.map((reserva) => (
-                    <FilaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
+                    <FilaReserva
+                      key={reserva.id}
+                      reserva={reserva}
+                      ahora={ahora}
+                      conDisputa={vista === 'historial'}
+                    />
                   ))}
                 </TableBody>
               </Table>
@@ -208,13 +221,16 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
   )
 }
 
-// Una fila de la tabla de historial o canceladas: solo para consultar
+// Una fila de la tabla de historial o canceladas. En el historial lleva la
+// disputa: el botón para abrirla, o en qué está la que ya abrió.
 function FilaReserva({
   reserva,
   ahora,
+  conDisputa,
 }: {
   reserva: Reserva
   ahora: { dia: string; hora: string }
+  conDisputa: boolean
 }) {
   const dia = diaDeReserva(reserva.fecha)
   const monto = montoDelHistorial(
@@ -254,6 +270,25 @@ function FilaReserva({
       <TableCell className="hidden pr-4 sm:table-cell">
         <CeldaMonto monto={monto} />
       </TableCell>
+      {conDisputa && (
+        <TableCell className="pr-4 text-right">
+          {reserva.disputa ? (
+            <EstadoDeDisputa disputa={reserva.disputa} />
+          ) : (
+            sePuedeDisputar(
+              {
+                estado: reserva.estado,
+                asistio: reserva.asistio,
+                dia,
+                horaInicio: reserva.horaInicio,
+                horaFin: reserva.horaFin,
+                asistenciaMarcadaEn: reserva.asistenciaMarcadaEn,
+              },
+              ahora,
+            ) && <DisputeFormDialog bookingId={reserva.id} />
+          )}
+        </TableCell>
+      )}
     </TableRow>
   )
 }

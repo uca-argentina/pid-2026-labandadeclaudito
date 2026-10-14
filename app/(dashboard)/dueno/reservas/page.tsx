@@ -25,6 +25,7 @@ import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { AttendanceButtons } from '@/components/attendance-buttons'
 import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
 import { CeldaCancha, CeldaMonto } from '@/components/celdas-reserva'
+import { EstadoDeDisputa } from '@/components/estado-de-disputa'
 import { EstadoVacio } from '@/components/estado-vacio'
 import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
 import { FranjaDeCancha } from '@/components/franja-de-cancha'
@@ -59,7 +60,12 @@ async function getReservas(
 ) {
   return db.reserva.findMany({
     where,
-    include: { cancha: { include: { complejo: true } }, jugador: true, pago: true },
+    include: {
+      cancha: { include: { complejo: true } },
+      jugador: true,
+      pago: true,
+      disputa: true,
+    },
     orderBy: [{ fecha: orden }, { horaInicio: orden }],
     skip,
     take,
@@ -305,8 +311,14 @@ function FilaReserva({
       </TableCell>
       {conAsistencia && (
         <TableCell className="pr-4 text-right">
-          {seMarcaAsistencia && (
-            <AttendanceButtons bookingId={reserva.id} asistio={reserva.asistio} />
+          {/* Con una disputa la marca queda congelada: mientras está abierta la
+              revisa el admin, y una vez resuelta su decisión es definitiva */}
+          {reserva.disputa ? (
+            <EstadoDeDisputa disputa={reserva.disputa} />
+          ) : (
+            seMarcaAsistencia && (
+              <AttendanceButtons bookingId={reserva.id} asistio={reserva.asistio} />
+            )
           )}
         </TableCell>
       )}

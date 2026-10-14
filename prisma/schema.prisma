@@ -49,6 +49,11 @@ enum DecisionDisputa {
   A_FAVOR_DUENIO
 }
 
+enum TipoEvidencia {
+  IMAGEN
+  VIDEO
+}
+
 model Usuario {
   id           String   @id @default(cuid())
   nombre       String
@@ -172,19 +177,23 @@ model PrecioEspecial {
 }
 
 model Reserva {
-  id          String        @id @default(cuid())
-  canchaId    String
-  jugadorId   String
-  fecha       DateTime      @db.Date
-  horaInicio  String
-  horaFin     String
-  estado      EstadoReserva @default(PENDIENTE)
-  asistio     Boolean?
+  id                  String        @id @default(cuid())
+  canchaId            String
+  jugadorId           String
+  fecha               DateTime      @db.Date
+  horaInicio          String
+  horaFin             String
+  estado              EstadoReserva @default(PENDIENTE)
+  asistio             Boolean?
+  // Cuándo el dueño marcó la asistencia. El plazo para disputar corre desde
+  // acá y no desde el turno: si el dueño vuelve a marcar no-show, el jugador
+  // tiene de nuevo los 7 días para disputar.
+  asistenciaMarcadaEn DateTime?
   // Precio del turno congelado al momento de reservar (no se recalcula
   // aunque después cambie precioBase o haya un PrecioEspecial nuevo).
-  precioTurno Decimal       @db.Decimal(10, 2)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  precioTurno         Decimal       @db.Decimal(10, 2)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
   cancha  Cancha   @relation(fields: [canchaId], references: [id])
   jugador Usuario  @relation("JugadorReservas", fields: [jugadorId], references: [id])
@@ -235,8 +244,6 @@ model Disputa {
   reservaId   String @unique
   jugadorId   String
   descripcion String
-  // Simulada: texto o nombre de archivo, sin upload real
-  evidencia   String
 
   estado          EstadoDisputa    @default(ABIERTA)
   decision        DecisionDisputa?
@@ -247,10 +254,25 @@ model Disputa {
 
   createdAt DateTime @default(now())
 
-  reserva Reserva  @relation(fields: [reservaId], references: [id], onDelete: Cascade)
-  jugador Usuario  @relation("DisputasDelJugador", fields: [jugadorId], references: [id])
-  admin   Usuario? @relation("DisputasResueltas", fields: [adminId], references: [id])
+  reserva    Reserva            @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+  jugador    Usuario            @relation("DisputasDelJugador", fields: [jugadorId], references: [id])
+  admin      Usuario?           @relation("DisputasResueltas", fields: [adminId], references: [id])
+  evidencias EvidenciaDisputa[]
 
   // Para el listado del admin, que filtra abiertas o resueltas
   @@index([estado])
+}
+
+// Una prueba que subió el jugador (a Vercel Blob, como las fotos de complejo).
+// Hoy solo se suben imágenes; el tipo está para cuando entren los videos.
+model EvidenciaDisputa {
+  id        String        @id @default(cuid())
+  disputaId String
+  url       String
+  tipo      TipoEvidencia
+  orden     Int           @default(0)
+
+  disputa Disputa @relation(fields: [disputaId], references: [id], onDelete: Cascade)
+
+  @@index([disputaId])
 }

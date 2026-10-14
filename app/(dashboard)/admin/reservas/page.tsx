@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { CalendarDays, CircleDot, LandPlot, MapPin, User, Wallet } from 'lucide-react'
+import { CalendarDays, CircleDot, LandPlot, MapPin, Scale, User, Wallet } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { pendientesVencidas } from '@/lib/bookings'
@@ -58,6 +58,8 @@ async function getReservasPorId(ids: string[]) {
       cancha: { include: { complejo: true } },
       jugador: { select: { nombre: true, email: true } },
       pago: true,
+      // Solo lo que usa el link al detalle de la disputa
+      disputa: { select: { id: true, estado: true } },
     },
     orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
   })
@@ -354,6 +356,22 @@ function FilaReserva({
           horaFin={reserva.horaFin}
           ahoraInicial={ahora}
         />
+        {/* La disputa es sobre este estado (el jugador cuestiona la falta), por
+            eso el link va acá y no en una columna aparte. En rojo mientras
+            espera una decisión, igual que en el panel del admin. */}
+        {reserva.disputa && (
+          <Link
+            href={`/admin/disputas/${reserva.disputa.id}`}
+            className={
+              reserva.disputa.estado === 'ABIERTA'
+                ? 'text-destructive mt-1.5 flex items-center gap-1 text-xs font-semibold'
+                : 'text-muted-foreground hover:text-foreground mt-1.5 flex items-center gap-1 text-xs font-medium'
+            }
+          >
+            <Scale className="size-3 shrink-0" />
+            Ver disputa
+          </Link>
+        )}
       </TableCell>
       <TableCell className="hidden pr-4 @5xl:table-cell">
         <CeldaMonto monto={monto} />

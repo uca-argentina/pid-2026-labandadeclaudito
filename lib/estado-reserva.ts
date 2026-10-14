@@ -5,7 +5,7 @@ import type { EstadoReserva } from '@/lib/generated/prisma/client'
 // asistencia que marcó el dueño, y no se guardan nunca.
 export type EstadoVisible = EstadoReserva | 'EN_CURSO' | 'FINALIZADA' | 'ASISTIO' | 'NO_SHOW'
 
-type ReservaParaEstado = {
+export type ReservaParaEstado = {
   estado: EstadoReserva
   asistio: boolean | null
   dia: string
