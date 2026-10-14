@@ -134,9 +134,9 @@ export default async function AdminHomePage() {
   const pendientes = disputasAbiertas + complejosPorAprobar
   let bajada = 'Está todo al día: no hay nada esperando tu decisión.'
   if (pendientes === 1) {
-    bajada = 'Hay 1 cosa esperando tu decisión.'
+    bajada = 'Hay 1 inconveniente esperando tu decisión.'
   } else if (pendientes > 1) {
-    bajada = `Hay ${pendientes} cosas esperando tu decisión.`
+    bajada = `Hay ${pendientes} inconvenientes esperando tu decisión.`
   }
 
   let antiguedadDeLaDisputa = ''
