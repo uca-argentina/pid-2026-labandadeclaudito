@@ -77,3 +77,24 @@ export function esImagenReal(bytes: Uint8Array): boolean {
   const webp = empiezaCon([0x52, 0x49, 0x46, 0x46]) && empiezaCon([0x57, 0x45, 0x42, 0x50], 8)
   return jpg || png || webp
 }
+
+// El admin aprueba o rechaza un complejo pendiente. Si lo rechaza, el motivo
+// es obligatorio: es lo que lee el dueño para saber qué corregir.
+export const decidirComplejoSchema = z
+  .object({
+    estadoAprobacion: z.enum(['APROBADO', 'RECHAZADO']),
+    motivoRechazo: z.string().trim().max(500, 'Máximo 500 caracteres.').optional(),
+  })
+  .refine(
+    (datos) => {
+      if (datos.estadoAprobacion === 'APROBADO') return true
+      const motivo = datos.motivoRechazo ?? ''
+      return motivo.length >= 10
+    },
+    {
+      message: 'Contale al dueño qué tiene que corregir, con al menos 10 caracteres.',
+      path: ['motivoRechazo'],
+    },
+  )
+
+export type DecidirComplejoInput = z.infer<typeof decidirComplejoSchema>
