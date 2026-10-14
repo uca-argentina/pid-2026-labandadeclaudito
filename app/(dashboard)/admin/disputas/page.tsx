@@ -1,14 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import {
-  ArrowLeft,
-  CalendarDays,
-  CalendarPlus,
-  CircleDot,
-  LandPlot,
-  ShieldAlert,
-  User,
-} from 'lucide-react'
+import { CalendarDays, CalendarPlus, CircleDot, LandPlot, ShieldAlert, User } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { iniciales } from '@/lib/iniciales'
@@ -85,15 +77,7 @@ export default async function DisputasDelAdminPage({ searchParams }: PageProps<'
 
   return (
     <main>
-      <Link
-        href="/admin"
-        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm font-medium"
-      >
-        <ArrowLeft className="size-3.5" />
-        Inicio
-      </Link>
-
-      <h1 className="font-heading mt-2 text-4xl font-bold tracking-tight">Disputas</h1>
+      <h1 className="font-heading text-4xl font-bold tracking-tight">Disputas</h1>
       <p className="text-muted-foreground mt-1.5">
         Turnos en los que el jugador no está de acuerdo con la falta que le cargó el complejo.
       </p>

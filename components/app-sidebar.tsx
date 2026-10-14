@@ -2,7 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Building2, CalendarDays, ChartColumn, Equal, Home, Search, Users, X } from 'lucide-react'
+import {
+  Building2,
+  CalendarDays,
+  ChartColumn,
+  Equal,
+  Home,
+  Scale,
+  Search,
+  Users,
+  X,
+} from 'lucide-react'
 import { homePorRol } from '@/lib/home-por-rol'
 import { Button } from '@/components/ui/button'
 import {
@@ -43,12 +53,21 @@ const navPorRol: Record<'JUGADOR' | 'DUENIO' | 'ADMIN', ItemNav[]> = {
     { href: '/dueno/reservas', label: 'Reservas', icon: CalendarDays },
     { href: '/dueno/dashboard', label: 'Estadísticas', icon: ChartColumn },
   ],
-  // ponytail: complejos y disputas suman su link en su tarjeta
+  // ponytail: complejos suma su link en su tarjeta
   ADMIN: [
     { href: '/admin', label: 'Inicio', icon: Home },
     { href: '/admin/usuarios', label: 'Usuarios', icon: Users },
     { href: '/admin/reservas', label: 'Reservas', icon: CalendarDays },
+    { href: '/admin/disputas', label: 'Disputas', icon: Scale },
   ],
+}
+
+// El Inicio de cada rol es prefijo de todas sus páginas (/admin lo es de
+// /admin/usuarios), así que ese se compara exacto; el resto se ilumina también
+// en sus subrutas (/admin/disputas/[id], /dueno/complejos/[id]/canchas).
+function esElItemActivo(href: string, pathname: string, home: string): boolean {
+  if (href === home) return pathname === href
+  return pathname === href || pathname.startsWith(`${href}/`)
 }
 
 // Botón de la barra de arriba en mobile para abrir el sidebar (dos líneas)
@@ -135,7 +154,7 @@ export function AppSidebar({
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     render={<Link href={item.href} onClick={() => setOpenMobile(false)} />}
-                    isActive={pathname === item.href}
+                    isActive={esElItemActivo(item.href, pathname, home)}
                     tooltip={item.label}
                     className="text-sidebar-foreground/80 data-active:[&_svg]:text-sidebar-primary h-11 gap-3 px-3.5 text-base [&_svg]:size-5 group-data-[collapsible=icon]:p-1.5!"
                   >

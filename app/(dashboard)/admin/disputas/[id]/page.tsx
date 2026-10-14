@@ -7,8 +7,14 @@ import { db } from '@/lib/db'
 import { diaEnPalabras } from '@/lib/fechas'
 import { estadoDeReserva } from '@/lib/estado-reserva'
 import { ultimoDiaParaDisputar } from '@/lib/disputas'
-import { decisionDisputaLabels, estadoVisibleLabels, formatPrecio } from '@/lib/labels'
+import {
+  decisionDisputaLabels,
+  deporteLabels,
+  estadoVisibleLabels,
+  formatPrecio,
+} from '@/lib/labels'
 import { diaDeReserva, formatearDia, momentoActual } from '@/lib/time'
+import { MiniCancha } from '@/components/mini-cancha'
 import { ResolverDisputaForm } from '@/components/resolver-disputa-form'
 
 // "12/10/2026 14:30": el día y la hora exacta en que pasó algo
@@ -81,7 +87,15 @@ export default async function DisputaDelAdminPage({ params }: PageProps<'/admin/
             <h2 className="font-heading text-xl font-bold">El turno</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Dato etiqueta="Complejo">{reserva.cancha.complejo.nombre}</Dato>
-              <Dato etiqueta="Cancha">{reserva.cancha.nombre}</Dato>
+              <Dato etiqueta="Cancha">
+                <span className="flex items-center gap-2">
+                  <MiniCancha deporte={reserva.cancha.deporte} className="h-6 w-10 rounded-md" />
+                  {reserva.cancha.nombre}
+                  <span className="text-muted-foreground text-xs font-normal">
+                    {deporteLabels[reserva.cancha.deporte]}
+                  </span>
+                </span>
+              </Dato>
               <Dato etiqueta="Jugador">
                 {reserva.jugador.nombre}
                 <span className="text-muted-foreground block text-xs font-normal">
@@ -93,6 +107,7 @@ export default async function DisputaDelAdminPage({ params }: PageProps<'/admin/
                 {reserva.pago ? formatPrecio(reserva.pago.monto.toString()) : 'Sin seña'}
                 <span className="text-muted-foreground block text-xs font-normal">
                   Precio del turno {formatPrecio(reserva.precioTurno.toString())}
+                  {reserva.pago && ` · seña del ${reserva.pago.porcentaje}%`}
                 </span>
               </Dato>
               {/* El plazo para disputar corre desde esta marca y no desde el
