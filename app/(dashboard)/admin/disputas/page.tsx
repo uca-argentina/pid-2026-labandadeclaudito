@@ -162,7 +162,7 @@ export default async function DisputasDelAdminPage({ searchParams }: PageProps<'
                         {formatearDia(momentoActual(disputa.createdAt).dia)}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <EstadoDeDisputa disputa={disputa} />
+                        <EstadoDeDisputa disputa={disputa} vista="ADMIN" />
                       </TableCell>
                       <TableCell className="pr-4 text-right">
                         <Button

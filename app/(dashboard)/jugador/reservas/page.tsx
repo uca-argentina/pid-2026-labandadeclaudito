@@ -273,7 +273,7 @@ function FilaReserva({
       {conDisputa && (
         <TableCell className="pr-4 text-right">
           {reserva.disputa ? (
-            <EstadoDeDisputa disputa={reserva.disputa} />
+            <EstadoDeDisputa disputa={reserva.disputa} vista="JUGADOR" />
           ) : (
             sePuedeDisputar(
               {

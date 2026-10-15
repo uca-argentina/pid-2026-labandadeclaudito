@@ -1,4 +1,4 @@
-import type { DecisionDisputa, EstadoDisputa } from '@/lib/generated/prisma/client'
+import type { DecisionDisputa, EstadoDisputa, Rol } from '@/lib/generated/prisma/client'
 import { decisionDisputaLabels, estadoDisputaLabels } from '@/lib/labels'
 
 type DisputaParaMostrar = {
@@ -9,14 +9,23 @@ type DisputaParaMostrar = {
 
 const estilos = {
   ABIERTA: 'bg-accent text-accent-foreground',
-  A_FAVOR_JUGADOR: 'bg-green-600/15 text-green-700 dark:text-green-500',
-  A_FAVOR_DUENIO: 'bg-destructive/15 text-destructive',
+  GANADA: 'bg-green-600/15 text-green-700 dark:text-green-500',
+  PERDIDA: 'bg-destructive/15 text-destructive',
+  NEUTRAL: 'bg-muted text-muted-foreground',
 }
 
-// Lo que el jugador ve de su disputa en el historial: en qué está y, si ya se
+// Verde si la disputa salió a favor de quien la mira, rojo si salió en contra.
+// El admin no es parte, así que lo ve neutro.
+function estiloDeDecision(decision: DecisionDisputa, vista: Rol) {
+  if (vista === 'ADMIN') return estilos.NEUTRAL
+  const aFavorMio = decision === (vista === 'DUENIO' ? 'A_FAVOR_DUENIO' : 'A_FAVOR_JUGADOR')
+  return aFavorMio ? estilos.GANADA : estilos.PERDIDA
+}
+
+// Lo que se ve de una disputa en el historial: en qué está y, si ya se
 // resolvió, qué decidió el administrador y por qué.
-export function EstadoDeDisputa({ disputa }: { disputa: DisputaParaMostrar }) {
-  const estilo = disputa.decision ? estilos[disputa.decision] : estilos.ABIERTA
+export function EstadoDeDisputa({ disputa, vista }: { disputa: DisputaParaMostrar; vista: Rol }) {
+  const estilo = disputa.decision ? estiloDeDecision(disputa.decision, vista) : estilos.ABIERTA
   const texto = disputa.decision
     ? `${estadoDisputaLabels.RESUELTA}: ${decisionDisputaLabels[disputa.decision]}`
     : estadoDisputaLabels.ABIERTA

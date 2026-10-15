@@ -314,7 +314,7 @@ function FilaReserva({
           {/* Con una disputa la marca queda congelada: mientras está abierta la
               revisa el admin, y una vez resuelta su decisión es definitiva */}
           {reserva.disputa ? (
-            <EstadoDeDisputa disputa={reserva.disputa} />
+            <EstadoDeDisputa disputa={reserva.disputa} vista="DUENIO" />
           ) : (
             seMarcaAsistencia && (
               <AttendanceButtons bookingId={reserva.id} asistio={reserva.asistio} />
