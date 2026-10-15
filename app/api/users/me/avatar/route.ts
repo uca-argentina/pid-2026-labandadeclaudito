@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
-import { del, put } from '@vercel/blob'
+import { put } from '@vercel/blob'
 import { auth } from '@/auth'
 import { avatarSchema } from '@/lib/validations/user'
 import { esImagenReal } from '@/lib/validations/complex'
 import { db } from '@/lib/db'
+import { borrarDelBlob } from '@/lib/blob'
 
 // Subir (o reemplazar) la foto de perfil
 export async function POST(request: Request) {
@@ -54,9 +55,9 @@ export async function POST(request: Request) {
     data: { imagenUrl: urlDeLaFoto },
   })
 
-  // Borrar la anterior para no dejar archivos huérfanos en el Blob
+  // La anterior ya no la usa nadie
   if (usuario?.imagenUrl) {
-    await del(usuario.imagenUrl)
+    await borrarDelBlob(usuario.imagenUrl)
   }
 
   return NextResponse.json({ url: urlDeLaFoto }, { status: 201 })
@@ -81,7 +82,7 @@ export async function DELETE() {
     where: { id: session.user.id },
     data: { imagenUrl: null },
   })
-  await del(usuario.imagenUrl)
+  await borrarDelBlob(usuario.imagenUrl)
 
   return NextResponse.json({ ok: true }, { status: 200 })
 }

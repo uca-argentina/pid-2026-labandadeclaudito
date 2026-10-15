@@ -30,11 +30,15 @@ export function EstadoDeDisputa({ disputa, vista }: { disputa: DisputaParaMostra
     ? `${estadoDisputaLabels.RESUELTA}: ${decisionDisputaLabels[disputa.decision]}`
     : estadoDisputaLabels.ABIERTA
 
+  // whitespace-normal: adentro de una celda de tabla (que es nowrap) el
+  // comentario del admin no se partía y se metía en la columna de al lado
   return (
-    <div className="ml-auto max-w-56 text-right">
-      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${estilo}`}>{texto}</span>
+    <div className="ml-auto max-w-56 text-right whitespace-normal">
+      <span className={`inline-block rounded-2xl px-2.5 py-1 text-xs font-medium ${estilo}`}>
+        {texto}
+      </span>
       {disputa.comentarioAdmin && (
-        <p className="text-muted-foreground mt-1 text-xs">{disputa.comentarioAdmin}</p>
+        <p className="text-muted-foreground mt-1 text-xs break-words">{disputa.comentarioAdmin}</p>
       )}
     </div>
   )
