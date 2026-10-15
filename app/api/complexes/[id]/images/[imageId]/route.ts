@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { del } from '@vercel/blob'
 import { requireRole } from '@/lib/auth-helpers'
 import { db } from '@/lib/db'
+import { borrarDelBlob } from '@/lib/blob'
 
 export async function DELETE(
   _request: Request,
@@ -24,9 +24,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'Foto no encontrada' }, { status: 404 })
   }
 
-  // Borrar también el archivo del Blob para que no quede huérfano
-  await del(imagen.url)
   await db.imagenComplejo.delete({ where: { id: imageId } })
+  await borrarDelBlob(imagen.url)
 
   return NextResponse.json({ ok: true }, { status: 200 })
 }
