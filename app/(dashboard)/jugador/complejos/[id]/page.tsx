@@ -115,7 +115,8 @@ export default async function ComplejoDetallePage({
           )}
         </section>
 
-        <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+        {/* En celular la ficha va antes que las canchas; en lg vuelve a la columna derecha */}
+        <aside className="order-first space-y-4 lg:sticky lg:top-6 lg:order-none lg:self-start">
           <div className="bg-card shadow-card rounded-3xl p-6">
             <div className="space-y-3.5">
               <p className="flex items-center gap-3">

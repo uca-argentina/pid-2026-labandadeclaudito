@@ -118,7 +118,11 @@ export default function RegistroPage() {
 
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-          <InputContrasenia id="confirmPassword" name="confirmPassword" placeholder="Repetí tu contraseña" />
+          <InputContrasenia
+            id="confirmPassword"
+            name="confirmPassword"
+            placeholder="Repetí tu contraseña"
+          />
         </div>
 
         {error && (
