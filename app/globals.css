@@ -341,6 +341,9 @@
 }
 
 .dark {
+  /* Sin esto, la lista que despliega un <select> nativo (y el calendario de
+     un input date) sale con fondo blanco y la letra clara del tema: no se lee */
+  color-scheme: dark;
   --background: oklch(0.19 0.016 145);
   --foreground: oklch(0.94 0.012 100);
   --card: oklch(0.24 0.018 145);
