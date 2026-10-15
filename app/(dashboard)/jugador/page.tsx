@@ -7,7 +7,7 @@ import { dondeProximas, pendientesVencidas } from '@/lib/bookings'
 import { complejoVisible } from '@/lib/complejos'
 import { venceLaSena } from '@/lib/estado-reserva'
 import { diaCercano, diaEnPalabras, proximoSabado, saludoSegunHora } from '@/lib/fechas'
-import { diaDeHoy, diaDeReserva } from '@/lib/time'
+import { diaDeHoy, diaDeReserva, sumarDias } from '@/lib/time'
 import { Button } from '@/components/ui/button'
 import { EstadoVacio } from '@/components/estado-vacio'
 import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
@@ -19,38 +19,57 @@ export default async function JugadorHomePage() {
   const session = await auth()
   if (!session) redirect('/login')
 
-  // Las cuatro consultas no dependen entre sí: se hacen a la vez (una sola
-  // espera a la base en lugar de cuatro seguidas).
-  const [proximasReservas, totalProximasReservas, totalReservas, totalComplejos] =
-    await Promise.all([
-      db.reserva.findMany({
-        where: {
-          jugadorId: session.user.id,
-          ...dondeProximas(),
-        },
-        include: { cancha: { include: { complejo: true } } },
-        orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
-        take: 3,
-      }),
-      db.reserva.count({
-        where: {
-          jugadorId: session.user.id,
-          ...dondeProximas(),
-        },
-      }),
-      db.reserva.count({
-        where: { jugadorId: session.user.id, NOT: pendientesVencidas() },
-      }),
-      db.complejo.count({
-        where: { ...complejoVisible(), canchas: { some: { activo: true } } },
-      }),
-    ])
+  const hoy = diaDeHoy()
+  const sabado = proximoSabado(hoy)
+
+  // Las cinco consultas no dependen entre sí: se hacen a la vez (una sola
+  // espera a la base en lugar de cinco seguidas).
+  const [
+    proximasReservas,
+    totalProximasReservas,
+    totalReservas,
+    totalComplejos,
+    reservasDelSabado,
+  ] = await Promise.all([
+    db.reserva.findMany({
+      where: {
+        jugadorId: session.user.id,
+        ...dondeProximas(),
+      },
+      include: { cancha: { include: { complejo: true } } },
+      orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
+      take: 3,
+    }),
+    db.reserva.count({
+      where: {
+        jugadorId: session.user.id,
+        ...dondeProximas(),
+      },
+    }),
+    db.reserva.count({
+      where: { jugadorId: session.user.id, NOT: pendientesVencidas() },
+    }),
+    db.complejo.count({
+      where: { ...complejoVisible(), canchas: { some: { activo: true } } },
+    }),
+    db.reserva.count({
+      where: {
+        jugadorId: session.user.id,
+        fecha: new Date(sabado),
+        estado: { not: 'CANCELADA' },
+        NOT: pendientesVencidas(),
+      },
+    }),
+  ])
 
   // El primero va destacado arriba; los otros dos, como tarjetas debajo.
   const [proximoTurno, ...otrosTurnos] = proximasReservas
 
   const primerNombre = (session.user.name ?? '').split(' ')[0]
-  const hoy = diaDeHoy()
+
+  // Si ya reservó para el sábado, la tarjeta del finde le propone el domingo
+  const yaJuegaElSabado = reservasDelSabado > 0
+  const domingo = sumarDias(sabado, 1)
 
   // La frase de arriba cuenta cuándo es el próximo partido
   let bajada = 'Buscá una cancha libre y reservá tu próximo partido.'
@@ -199,12 +218,16 @@ export default async function JugadorHomePage() {
           </div>
 
           <div className="bg-clay/12 rounded-3xl px-7 py-6">
-            <p className="font-heading text-xl font-bold">¿Sale partido el finde?</p>
+            <p className="font-heading text-xl font-bold">
+              {yaJuegaElSabado ? '¿Y el domingo, otro partido?' : '¿Sale partido el finde?'}
+            </p>
             <p className="text-foreground/80 mt-1.5 text-sm">
-              Mirá qué canchas quedan libres este sábado.
+              {yaJuegaElSabado
+                ? 'El sábado ya tenés turno. Mirá qué canchas quedan libres el domingo.'
+                : 'Mirá qué canchas quedan libres este sábado.'}
             </p>
             <Link
-              href={`/jugador/canchas?fecha=${proximoSabado(hoy)}`}
+              href={`/jugador/canchas?fecha=${yaJuegaElSabado ? domingo : sabado}`}
               className="text-clay-foreground mt-3 inline-flex items-center gap-1.5 text-sm font-semibold"
             >
               Ver canchas libres
