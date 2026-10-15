@@ -402,4 +402,10 @@
   html {
     @apply font-sans;
   }
+  /* La lista que despliega un <select> nativo toma el fondo del select, que
+     es semitransparente (bg-input/30): en Windows queda blanca, y en modo
+     oscuro con la letra clara no se lee. Las opciones llevan colores propios. */
+  option {
+    @apply bg-popover text-popover-foreground;
+  }
 }
