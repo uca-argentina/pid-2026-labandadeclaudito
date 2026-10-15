@@ -24,6 +24,7 @@ export function CourtBookingSheet({
   duracionTurnoMin,
   fechaInicial,
   className,
+  otroDia,
 }: {
   courtId: string
   courtName: string
@@ -32,14 +33,16 @@ export function CourtBookingSheet({
   duracionTurnoMin: number
   fechaInicial?: string
   className?: string
+  // La cancha está bloqueada el día buscado: el botón invita a elegir otro
+  otroDia?: boolean
 }) {
   return (
     <Sheet>
       <SheetTrigger
         render={
-          <Button className={className}>
+          <Button className={className} variant={otroDia ? 'outline' : 'default'}>
             <CalendarPlus className="size-3.5" />
-            Reservar
+            {otroDia ? 'Probá otro día' : 'Reservar'}
           </Button>
         }
       />

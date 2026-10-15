@@ -16,10 +16,21 @@ export function leerVista(valor: unknown): VistaDeReservas {
   return 'proximas'
 }
 
-// Link a una pestaña y página de la pantalla de reservas (ruta = la pantalla)
-export function urlDeReservas(ruta: string, vista: VistaDeReservas, pagina: number) {
+// Link a una pestaña y página de la pantalla de reservas (ruta = la pantalla).
+// filtros: los que eligió en el formulario (solo el dueño tiene), para no
+// perderlos al cambiar de pestaña o de página.
+export function urlDeReservas(
+  ruta: string,
+  vista: VistaDeReservas,
+  pagina: number,
+  filtros: Record<string, string | undefined> = {},
+) {
   const params = new URLSearchParams()
   if (vista !== 'proximas') params.set('vista', vista)
+  for (const clave in filtros) {
+    const valor = filtros[clave]
+    if (valor !== undefined) params.set(clave, valor)
+  }
   if (pagina > 1) params.set('pagina', String(pagina))
   return `${ruta}?${params.toString()}`
 }
@@ -29,10 +40,12 @@ export function PestaniasDeReservas({
   ruta,
   vista,
   totales,
+  filtros = {},
 }: {
   ruta: string
   vista: VistaDeReservas
   totales: Record<VistaDeReservas, number>
+  filtros?: Record<string, string | undefined>
 }) {
   const todas: VistaDeReservas[] = ['proximas', 'historial', 'canceladas']
 
@@ -43,7 +56,7 @@ export function PestaniasDeReservas({
         return (
           <Link
             key={pestania}
-            href={urlDeReservas(ruta, pestania, 1)}
+            href={urlDeReservas(ruta, pestania, 1, filtros)}
             className={
               elegida
                 ? 'bg-sidebar text-sidebar-foreground inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold'

@@ -77,26 +77,39 @@ export function CourtSlotPicker({
   async function cargarDisponibilidad(fechaConsultada: Date) {
     const fechaISO = format(fechaConsultada, 'yyyy-MM-dd')
     const res = await fetch(`/api/courts/${courtId}/availability?fecha=${fechaISO}`)
+    if (!res.ok) return
     const json = await res.json()
-    if (res.ok) {
-      setSlots(json.slots)
-      setPorcentajeSena(json.porcentajeSena)
-      setMinAdvanceMinutes(json.minAdvanceMinutes)
-    }
+    setSlots(json.slots)
+    setPorcentajeSena(json.porcentajeSena)
+    setMinAdvanceMinutes(json.minAdvanceMinutes)
   }
 
   useEffect(() => {
     let ignore = false
     const fechaISO = format(fecha, 'yyyy-MM-dd')
-    fetch(`/api/courts/${courtId}/availability?fecha=${fechaISO}`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (ignore) return
-        setSlots(json.slots)
-        setPorcentajeSena(json.porcentajeSena)
-        setMinAdvanceMinutes(json.minAdvanceMinutes)
-        setCargando(false)
-      })
+    async function cargar() {
+      // Si el server falla (por ejemplo, la base no responde) la respuesta no
+      // es JSON: se avisa en vez de dejar los turnos cargando para siempre.
+      let json = null
+      try {
+        const res = await fetch(`/api/courts/${courtId}/availability?fecha=${fechaISO}`)
+        if (res.ok) json = await res.json()
+      } catch {
+        json = null
+      }
+      if (ignore) return
+      setCargando(false)
+      if (json === null) {
+        setSlots([])
+        setMensajeError('No pudimos cargar los horarios. Probá de nuevo en un rato.')
+        setEstado('error')
+        return
+      }
+      setSlots(json.slots)
+      setPorcentajeSena(json.porcentajeSena)
+      setMinAdvanceMinutes(json.minAdvanceMinutes)
+    }
+    cargar()
     return () => {
       ignore = true
     }
@@ -139,8 +152,8 @@ export function CourtSlotPicker({
 
       const fechaISO = format(fecha, 'yyyy-MM-dd')
       const res = await fetch(`/api/courts/${courtId}/availability?fecha=${fechaISO}`)
-      const json = await res.json()
       if (res.ok) {
+        const json = await res.json()
         setSlots(json.slots)
       }
     }, msHastaVencer + 1000)

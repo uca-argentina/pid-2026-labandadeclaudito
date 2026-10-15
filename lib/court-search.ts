@@ -65,6 +65,24 @@ export function matchingSlots(
   return turnosQueCumplen
 }
 
+// Con fecha: true si la cancha no tiene turnos para el jugador porque todos los
+// de la franja buscada están bloqueados por el dueño (no porque estén
+// reservados o ya hayan pasado). Esas canchas se muestran en gris.
+export function bloqueadaEnLaFranja(
+  slots: { horaInicio: string; bloqueado: boolean }[],
+  filtros: SearchCourtsFilters,
+): boolean {
+  let turnosEnLaFranja = 0
+  for (const slot of slots) {
+    if (filtros.horaDesde !== undefined && slot.horaInicio < filtros.horaDesde) continue
+    if (filtros.horaHasta !== undefined && slot.horaInicio >= filtros.horaHasta) continue
+
+    turnosEnLaFranja++
+    if (!slot.bloqueado) return false
+  }
+  return turnosEnLaFranja > 0
+}
+
 // Las zonas que el jugador puede elegir: solo las de complejos que tienen
 // alguna cancha activa, porque los demás nunca aparecen en los resultados.
 export async function getSearchableZones() {
@@ -85,7 +103,9 @@ export async function getSearchableZones() {
 // priceFrom: lo que se muestra como "desde $X". Con fecha es el turno más barato
 // que cumple los filtros ese día; sin fecha, el turno más barato de la semana
 // que está en el rango de precio.
-export type CourtWithPrice = CanchaConPrecios & { priceFrom: number }
+// bloqueadaTodoElDia: con fecha, la cancha no tiene ningún turno libre en la
+// franja buscada porque el dueño la bloqueó (va en gris). Sin fecha, false.
+export type CourtWithPrice = CanchaConPrecios & { priceFrom: number; bloqueadaTodoElDia: boolean }
 
 // Sin fecha se miran los precios de toda la semana. Con fecha se consulta la
 // disponibilidad real de cada cancha (reservas, bloqueos y turnos que ya
@@ -109,7 +129,7 @@ async function courtsThatMatch(
           (filtros.precioMax === undefined || precio <= filtros.precioMax),
       )
       if (enRango.length > 0) {
-        resultado.push({ ...cancha, priceFrom: Math.min(...enRango) })
+        resultado.push({ ...cancha, priceFrom: Math.min(...enRango), bloqueadaTodoElDia: false })
       }
     }
     return resultado
@@ -123,10 +143,22 @@ async function courtsThatMatch(
       const slots = disponibilidad.slots.map((slot) => ({
         horaInicio: slot.horaInicio,
         disponible: slot.disponible,
+        bloqueado: slot.bloqueado,
         precio: Number(slot.precio),
       }))
       const turnos = matchingSlots(slots, filtros)
-      if (turnos.length === 0) return null
+      if (turnos.length === 0) {
+        // Sin turnos porque está bloqueada: se muestra igual, en gris, para que
+        // el jugador sepa que existe y que ese día no se puede
+        if (!bloqueadaEnLaFranja(slots, filtros)) return null
+        let precioMasBajo = slots[0].precio
+        for (const slot of slots) {
+          if (slot.precio < precioMasBajo) {
+            precioMasBajo = slot.precio
+          }
+        }
+        return { ...cancha, priceFrom: precioMasBajo, bloqueadaTodoElDia: true }
+      }
 
       let precioMasBajo = turnos[0].precio
       for (const turno of turnos) {
@@ -134,13 +166,19 @@ async function courtsThatMatch(
           precioMasBajo = turno.precio
         }
       }
-      return { ...cancha, priceFrom: precioMasBajo }
+      return { ...cancha, priceFrom: precioMasBajo, bloqueadaTodoElDia: false }
     }),
   )
 
+  // Las bloqueadas van al final: primero lo que se puede reservar
   const resultado: CourtWithPrice[] = []
   for (const cancha of canchasConTurnos) {
-    if (cancha !== null) {
+    if (cancha !== null && !cancha.bloqueadaTodoElDia) {
+      resultado.push(cancha)
+    }
+  }
+  for (const cancha of canchasConTurnos) {
+    if (cancha !== null && cancha.bloqueadaTodoElDia) {
       resultado.push(cancha)
     }
   }
@@ -177,7 +215,22 @@ export async function searchComplexes(filtros: SearchCourtsFilters, jugadorId?: 
     })),
   )
 
-  return complejosConCanchas.filter((complejo) => complejo.canchas.length > 0)
+  // Los complejos con todas sus canchas bloqueadas ese día van al final
+  const conAlgoLibre = []
+  const todoBloqueado = []
+  for (const complejo of complejosConCanchas) {
+    if (complejo.canchas.length === 0) continue
+    let todasBloqueadas = true
+    for (const cancha of complejo.canchas) {
+      if (!cancha.bloqueadaTodoElDia) todasBloqueadas = false
+    }
+    if (todasBloqueadas) {
+      todoBloqueado.push(complejo)
+    } else {
+      conAlgoLibre.push(complejo)
+    }
+  }
+  return [...conAlgoLibre, ...todoBloqueado]
 }
 
 // Detalle de un complejo mostrando solo las canchas que cumplen los filtros

@@ -3,6 +3,7 @@ import {
   activeFilterChips,
   filtersToQueryString,
   matchingSlots,
+  bloqueadaEnLaFranja,
   preciosDeLaSemana,
 } from './court-search'
 import { Prisma } from '@/lib/generated/prisma/client'
@@ -184,5 +185,33 @@ describe('preciosDeLaSemana', () => {
     const precios = preciosDeLaSemana(cancha)
     expect(precios).toHaveLength(14)
     expect(Math.min(...precios)).toBe(25000)
+  })
+})
+
+describe('bloqueadaEnLaFranja', () => {
+  const turnos = [
+    { horaInicio: '08:00', bloqueado: false },
+    { horaInicio: '14:00', bloqueado: true },
+    { horaInicio: '15:00', bloqueado: true },
+  ]
+
+  test('sin franja, con algún turno sin bloquear, no está bloqueada', () => {
+    expect(bloqueadaEnLaFranja(turnos, {})).toBe(false)
+  })
+
+  test('si todos los turnos de la franja están bloqueados, está bloqueada', () => {
+    expect(bloqueadaEnLaFranja(turnos, { horaDesde: '14:00' })).toBe(true)
+  })
+
+  test('una franja sin turnos no cuenta como bloqueada', () => {
+    expect(bloqueadaEnLaFranja(turnos, { horaDesde: '20:00' })).toBe(false)
+  })
+
+  test('todo el día bloqueado', () => {
+    const todoBloqueado = [
+      { horaInicio: '08:00', bloqueado: true },
+      { horaInicio: '09:00', bloqueado: true },
+    ]
+    expect(bloqueadaEnLaFranja(todoBloqueado, {})).toBe(true)
   })
 })

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { CalendarDays, CalendarPlus, CircleDot, LandPlot, ShieldAlert, User } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { homePorRol } from '@/lib/home-por-rol'
 import { iniciales } from '@/lib/iniciales'
 import { calcularPagina } from '@/lib/paginacion'
 import { diaDeReserva, formatearDia, momentoActual } from '@/lib/time'
@@ -40,6 +41,8 @@ function claseContador(elegida: boolean) {
 export default async function DisputasDelAdminPage({ searchParams }: PageProps<'/admin/disputas'>) {
   const session = await auth()
   if (!session) redirect('/login')
+  // El proxy ya filtra por rol, pero la página lo vuelve a chequear (como el resto del admin)
+  if (session.user.rol !== 'ADMIN') redirect(homePorRol(session.user.rol))
 
   // ?filtro=resueltas muestra las ya decididas, ?pagina=2 la página
   const { filtro, pagina } = await searchParams
