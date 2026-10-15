@@ -1,8 +1,9 @@
 'use client'
 
 import { useTransition } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Building2, ChevronDown } from 'lucide-react'
+import { ArrowRight, Building2, ChevronDown } from 'lucide-react'
 import { urlDelDashboard, type FiltrosDelDashboard } from '@/lib/dashboard'
 import type { VistaDelSelector } from '@/lib/periodos'
 import { PeriodPicker } from '@/components/period-picker'
@@ -32,11 +33,14 @@ export function DashboardFrame({
   complejos,
   filtros,
   periodo,
+  hrefDelComplejo,
   children,
 }: {
   complejos: { id: string; nombre: string }[]
   filtros: FiltrosDelDashboard
   periodo: DatosDelPeriodo
+  // La página del complejo elegido. Sin un complejo elegido no viene nada.
+  hrefDelComplejo?: string
   children: React.ReactNode
 }) {
   const router = useRouter()
@@ -79,6 +83,18 @@ export function DashboardFrame({
           </select>
           <ChevronDown className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2" />
         </div>
+
+        {/* order-last igual que el selector: en mobile los dos van abajo del
+            título, el link en su propia fila */}
+        {hrefDelComplejo && (
+          <Link
+            href={hrefDelComplejo}
+            className="text-muted-foreground hover:text-foreground order-last inline-flex items-center gap-1.5 text-sm font-medium sm:order-0"
+          >
+            Ver el complejo
+            <ArrowRight className="size-4" />
+          </Link>
+        )}
       </div>
 
       <div className="bg-background/85 relative -mx-6 px-6 py-2 backdrop-blur-md md:sticky md:top-0 md:z-30">

@@ -1,0 +1,191 @@
+/* Pantalla de carga del login exitoso. Se reproduce una sola vez.
+   FUERA DEL ALCANCE DEL PARCIAL (igual que components/login-hero/): acá vive
+   solo el movimiento; los colores y la tipografía salen de las clases de
+   Tailwind en login-success.tsx.
+
+   Línea de tiempo (ms desde que aparece el overlay):
+      0 –  760   la pelota entra y gira 720°
+    280 –  460   aparece el gancho
+    280 – 1160   la cinta se dibuja del gancho a la punta
+    760 – 1240   la cinta sube con rebote
+   1040 – 1600   pulso circular desde el centro de la pelota
+   1100 – 1500   wordmark, mensaje y bajada, escalonados
+   1550 – 2150   barra de progreso
+   2300          redirect, con el overlay todavía tapando la pantalla (en el .tsx)
+
+   Los tiempos de arriba son animation-delay/animation-duration de este
+   archivo; el último es el setTimeout del .tsx. Si cambiás uno, cambiá el otro.
+
+   El overlay no se desvanece al final a propósito: mientras Next trae la
+   página que sigue, un fundido dejaría ver el login abajo. */
+
+/* ---------- logo ---------- */
+
+/* El centro de la pelota, en unidades del viewBox 512x512: es el eje del giro
+   y del pulso circular. */
+.success-spin,
+.success-ring {
+  transform-box: view-box;
+  transform-origin: 231.3px 254.6px;
+}
+
+.success-spin {
+  opacity: 0;
+  animation: success-spin 760ms linear forwards;
+}
+
+/* La cinta arranca abajo y sube cuando la pelota termina de girar. */
+.success-rib {
+  transform: translateY(14px);
+  animation: success-rise 480ms cubic-bezier(0.16, 1, 0.3, 1) 760ms forwards;
+}
+
+.success-hook {
+  opacity: 0;
+  animation: success-fade 180ms linear 280ms forwards;
+}
+
+/* La máscara barre el eje de la cinta desde el gancho hacia la punta. */
+.success-draw {
+  stroke-dashoffset: 521;
+  animation: success-draw 880ms cubic-bezier(0.22, 0.9, 0.25, 1) 280ms forwards;
+}
+
+.success-ring {
+  opacity: 0;
+  animation: success-ring 560ms cubic-bezier(0.16, 1, 0.3, 1) 1040ms forwards;
+}
+
+@keyframes success-spin {
+  0% {
+    opacity: 0;
+    transform: scale(0.22) rotate(-40deg);
+    animation-timing-function: cubic-bezier(0.34, 1.28, 0.5, 1);
+  }
+  16% {
+    opacity: 1;
+  }
+  58% {
+    transform: scale(1.08) rotate(420deg);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(720deg);
+  }
+}
+
+@keyframes success-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes success-rise {
+  0% {
+    transform: translateY(14px);
+  }
+  55% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes success-fade {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes success-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  25% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+
+/* ---------- textos ---------- */
+
+.success-word,
+.success-msg,
+.success-sub {
+  opacity: 0;
+  animation: success-up 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.success-word {
+  animation-delay: 1100ms;
+}
+
+.success-msg {
+  animation-delay: 1250ms;
+}
+
+.success-sub {
+  animation-delay: 1400ms;
+}
+
+@keyframes success-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- barra de progreso ---------- */
+
+.success-bar {
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: success-bar 600ms cubic-bezier(0.35, 0.6, 0.3, 1) 1550ms forwards;
+}
+
+@keyframes success-bar {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ---------- a quien pidió menos movimiento ---------- */
+
+/* Se muestra el estado final quieto. La espera también se acorta, en el .tsx. */
+@media (prefers-reduced-motion: reduce) {
+  .success-overlay *,
+  .success-overlay {
+    animation: none !important;
+    transition: none !important;
+  }
+  .success-spin,
+  .success-hook,
+  .success-word,
+  .success-msg,
+  .success-sub {
+    opacity: 1;
+  }
+  .success-spin,
+  .success-rib {
+    transform: none;
+  }
+  .success-draw {
+    stroke-dashoffset: 0;
+  }
+  .success-ring {
+    opacity: 0;
+  }
+  .success-bar {
+    transform: scaleX(1);
+  }
+}

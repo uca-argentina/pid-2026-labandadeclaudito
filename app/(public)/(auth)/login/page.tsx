@@ -2,25 +2,34 @@
 
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { getSession, signIn } from 'next-auth/react'
 import { Lock, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { AvisoCuentaSuspendida } from '@/components/aviso-cuenta-suspendida'
+import { LoginSuccess } from '@/components/login-success/login-success'
 import { homePorRol } from '@/lib/home-por-rol'
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const cuentaCreada = searchParams.get('registrado') === '1'
 
   const [error, setError] = useState('')
+  const [cuentaSuspendida, setCuentaSuspendida] = useState(false)
   const [cargando, setCargando] = useState(false)
+  // Cuando el login sale bien se guardan el nombre y a dónde va, y con eso se
+  // muestra la pantalla de carga, que redirige cuando termina la animación.
+  const [loginExitoso, setLoginExitoso] = useState<{
+    nombre: string
+    destino: string
+  } | null>(null)
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
+    setCuentaSuspendida(false)
     setCargando(true)
 
     const form = new FormData(e.currentTarget)
@@ -36,7 +45,7 @@ function LoginForm() {
       return
     }
     if (resultado?.code === 'cuenta_suspendida') {
-      setError('Tu cuenta está suspendida. Si creés que es un error, contactá a TocaYJuga.')
+      setCuentaSuspendida(true)
       setCargando(false)
       return
     }
@@ -47,8 +56,20 @@ function LoginForm() {
     }
 
     const session = await getSession()
-    router.push(session ? homePorRol(session.user.rol) : '/login')
-    router.refresh()
+    if (!session) {
+      setError('No pudimos abrir tu sesión. Probá de nuevo.')
+      setCargando(false)
+      return
+    }
+
+    setLoginExitoso({
+      nombre: session.user.name ?? '',
+      destino: homePorRol(session.user.rol),
+    })
+  }
+
+  if (loginExitoso) {
+    return <LoginSuccess nombre={loginExitoso.nombre} destino={loginExitoso.destino} />
   }
 
   return (
@@ -99,6 +120,8 @@ function LoginForm() {
             {error}
           </p>
         )}
+
+        {cuentaSuspendida && <AvisoCuentaSuspendida />}
 
         <Button type="submit" size="lg" className="w-full" disabled={cargando}>
           {cargando ? 'Ingresando...' : 'Iniciar sesión'}

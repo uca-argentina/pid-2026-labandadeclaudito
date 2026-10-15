@@ -1,6 +1,16 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { ArrowLeft, ImageIcon, ImagePlus, MapPin, Pencil, Phone, Plus, Shapes } from 'lucide-react'
+import {
+  ArrowLeft,
+  ChartColumn,
+  ImageIcon,
+  ImagePlus,
+  MapPin,
+  Pencil,
+  Phone,
+  Plus,
+  Shapes,
+} from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { dondeProximas } from '@/lib/bookings'
@@ -235,6 +245,10 @@ export default async function DetalleComplejoDuenoPage({
           </div>
 
           <div className="flex flex-col gap-2.5">
+            <Button variant="outline" render={<Link href={`/dueno/dashboard?complejoId=${id}`} />}>
+              <ChartColumn className="size-4" />
+              Ver estadísticas
+            </Button>
             <Button variant="outline" render={<Link href={`/dueno/complejos/${id}/editar`} />}>
               <Pencil className="size-4" />
               Editar complejo
