@@ -27,7 +27,7 @@ function Dato({ etiqueta, children }: { etiqueta: string; children: React.ReactN
   return (
     <div>
       <p className="text-muted-foreground text-xs">{etiqueta}</p>
-      <p className="font-medium">{children}</p>
+      <div className="font-medium">{children}</div>
     </div>
   )
 }
