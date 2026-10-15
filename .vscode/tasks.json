@@ -1,0 +1,18 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Mi Terminal Ejecutora",
+            "type": "shell",
+            "command": "echo '¡Hola mundo! Tu terminal funciona'", 
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new",
+                "location": "editor" 
+            },
+            "problemMatcher": []
+        }
+    ]
+}
