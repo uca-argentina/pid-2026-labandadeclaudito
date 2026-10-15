@@ -265,6 +265,7 @@ export default async function DashboardDuenioPage({ searchParams }: PageProps<'/
       <DashboardFrame
         complejos={complejos}
         filtros={filtrosValidos}
+        hrefDelComplejo={elegido ? `/dueno/complejos/${elegido.id}` : undefined}
         periodo={{
           titulo: periodo.titulo,
           subtitulo: periodo.subtitulo,
