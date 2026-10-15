@@ -8,6 +8,7 @@ import { Lock, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { AvisoCuentaSuspendida } from '@/components/aviso-cuenta-suspendida'
 import { homePorRol } from '@/lib/home-por-rol'
 
 function LoginForm() {
@@ -16,11 +17,13 @@ function LoginForm() {
   const cuentaCreada = searchParams.get('registrado') === '1'
 
   const [error, setError] = useState('')
+  const [cuentaSuspendida, setCuentaSuspendida] = useState(false)
   const [cargando, setCargando] = useState(false)
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
+    setCuentaSuspendida(false)
     setCargando(true)
 
     const form = new FormData(e.currentTarget)
@@ -36,7 +39,7 @@ function LoginForm() {
       return
     }
     if (resultado?.code === 'cuenta_suspendida') {
-      setError('Tu cuenta está suspendida. Si creés que es un error, contactá a TocaYJuga.')
+      setCuentaSuspendida(true)
       setCargando(false)
       return
     }
@@ -99,6 +102,8 @@ function LoginForm() {
             {error}
           </p>
         )}
+
+        {cuentaSuspendida && <AvisoCuentaSuspendida />}
 
         <Button type="submit" size="lg" className="w-full" disabled={cargando}>
           {cargando ? 'Ingresando...' : 'Iniciar sesión'}
