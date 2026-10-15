@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
+import { db } from '@/lib/db'
 import { AppSidebar, MobileMenuButton } from '@/components/app-sidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -11,6 +12,15 @@ export default async function DashboardLayout({ children }: LayoutProps<'/'>) {
   // sin sesión no queremos romper leyendo session.user de undefined
   if (!session) redirect('/login')
 
+  // El nombre y la foto se leen de la base, no de la sesión: el token solo
+  // refresca el rol, así que después de editar el perfil la sesión los
+  // seguiría mostrando viejos hasta volver a entrar.
+  const usuario = await db.usuario.findUnique({
+    where: { id: session.user.id },
+    select: { nombre: true, email: true, imagenUrl: true },
+  })
+  if (!usuario) redirect('/login')
+
   return (
     <TooltipProvider>
       {/* El fondo de todo es el verde del sidebar y el contenido es una hoja
@@ -19,8 +29,9 @@ export default async function DashboardLayout({ children }: LayoutProps<'/'>) {
       <SidebarProvider className="bg-sidebar">
         <AppSidebar
           rol={session.user.rol}
-          nombre={session.user.name ?? ''}
-          email={session.user.email ?? ''}
+          nombre={usuario.nombre}
+          email={usuario.email}
+          imagenUrl={usuario.imagenUrl}
         />
         {/* Desde md la hoja ocupa el alto de la pantalla y scrollea por dentro,
             para que las esquinas redondeadas no se vayan al scrollear. */}

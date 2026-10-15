@@ -61,6 +61,7 @@ model Usuario {
   passwordHash String
   dni          String?  @unique
   telefono     String?
+  imagenUrl    String?
   rol          Rol
   activo       Boolean  @default(true)
   createdAt    DateTime @default(now())

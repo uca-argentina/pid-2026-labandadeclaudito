@@ -51,7 +51,7 @@ export type CreateComplexInput = z.infer<typeof createComplexSchema>
 
 export const MAX_IMAGES_PER_COMPLEX = 5
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 export const complexImageSchema = z.object({
   imagen: z

@@ -29,7 +29,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { iniciales } from '@/lib/iniciales'
 import { SignOutButton } from '@/components/sign-out-button'
 import { Logo } from '@/components/logo'
@@ -90,10 +90,12 @@ export function AppSidebar({
   rol,
   nombre,
   email,
+  imagenUrl,
 }: {
   rol: 'JUGADOR' | 'DUENIO' | 'ADMIN'
   nombre: string
   email: string
+  imagenUrl: string | null
 }) {
   const pathname = usePathname()
   // En mobile el sidebar es un panel encima de la página: lo cerramos al navegar
@@ -170,20 +172,47 @@ export function AppSidebar({
 
       <SidebarFooter>
         {/* Tarjeta del perfil: avatar, nombre, cerrar sesión y tema. Con el
-            sidebar plegado queda solo el avatar con el botón de tema abajo. */}
-        <div className="bg-sidebar-accent flex items-center gap-2.5 rounded-2xl p-2.5 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0">
-          <Avatar className="size-9 shrink-0 group-data-[collapsible=icon]:size-8">
-            <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground font-heading font-bold">
-              {iniciales(nombre)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-            <p className="truncate text-sm font-semibold" title={email}>
-              {nombre}
-            </p>
+            sidebar plegado queda solo el avatar con el botón de tema abajo.
+            El botón de cerrar sesión va afuera del link: un <button> no puede
+            ir adentro de un <a>. */}
+        <div className="bg-sidebar-accent space-y-2 rounded-2xl p-2.5 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0">
+          <div className="flex items-center gap-2.5 group-data-[collapsible=icon]:flex-col">
+            {rol === 'ADMIN' ? (
+              // El admin es una cuenta de la app: no tiene perfil que editar
+              <div className="flex min-w-0 flex-1 items-center gap-2.5" title={email}>
+                <Avatar className="size-9 shrink-0 group-data-[collapsible=icon]:size-8">
+                  <AvatarImage src={imagenUrl ?? undefined} alt="" />
+                  <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground font-heading font-bold">
+                    {iniciales(nombre)}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
+                  {nombre}
+                </p>
+              </div>
+            ) : (
+              <Link
+                href="/perfil"
+                onClick={() => setOpenMobile(false)}
+                title="Editar mi perfil"
+                className="hover:bg-sidebar-accent flex min-w-0 flex-1 items-center gap-2.5 rounded-xl transition-colors"
+              >
+                <Avatar className="size-9 shrink-0 group-data-[collapsible=icon]:size-8">
+                  <AvatarImage src={imagenUrl ?? undefined} alt="" />
+                  <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground font-heading font-bold">
+                    {iniciales(nombre)}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
+                  {nombre}
+                </p>
+              </Link>
+            )}
+            <ThemeToggle />
+          </div>
+          <div className="group-data-[collapsible=icon]:hidden">
             <SignOutButton />
           </div>
-          <ThemeToggle />
         </div>
       </SidebarFooter>
 
