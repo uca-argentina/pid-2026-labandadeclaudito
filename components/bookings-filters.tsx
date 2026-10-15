@@ -1,9 +1,10 @@
+import Link from 'next/link'
 import { Building2, CalendarDays, Trophy, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { deporteLabels } from '@/lib/labels'
-import type { FiltrosDeReservas } from '@/lib/admin-bookings'
+import type { Deporte } from '@/lib/generated/prisma/client'
 
 // Mismas clases que el Input de shadcn (como en zona-filter.tsx), con fondo de
 // tarjeta como los filtros de Usuarios
@@ -12,21 +13,40 @@ const claseSelect =
 
 const deportes = ['FUTBOL_5', 'FUTBOL_7', 'FUTBOL_11', 'TENIS', 'PADEL', 'BASQUET'] as const
 
-// Filtros de /admin/reservas. Es un formulario HTML común con method="get":
-// al tocar "Filtrar" (o Enter en la búsqueda) el navegador arma la URL con los
-// campos (?complejoId=...&deporte=...&jugador=...&desde=...&hasta=...) y la
-// página la lee de searchParams. No hace falta JavaScript ni estado.
-export function AdminBookingsFilters({
+// Filtros de las pantallas de reservas del admin y del dueño. Es un formulario
+// HTML común con method="get": al tocar "Filtrar" (o Enter en la búsqueda) el
+// navegador arma la URL con los campos (?complejoId=...&deporte=...&jugador=...
+// &desde=...&hasta=...) y la página la lee de searchParams. No hace falta
+// JavaScript ni estado.
+// - campoOculto: lo que se elige afuera del formulario (la pestaña) y se tiene
+//   que mantener al filtrar. El admin manda el estado; el dueño, la vista.
+// - fechasObligatorias: el admin siempre mira un período; el dueño puede dejar
+//   las fechas vacías y ver todo.
+// - urlSinFiltros: si viene, aparece "Limpiar" al lado de Filtrar.
+export function BookingsFilters({
   complejos,
   filtros,
+  campoOculto,
+  fechasObligatorias,
+  urlSinFiltros,
 }: {
   complejos: { id: string; nombre: string; activo: boolean }[]
-  filtros: FiltrosDeReservas
+  filtros: {
+    complejoId?: string
+    deporte?: Deporte
+    jugador?: string
+    desde?: string
+    hasta?: string
+  }
+  campoOculto?: { nombre: string; valor: string }
+  fechasObligatorias: boolean
+  urlSinFiltros?: string
 }) {
   return (
     <form method="get" className="mt-6 flex flex-wrap items-end gap-3">
-      {/* El estado se elige con las pestañas: se mantiene al cambiar el resto */}
-      {filtros.estado !== undefined && <input type="hidden" name="estado" value={filtros.estado} />}
+      {campoOculto !== undefined && (
+        <input type="hidden" name={campoOculto.nombre} value={campoOculto.valor} />
+      )}
 
       <div className="grid w-full gap-1.5 sm:w-52">
         <Label htmlFor="complejoId" className="flex items-center gap-1.5">
@@ -84,7 +104,8 @@ export function AdminBookingsFilters({
         />
       </div>
 
-      <div className="grid gap-1.5">
+      {/* En celular, Desde y Hasta comparten la fila (mitad cada uno) */}
+      <div className="grid min-w-0 flex-1 gap-1.5 sm:flex-none">
         <Label htmlFor="desde" className="flex items-center gap-1.5">
           <CalendarDays className="size-3.5" />
           Desde
@@ -93,13 +114,13 @@ export function AdminBookingsFilters({
           id="desde"
           name="desde"
           type="date"
-          defaultValue={filtros.desde}
-          required
+          defaultValue={filtros.desde ?? ''}
+          required={fechasObligatorias}
           className="bg-card"
         />
       </div>
 
-      <div className="grid gap-1.5">
+      <div className="grid min-w-0 flex-1 gap-1.5 sm:flex-none">
         <Label htmlFor="hasta" className="flex items-center gap-1.5">
           <CalendarDays className="size-3.5" />
           Hasta
@@ -108,16 +129,23 @@ export function AdminBookingsFilters({
           id="hasta"
           name="hasta"
           type="date"
-          defaultValue={filtros.hasta}
-          required
+          defaultValue={filtros.hasta ?? ''}
+          required={fechasObligatorias}
           className="bg-card"
         />
       </div>
 
-      {/* outline: en esta pantalla no hay una acción principal verde */}
-      <Button type="submit" variant="outline">
-        Filtrar
-      </Button>
+      <div className="flex gap-2">
+        {/* outline: en estas pantallas no hay una acción principal verde */}
+        <Button type="submit" variant="outline">
+          Filtrar
+        </Button>
+        {urlSinFiltros !== undefined && (
+          <Button variant="ghost" render={<Link href={urlSinFiltros} />}>
+            Limpiar
+          </Button>
+        )}
+      </div>
     </form>
   )
 }

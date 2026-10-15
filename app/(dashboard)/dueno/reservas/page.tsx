@@ -1,15 +1,6 @@
 import { redirect } from 'next/navigation'
-import {
-  CalendarDays,
-  CircleDot,
-  Clock,
-  LandPlot,
-  Mail,
-  Phone,
-  User,
-  UserCheck,
-  Wallet,
-} from 'lucide-react'
+import Link from 'next/link'
+import { CalendarDays, CircleDot, Clock, LandPlot, User, UserCheck, Wallet } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import type { Prisma } from '@/lib/generated/prisma/client'
@@ -18,10 +9,14 @@ import { clasesGrillaAdaptable } from '@/lib/grid-columns'
 import { montoDelHistorial } from '@/lib/historial'
 import { estadoDeReserva, venceLaSena } from '@/lib/estado-reserva'
 import { calcularPagina } from '@/lib/paginacion'
-import { iniciales } from '@/lib/iniciales'
+import { homePorRol } from '@/lib/home-por-rol'
+import { ownerBookingsFiltersSchema } from '@/lib/validations/owner-bookings'
 import { diaEnPalabras } from '@/lib/fechas'
 import { diaDeReserva, momentoActual, turnoYaPaso } from '@/lib/time'
+import { Button } from '@/components/ui/button'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
+import { BookingsFilters } from '@/components/bookings-filters'
+import { ContactoDelJugador } from '@/components/contacto-del-jugador'
 import { AttendanceButtons } from '@/components/attendance-buttons'
 import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
 import { CeldaCancha, CeldaMonto } from '@/components/celdas-reserva'
@@ -85,19 +80,58 @@ export default async function ReservasDelDuenioPage({
 }: PageProps<'/dueno/reservas'>) {
   const session = await auth()
   if (!session) redirect('/login')
+  if (session.user.rol !== 'DUENIO') redirect(homePorRol(session.user.rol))
 
-  // ?vista=historial|canceladas elige la pestaña, ?pagina=2 la página
-  const { vista: vistaPedida, pagina } = await searchParams
-  const vista = leerVista(vistaPedida)
+  // ?vista=historial|canceladas elige la pestaña, ?pagina=2 la página y el
+  // resto son los filtros del formulario (complejo, deporte, jugador, fechas)
+  const parametros = await searchParams
+  const vista = leerVista(parametros.vista)
+  const filtros = ownerBookingsFiltersSchema.parse(parametros)
+  const hayFiltros =
+    filtros.complejoId !== undefined ||
+    filtros.deporte !== undefined ||
+    filtros.jugador !== undefined ||
+    filtros.desde !== undefined ||
+    filtros.hasta !== undefined
 
-  // Las reservas de todas las canchas de sus complejos. Qué es "próxima" o
-  // "historial" lo decide la base (ver dondeProximas).
-  const deSusCanchas = { cancha: { complejo: { duenioId: session.user.id } } }
+  // Sus complejos, también los dados de baja: sus reservas viejas existen
+  const complejos = await db.complejo.findMany({
+    where: { duenioId: session.user.id },
+    select: { id: true, nombre: true, activo: true },
+    orderBy: { nombre: 'asc' },
+  })
+
+  // Las reservas de todas las canchas de sus complejos, con los filtros. El
+  // duenioId va siempre: aunque en la URL venga el complejo de otro dueño, no
+  // trae nada que no sea suyo.
+  const deSusCanchasConFiltros: Prisma.ReservaWhereInput = {
+    cancha: {
+      complejo: { duenioId: session.user.id },
+      complejoId: filtros.complejoId,
+      deporte: filtros.deporte,
+    },
+    jugador: filtros.jugador
+      ? {
+          OR: [
+            { nombre: { contains: filtros.jugador, mode: 'insensitive' } },
+            { email: { contains: filtros.jugador, mode: 'insensitive' } },
+          ],
+        }
+      : undefined,
+    fecha: {
+      gte: filtros.desde ? new Date(filtros.desde) : undefined,
+      lte: filtros.hasta ? new Date(filtros.hasta) : undefined,
+    },
+  }
+
+  // Qué es "próxima" o "historial" lo decide la base (ver dondeProximas). Va
+  // con AND y no mezclado en el mismo objeto: si no, el filtro de fechas
+  // podría pisar las condiciones de la pestaña (o al revés).
   const ahora = momentoActual()
   const dondePorVista: Record<VistaDeReservas, Prisma.ReservaWhereInput> = {
-    proximas: { ...deSusCanchas, ...dondeProximas(ahora) },
-    historial: { ...deSusCanchas, ...dondeHistorial(ahora) },
-    canceladas: { ...deSusCanchas, estado: 'CANCELADA' },
+    proximas: { AND: [deSusCanchasConFiltros, dondeProximas(ahora)] },
+    historial: { AND: [deSusCanchasConFiltros, dondeHistorial(ahora)] },
+    canceladas: { AND: [deSusCanchasConFiltros, { estado: 'CANCELADA' }] },
   }
 
   const [totalProximas, totalHistorial, totalCanceladas] = await Promise.all([
@@ -112,7 +146,11 @@ export default async function ReservasDelDuenioPage({
   }
 
   const porPagina = vista === 'proximas' ? TARJETAS_POR_PAGINA : FILAS_POR_PAGINA
-  const { paginaActual, totalPaginas, skip } = calcularPagina(pagina, totales[vista], porPagina)
+  const { paginaActual, totalPaginas, skip } = calcularPagina(
+    parametros.pagina,
+    totales[vista],
+    porPagina,
+  )
 
   // Próximas: de la más cercana a la más lejana.
   // Historial y canceladas: de la más reciente a la más vieja.
@@ -130,22 +168,25 @@ export default async function ReservasDelDuenioPage({
       desde={skip + 1}
       hasta={skip + reservas.length}
       total={totales[vista]}
-      urlAnterior={urlDeReservas('/dueno/reservas', vista, paginaActual - 1)}
-      urlSiguiente={urlDeReservas('/dueno/reservas', vista, paginaActual + 1)}
+      urlAnterior={urlDeReservas('/dueno/reservas', vista, paginaActual - 1, filtros)}
+      urlSiguiente={urlDeReservas('/dueno/reservas', vista, paginaActual + 1, filtros)}
     />
   )
 
-  const nuncaReservaron = totalProximas + totalHistorial + totalCanceladas === 0
+  // Sin filtros y sin nada en ninguna pestaña: todavía nadie reservó
+  const nuncaReservaron = !hayFiltros && totalProximas + totalHistorial + totalCanceladas === 0
 
   return (
     <main>
       <div className="mb-6">
         <h1 className="font-heading text-4xl font-bold tracking-tight">Reservas</h1>
         <p className="text-muted-foreground mt-1.5">
-          {totalProximas === 0 &&
+          {(hayFiltros || totalProximas === 0) &&
             'Los próximos turnos en tus canchas y todo lo que se reservó antes.'}
-          {totalProximas === 1 && '1 turno por jugarse en tus canchas.'}
-          {totalProximas > 1 && `${totalProximas} turnos por jugarse en tus canchas.`}
+          {!hayFiltros && totalProximas === 1 && '1 turno por jugarse en tus canchas.'}
+          {!hayFiltros &&
+            totalProximas > 1 &&
+            `${totalProximas} turnos por jugarse en tus canchas.`}
         </p>
       </div>
 
@@ -156,9 +197,38 @@ export default async function ReservasDelDuenioPage({
         />
       ) : (
         <>
-          <PestaniasDeReservas ruta="/dueno/reservas" vista={vista} totales={totales} />
+          <BookingsFilters
+            complejos={complejos}
+            filtros={filtros}
+            campoOculto={vista === 'proximas' ? undefined : { nombre: 'vista', valor: vista }}
+            fechasObligatorias={false}
+            urlSinFiltros={hayFiltros ? urlDeReservas('/dueno/reservas', vista, 1) : undefined}
+          />
 
-          {reservas.length === 0 && (
+          <div className="mt-5">
+            <PestaniasDeReservas
+              ruta="/dueno/reservas"
+              vista={vista}
+              totales={totales}
+              filtros={filtros}
+            />
+          </div>
+
+          {reservas.length === 0 && hayFiltros && (
+            <EstadoVacio
+              titulo="Ninguna reserva cumple los filtros"
+              texto="Probá con otro complejo, otro deporte u otras fechas."
+            >
+              <Button
+                variant="secondary"
+                render={<Link href={urlDeReservas('/dueno/reservas', vista, 1)} />}
+              >
+                Limpiar filtros
+              </Button>
+            </EstadoVacio>
+          )}
+
+          {reservas.length === 0 && !hayFiltros && (
             <p className="text-muted-foreground text-sm">
               {vista === 'proximas' && 'No hay turnos próximos en tus canchas.'}
               {vista === 'historial' && 'Todavía no se jugó ningún turno en tus canchas.'}
@@ -281,18 +351,8 @@ function FilaReserva({
         />
       </TableCell>
       <TableCell className="hidden lg:table-cell">
-        <div className="flex items-center gap-2.5">
-          <div className="bg-primary/15 text-primary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
-            {iniciales(reserva.jugador.nombre)}
-          </div>
-          <div>
-            <p className="font-medium">{reserva.jugador.nombre}</p>
-            <p className="text-muted-foreground flex items-center gap-1 text-xs">
-              <Phone className="size-3" />
-              {reserva.jugador.telefono ?? reserva.jugador.email}
-            </p>
-          </div>
-        </div>
+        {/* -ml: el círculo queda alineado con el título de la columna */}
+        <ContactoDelJugador jugador={reserva.jugador} className="-ml-2.5 max-w-60" />
       </TableCell>
       {/* En el historial, en celular no entra: los botones de asistencia ya
           muestran si vino (verde) o no (rojo) */}
@@ -383,25 +443,8 @@ function TarjetaReserva({
           {reserva.cancha.complejo.nombre}
         </p>
 
-        {/* Quién reservó: nombre arriba, y el contacto cada uno en su renglón */}
-        <div className="bg-muted/60 mt-3 flex items-center gap-2.5 rounded-xl px-2.5 py-2">
-          <div className="bg-primary/15 text-primary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
-            {iniciales(reserva.jugador.nombre)}
-          </div>
-          <div className="min-w-0 text-sm">
-            <p className="truncate font-semibold">{reserva.jugador.nombre}</p>
-            <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-              <Mail className="size-3 shrink-0" />
-              <span className="truncate">{reserva.jugador.email}</span>
-            </p>
-            {reserva.jugador.telefono && (
-              <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                <Phone className="size-3 shrink-0" />
-                {reserva.jugador.telefono}
-              </p>
-            )}
-          </div>
-        </div>
+        {/* Quién reservó: el contacto se abre al tocarlo */}
+        <ContactoDelJugador jugador={reserva.jugador} className="bg-muted/60 mt-3" />
 
         {/* De acá para abajo todas las tarjetas tienen lo mismo a la misma
             altura, esté o no pagada la seña: un renglón con su barra y el

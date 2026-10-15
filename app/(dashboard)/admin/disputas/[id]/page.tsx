@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
+import { homePorRol } from '@/lib/home-por-rol'
 import { diaEnPalabras } from '@/lib/fechas'
 import { estadoDeReserva } from '@/lib/estado-reserva'
 import { ultimoDiaParaDisputar } from '@/lib/disputas'
@@ -35,6 +36,8 @@ function Dato({ etiqueta, children }: { etiqueta: string; children: React.ReactN
 export default async function DisputaDelAdminPage({ params }: PageProps<'/admin/disputas/[id]'>) {
   const session = await auth()
   if (!session) redirect('/login')
+  // El proxy ya filtra por rol, pero la página lo vuelve a chequear (como el resto del admin)
+  if (session.user.rol !== 'ADMIN') redirect(homePorRol(session.user.rol))
 
   const { id } = await params
 

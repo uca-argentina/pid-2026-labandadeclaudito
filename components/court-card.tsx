@@ -9,8 +9,9 @@ import { AvisoBloqueo } from '@/components/aviso-bloqueo'
 // Card de una cancha en el detalle del complejo. A la izquierda, una franja
 // recortada en diagonal con un dibujo de la cancha según el deporte; a la
 // derecha, los datos y el botón.
-// bloqueo: el texto del bloqueo de ese día, si tiene; la card va en gris (se
-// puede seguir reservando en los horarios u otros días que estén libres).
+// bloqueo: el texto de los horarios bloqueados del día buscado, si tiene. La
+// card va en gris solo si ese día no le queda ningún turno (bloqueadaTodoElDia);
+// si no, se puede reservar en los otros horarios.
 export function CourtCard({
   cancha,
   fechaInicial,
@@ -22,7 +23,7 @@ export function CourtCard({
 }) {
   return (
     <div
-      className={`bg-card shadow-card relative min-h-31 overflow-hidden rounded-2xl ${bloqueo ? 'opacity-60 grayscale' : ''}`}
+      className={`bg-card shadow-card relative min-h-31 overflow-hidden rounded-2xl ${cancha.bloqueadaTodoElDia ? 'opacity-60 grayscale' : ''}`}
     >
       <div className="absolute inset-y-0 left-0 w-25 opacity-75 [clip-path:polygon(0_0,58%_0,100%_100%,0_100%)] [mask-image:linear-gradient(90deg,black_40%,rgb(0_0_0/0.3)_100%)]">
         <DibujoDeCancha deporte={cancha.deporte} />
@@ -84,7 +85,8 @@ export function CourtCard({
             deporte={cancha.deporte}
             precioBase={cancha.precioBase.toString()}
             duracionTurnoMin={cancha.duracionTurnoMin}
-            fechaInicial={fechaInicial}
+            fechaInicial={cancha.bloqueadaTodoElDia ? undefined : fechaInicial}
+            otroDia={cancha.bloqueadaTodoElDia}
           />
         </div>
       </div>

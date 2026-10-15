@@ -8,8 +8,12 @@ import { activeFilterChips, filtersToQueryString, searchComplexes } from '@/lib/
 import { searchCourtsSchema } from '@/lib/validations/court-search'
 import { clasesGrillaAdaptable } from '@/lib/grid-columns'
 import { deportesDistintos, precioMasBajo } from '@/lib/resumen-complejo'
-import { bloqueosDelDia, resumenBloqueosDelComplejo } from '@/lib/blocks'
-import { diaDeHoy } from '@/lib/time'
+import {
+  bloqueosDelDia,
+  bloqueosEnLaFranja,
+  resumenBloqueosParaElJugador,
+  type BloqueoDelDia,
+} from '@/lib/blocks'
 import { Button } from '@/components/ui/button'
 import { SearchFiltersSheet } from '@/components/search-filters-sheet'
 import { FiltrosDeBusqueda } from '@/components/filtros-de-busqueda'
@@ -27,15 +31,21 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
 
   const filtrosAplicados = activeFilterChips(filtros)
 
-  // Bloqueos del día buscado (o de hoy): un complejo con todas sus canchas
-  // bloqueadas va en gris, y si son algunas se avisa cuántas.
-  const idsDeCanchas: string[] = []
-  for (const complejo of complejos) {
-    for (const cancha of complejo.canchas) {
-      idsDeCanchas.push(cancha.id)
+  // Los bloqueos se avisan solo si el jugador eligió un día: sin fecha no hay
+  // un día del que hablar (otro día esa cancha puede estar libre). Y si eligió
+  // horario, cuentan solo los que caen en ese horario. En gris va solo el
+  // complejo que ese día no tiene ningún turno porque está todo bloqueado.
+  let bloqueos: BloqueoDelDia[] = []
+  if (filtros.fecha !== undefined) {
+    const idsDeCanchas: string[] = []
+    for (const complejo of complejos) {
+      for (const cancha of complejo.canchas) {
+        idsDeCanchas.push(cancha.id)
+      }
     }
+    const bloqueosDelDiaBuscado = await bloqueosDelDia(idsDeCanchas, new Date(filtros.fecha))
+    bloqueos = bloqueosEnLaFranja(bloqueosDelDiaBuscado, filtros.horaDesde, filtros.horaHasta)
   }
-  const bloqueos = await bloqueosDelDia(idsDeCanchas, new Date(filtros.fecha ?? diaDeHoy()))
 
   // En xl el botón "Filtros" se oculta: sin chips, la fila de arriba queda
   // vacía y los resultados suben para quedar alineados con los filtros.
@@ -101,18 +111,26 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
                 {complejos.map((complejo) => {
                   const deportes = deportesDistintos(complejo.canchas)
                   const precioMinimo = precioMasBajo(complejo.canchas)
-                  let canchasBloqueadas = 0
+                  let canchasConBloqueos = 0
                   for (const cancha of complejo.canchas) {
                     if (bloqueos.some((b) => b.courtId === cancha.id)) {
-                      canchasBloqueadas++
+                      canchasConBloqueos++
                     }
                   }
-                  const resumenBloqueos = resumenBloqueosDelComplejo(
-                    canchasBloqueadas,
+                  let todasBloqueadas = true
+                  for (const cancha of complejo.canchas) {
+                    if (!cancha.bloqueadaTodoElDia) todasBloqueadas = false
+                  }
+                  let resumenBloqueos = resumenBloqueosParaElJugador(
+                    canchasConBloqueos,
                     complejo.canchas.length,
                   )
-                  const todasBloqueadas =
-                    complejo.canchas.length > 0 && canchasBloqueadas === complejo.canchas.length
+                  if (todasBloqueadas) {
+                    resumenBloqueos =
+                      filtros.horaDesde || filtros.horaHasta
+                        ? 'Bloqueado en ese horario'
+                        : 'Bloqueado todo el día'
+                  }
 
                   return (
                     <Link

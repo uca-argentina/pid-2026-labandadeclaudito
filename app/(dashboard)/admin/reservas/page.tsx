@@ -21,7 +21,7 @@ import {
   type GrupoDeEstado,
 } from '@/lib/admin-bookings'
 import { adminBookingsFiltersSchema } from '@/lib/validations/admin-bookings'
-import { AdminBookingsFilters } from '@/components/admin-bookings-filters'
+import { BookingsFilters } from '@/components/bookings-filters'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { CeldaMonto } from '@/components/celdas-reserva'
 import { MiniCancha } from '@/components/mini-cancha'
@@ -160,7 +160,14 @@ export default async function AdminReservasPage({ searchParams }: PageProps<'/ad
         Todas las reservas de la plataforma en el período elegido.
       </p>
 
-      <AdminBookingsFilters complejos={complejos} filtros={filtros} />
+      <BookingsFilters
+        complejos={complejos}
+        filtros={filtros}
+        campoOculto={
+          filtros.estado === undefined ? undefined : { nombre: 'estado', valor: filtros.estado }
+        }
+        fechasObligatorias
+      />
 
       {reservas.length === 0 ? (
         <>

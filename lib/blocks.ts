@@ -105,10 +105,20 @@ export async function findOverlappingBookingIds(courtId: string, range: BlockRan
     .map((booking) => booking.id)
 }
 
+export type BloqueoDelDia = {
+  courtId: string
+  startTime: string
+  endTime: string
+  reason: string | null
+}
+
 // Los bloqueos de varias canchas que caen en un día, en una sola consulta.
 // Los usan los listados (búsqueda, detalle del complejo, pantallas del dueño)
 // para mostrar en gris las canchas bloqueadas.
-export async function bloqueosDelDia(idsDeCanchas: string[], fecha: Date) {
+export async function bloqueosDelDia(
+  idsDeCanchas: string[],
+  fecha: Date,
+): Promise<BloqueoDelDia[]> {
   return db.block.findMany({
     where: { courtId: { in: idsDeCanchas }, startDate: { lte: fecha }, endDate: { gte: fecha } },
     select: { courtId: true, startTime: true, endTime: true, reason: true },
@@ -136,6 +146,38 @@ export function textoDelBloqueo(
     texto += ` · ${motivos.join(', ')}`
   }
   return texto
+}
+
+// De los bloqueos de un día, los que se cruzan con la franja horaria que busca
+// el jugador. Sin franja (horaDesde y horaHasta vacías) sirven todos.
+export function bloqueosEnLaFranja(
+  bloqueos: BloqueoDelDia[],
+  horaDesde: string | undefined,
+  horaHasta: string | undefined,
+): BloqueoDelDia[] {
+  const desde = horaDesde ?? '00:00'
+  const hasta = horaHasta ?? '24:00'
+
+  const enLaFranja: BloqueoDelDia[] = []
+  for (const bloqueo of bloqueos) {
+    if (bloqueo.startTime < hasta && desde < finDeDia(bloqueo.endTime)) {
+      enLaFranja.push(bloqueo)
+    }
+  }
+  return enLaFranja
+}
+
+// Para la card de un complejo en la búsqueda con fecha. Las canchas que se
+// muestran tienen algún turno libre ese día, así que no se dice "bloqueada":
+// solo que tienen horarios que no se pueden reservar.
+export function resumenBloqueosParaElJugador(conBloqueos: number, total: number): string | null {
+  if (conBloqueos === 0) {
+    return null
+  }
+  if (total === 1) {
+    return 'Tiene horarios bloqueados'
+  }
+  return `${conBloqueos} de ${total} canchas con horarios bloqueados`
 }
 
 // Para la card de un complejo: cuántas de sus canchas están bloqueadas.
