@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import './login-success.css'
 
@@ -32,16 +32,15 @@ const LARGO_DEL_EJE = 521
 // Solo se muestra un overlay a la vez, así que la máscara puede tener un id fijo.
 const ID_DE_LA_MASCARA = 'success-mask'
 
-// Lo que tarda la animación completa, y lo que tarda el overlay en desaparecer
-// (tiene que coincidir con la transition de .success-overlay en el CSS).
+// Lo que tarda la animación completa: cuando termina se redirige con el overlay
+// todavía tapando la pantalla. No se va con un fundido a propósito — mientras
+// Next trae la página que sigue se vería el login abajo.
 const ESPERA_MS = 2300
-const SALIDA_MS = 280
 // A quien pidió menos movimiento no se le hace esperar la animación.
 const ESPERA_SIN_MOVIMIENTO_MS = 900
 
 export function LoginSuccess({ nombre, destino }: { nombre?: string | null; destino: string }) {
   const router = useRouter()
-  const [saliendo, setSaliendo] = useState(false)
 
   useEffect(() => {
     // Se pide la próxima página mientras corre la animación, así el redirect
@@ -51,16 +50,12 @@ export function LoginSuccess({ nombre, destino }: { nombre?: string | null; dest
     const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const espera = sinMovimiento ? ESPERA_SIN_MOVIMIENTO_MS : ESPERA_MS
 
-    const aSalir = setTimeout(() => setSaliendo(true), espera)
     const aRedirigir = setTimeout(() => {
       router.push(destino)
       router.refresh()
-    }, espera + SALIDA_MS)
+    }, espera)
 
-    return () => {
-      clearTimeout(aSalir)
-      clearTimeout(aRedirigir)
-    }
+    return () => clearTimeout(aRedirigir)
   }, [destino, router])
 
   const primerNombre = nombre ? nombre.split(' ')[0] : ''
@@ -69,9 +64,7 @@ export function LoginSuccess({ nombre, destino }: { nombre?: string | null; dest
     <div
       role="status"
       aria-live="polite"
-      className={`success-overlay bg-background fixed inset-0 z-50 flex items-center justify-center overflow-hidden ${
-        saliendo ? 'success-saliendo' : ''
-      }`}
+      className="success-overlay bg-background fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
     >
       {/* Líneas de una cancha, apenas visibles, de fondo (como en el panel del login) */}
       <svg

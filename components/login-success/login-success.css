@@ -11,22 +11,13 @@
    1040 – 1600   pulso circular desde el centro de la pelota
    1100 – 1500   wordmark, mensaje y bajada, escalonados
    1550 – 2150   barra de progreso
-   2300 – 2580   sale el overlay y se dispara el redirect (en el .tsx)
+   2300          redirect, con el overlay todavía tapando la pantalla (en el .tsx)
 
    Los tiempos de arriba son animation-delay/animation-duration de este
-   archivo; los dos últimos son los setTimeout del .tsx. Si cambiás uno,
-   cambiá el otro. */
+   archivo; el último es el setTimeout del .tsx. Si cambiás uno, cambiá el otro.
 
-.success-overlay {
-  transition:
-    opacity 280ms ease,
-    transform 280ms ease;
-}
-
-.success-overlay.success-saliendo {
-  opacity: 0;
-  transform: scale(1.015);
-}
+   El overlay no se desvanece al final a propósito: mientras Next trae la
+   página que sigue, un fundido dejaría ver el login abajo. */
 
 /* ---------- logo ---------- */
 
