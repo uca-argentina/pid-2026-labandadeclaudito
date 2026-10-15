@@ -108,16 +108,20 @@ export default async function ComplejoDetallePage({
             <div className="grid gap-3.5 2xl:grid-cols-2">
               {complejo.canchas.map((cancha) => {
                 const bloqueosDeLaCancha = bloqueos.filter((b) => b.courtId === cancha.id)
+                let textoBloqueo: string | undefined = undefined
+                if (filtros.fecha !== undefined && cancha.bloqueadaTodoElDia) {
+                  const enQue =
+                    filtros.horaDesde || filtros.horaHasta ? 'en ese horario' : 'todo el día'
+                  textoBloqueo = `${diaEnPalabras(filtros.fecha)} · Bloqueada ${enQue}`
+                } else if (filtros.fecha !== undefined && bloqueosDeLaCancha.length > 0) {
+                  textoBloqueo = `${diaEnPalabras(filtros.fecha)} · ${textoDelBloqueo(bloqueosDeLaCancha, false)}`
+                }
                 return (
                   <CourtCard
                     key={cancha.id}
                     cancha={cancha}
                     fechaInicial={filtros.fecha}
-                    bloqueo={
-                      filtros.fecha !== undefined && bloqueosDeLaCancha.length > 0
-                        ? `${diaEnPalabras(filtros.fecha)} · ${textoDelBloqueo(bloqueosDeLaCancha, false)}`
-                        : undefined
-                    }
+                    bloqueo={textoBloqueo}
                   />
                 )
               })}

@@ -95,7 +95,13 @@ export async function getAvailableSlots(
   fecha: Date,
   jugadorId?: string,
 ): Promise<{
-  slots: { horaInicio: string; horaFin: string; disponible: boolean; precio: Prisma.Decimal }[]
+  slots: {
+    horaInicio: string
+    horaFin: string
+    disponible: boolean
+    bloqueado: boolean
+    precio: Prisma.Decimal
+  }[]
   porcentajeSena: number
   minAdvanceMinutes: number
 } | null> {
@@ -146,14 +152,19 @@ export async function getAvailableSlots(
       horariosSeSuperponen(horaInicio, horaFin, reserva.horaInicio, reserva.horaFin),
     )
 
+    // bloqueado aparte de disponible: la búsqueda lo usa para mostrar en gris
+    // una cancha que ese día no tiene turnos porque el dueño la bloqueó
+    const bloqueado = isSlotBlocked(horaInicio, horaFin, bloqueosDelDia)
+
     return {
       horaInicio,
       horaFin,
       disponible:
         !horasOcupadas.has(horaInicio) &&
         !isTooSoonToBook(dia, horaInicio, minAdvanceMinutes) &&
-        !isSlotBlocked(horaInicio, horaFin, bloqueosDelDia) &&
+        !bloqueado &&
         !seCruzaConReservaDelJugador,
+      bloqueado,
       precio: precioProporcional(
         precioDelTurno(cancha.precioBase, cancha.preciosEspeciales, diaSemana, horaInicio),
         horaInicio,

@@ -33,8 +33,8 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
 
   // Los bloqueos se avisan solo si el jugador eligió un día: sin fecha no hay
   // un día del que hablar (otro día esa cancha puede estar libre). Y si eligió
-  // horario, cuentan solo los que caen en ese horario. No se ponen en gris:
-  // con fecha, las canchas que aparecen tienen algún turno libre.
+  // horario, cuentan solo los que caen en ese horario. En gris va solo el
+  // complejo que ese día no tiene ningún turno porque está todo bloqueado.
   let bloqueos: BloqueoDelDia[] = []
   if (filtros.fecha !== undefined) {
     const idsDeCanchas: string[] = []
@@ -117,16 +117,26 @@ export default async function BusquedaCanchasPage({ searchParams }: PageProps<'/
                       canchasConBloqueos++
                     }
                   }
-                  const resumenBloqueos = resumenBloqueosParaElJugador(
+                  let todasBloqueadas = true
+                  for (const cancha of complejo.canchas) {
+                    if (!cancha.bloqueadaTodoElDia) todasBloqueadas = false
+                  }
+                  let resumenBloqueos = resumenBloqueosParaElJugador(
                     canchasConBloqueos,
                     complejo.canchas.length,
                   )
+                  if (todasBloqueadas) {
+                    resumenBloqueos =
+                      filtros.horaDesde || filtros.horaHasta
+                        ? 'Bloqueado en ese horario'
+                        : 'Bloqueado todo el día'
+                  }
 
                   return (
                     <Link
                       key={complejo.id}
                       href={`/jugador/complejos/${complejo.id}${filtersToQueryString(filtros)}`}
-                      className="bg-card shadow-card hover:bg-accent flex h-full flex-col overflow-hidden rounded-2xl transition-colors"
+                      className={`bg-card shadow-card hover:bg-accent flex h-full flex-col overflow-hidden rounded-2xl transition-colors ${todasBloqueadas ? 'opacity-60 grayscale' : ''}`}
                     >
                       {/* La foto de portada, con los deportes del complejo encima */}
                       <div className="relative aspect-16/10 shrink-0">
