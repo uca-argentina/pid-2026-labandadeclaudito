@@ -4,9 +4,10 @@ import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { getSession, signIn } from 'next-auth/react'
-import { Lock, Mail } from 'lucide-react'
+import { Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { InputContrasenia } from '@/components/input-contrasenia'
 import { Label } from '@/components/ui/label'
 import { AvisoCuentaSuspendida } from '@/components/aviso-cuenta-suspendida'
 import { LoginSuccess } from '@/components/login-success/login-success'
@@ -103,16 +104,7 @@ function LoginForm() {
 
         <div className="space-y-2">
           <Label htmlFor="password">Contraseña</Label>
-          <div className="relative">
-            <Lock className="text-muted-foreground absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2" />
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              className="pl-11"
-            />
-          </div>
+          <InputContrasenia id="password" name="password" placeholder="••••••••" />
         </div>
 
         {error && (

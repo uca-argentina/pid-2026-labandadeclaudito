@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Lock, Mail, User } from 'lucide-react'
+import { Mail, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { InputContrasenia } from '@/components/input-contrasenia'
 import { Label } from '@/components/ui/label'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { registerSchema } from '@/lib/validations/user'
@@ -112,30 +113,12 @@ export default function RegistroPage() {
 
         <div className="space-y-2">
           <Label htmlFor="password">Contraseña</Label>
-          <div className="relative">
-            <Lock className="text-muted-foreground absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2" />
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Mínimo 8 caracteres"
-              className="pl-11"
-            />
-          </div>
+          <InputContrasenia id="password" name="password" placeholder="Mínimo 8 caracteres" />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-          <div className="relative">
-            <Lock className="text-muted-foreground absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2" />
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              placeholder="Repetí tu contraseña"
-              className="pl-11"
-            />
-          </div>
+          <InputContrasenia id="confirmPassword" name="confirmPassword" placeholder="Repetí tu contraseña" />
         </div>
 
         {error && (
