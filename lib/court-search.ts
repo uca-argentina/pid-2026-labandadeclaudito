@@ -1,5 +1,6 @@
 import { db } from '@/lib/db'
 import { getAvailableSlots, precioDelTurno } from '@/lib/availability'
+import { complejoVisible } from '@/lib/complejos'
 import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { formatearDia, generateSlots } from '@/lib/time'
 import type { Cancha, PrecioEspecial } from '@/lib/generated/prisma/client'
@@ -68,7 +69,7 @@ export function matchingSlots(
 // alguna cancha activa, porque los demás nunca aparecen en los resultados.
 export async function getSearchableZones() {
   const complejos = await db.complejo.findMany({
-    where: { activo: true, duenio: { activo: true }, canchas: { some: { activo: true } } },
+    where: { ...complejoVisible(), canchas: { some: { activo: true } } },
     distinct: ['zona'],
     select: { zona: true },
     orderBy: { zona: 'asc' },
@@ -155,9 +156,7 @@ export async function searchComplexes(filtros: SearchCourtsFilters, jugadorId?: 
     where: {
       // La zona es texto libre: "CABA" y "caba" son la misma zona
       zona: filtros.zona === undefined ? undefined : { equals: filtros.zona, mode: 'insensitive' },
-      activo: true,
-      // los complejos de un dueño suspendido no aparecen
-      duenio: { activo: true },
+      ...complejoVisible(),
       canchas: { some: courtFilter(filtros) },
     },
     include: {
@@ -189,7 +188,7 @@ export async function getComplexDetail(
   jugadorId?: string,
 ) {
   const complejo = await db.complejo.findFirst({
-    where: { id, activo: true, duenio: { activo: true } },
+    where: { id, ...complejoVisible() },
     include: {
       canchas: {
         where: courtFilter(filtros),

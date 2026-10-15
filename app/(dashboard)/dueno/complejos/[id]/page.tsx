@@ -8,6 +8,7 @@ import { deporteLabels, formatPrecio, superficieLabels } from '@/lib/labels'
 import { diaDeHoy, diaDeReserva, formatAdvanceTime } from '@/lib/time'
 import { bloqueosDelDia, textoDelBloqueo } from '@/lib/blocks'
 import { AvisoBloqueo } from '@/components/aviso-bloqueo'
+import { AvisoDeAprobacion } from '@/components/aviso-de-aprobacion'
 import { Button } from '@/components/ui/button'
 import { ComplexGallery } from '@/components/complex-gallery'
 import { colorPorDeporte } from '@/components/etiqueta-deporte'
@@ -90,6 +91,12 @@ export default async function DetalleComplejoDuenoPage({
         <Pencil className="size-4" />
         Editar complejo
       </Button>
+
+      <AvisoDeAprobacion
+        complejoId={complejo.id}
+        estadoAprobacion={complejo.estadoAprobacion}
+        motivoRechazo={complejo.motivoRechazo}
+      />
 
       <div className="grid gap-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         {/* min-w-0: sin esto, en celular la columna se ensancha hasta el texto

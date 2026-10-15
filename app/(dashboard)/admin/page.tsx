@@ -6,6 +6,7 @@ import { db } from '@/lib/db'
 import { grupoDelEstado, reservasDiaPorDia, resumirReservas, tasa } from '@/lib/admin-bookings'
 import type { ReservaResumida } from '@/lib/admin-bookings'
 import { pendientesVencidas } from '@/lib/bookings'
+import { complejoPorAprobar, complejoVisible } from '@/lib/complejos'
 import { variacionPorcentual } from '@/lib/dashboard'
 import { estadoDeReserva } from '@/lib/estado-reserva'
 import { diaEnPalabras, haceCuanto, saludoSegunHora } from '@/lib/fechas'
@@ -47,6 +48,8 @@ export default async function AdminHomePage() {
     duenios,
     complejosActivos,
     cuentasSuspendidas,
+    complejosPorAprobar,
+    complejoMasViejo,
   ] = await Promise.all([
     db.disputa.count({ where: { estado: 'ABIERTA' } }),
     db.disputa.findFirst({
@@ -67,8 +70,15 @@ export default async function AdminHomePage() {
       where: { rol: 'JUGADOR', activo: true, createdAt: { gte: inicioDeLaSemanaComoInstante } },
     }),
     db.usuario.count({ where: { rol: 'DUENIO', activo: true } }),
-    db.complejo.count({ where: { activo: true } }),
+    // Solo los que ven los jugadores: aprobados y de un dueño no suspendido
+    db.complejo.count({ where: complejoVisible() }),
     db.usuario.count({ where: { activo: false } }),
+    db.complejo.count({ where: complejoPorAprobar() }),
+    db.complejo.findFirst({
+      where: complejoPorAprobar(),
+      orderBy: { createdAt: 'asc' },
+      select: { createdAt: true },
+    }),
   ])
 
   // En curso, Finalizada y No se presentó salen del reloj: se calculan acá
@@ -121,17 +131,24 @@ export default async function AdminHomePage() {
     },
   ]
 
+  const pendientes = disputasAbiertas + complejosPorAprobar
   let bajada = 'Está todo al día: no hay nada esperando tu decisión.'
-  if (disputasAbiertas === 1) {
-    bajada = 'Hay 1 disputa esperando tu decisión.'
-  } else if (disputasAbiertas > 1) {
-    bajada = `Hay ${disputasAbiertas} disputas esperando tu decisión.`
+  if (pendientes === 1) {
+    bajada = 'Hay 1 inconveniente esperando tu decisión.'
+  } else if (pendientes > 1) {
+    bajada = `Hay ${pendientes} inconvenientes esperando tu decisión.`
   }
 
   let antiguedadDeLaDisputa = ''
   if (disputaMasVieja !== null) {
     const diaDeLaDisputa = momentoActual(disputaMasVieja.createdAt).dia
     antiguedadDeLaDisputa = haceCuanto(diaDeLaDisputa, hoy)
+  }
+
+  let antiguedadDelComplejo = ''
+  if (complejoMasViejo !== null) {
+    const diaDelComplejo = momentoActual(complejoMasViejo.createdAt).dia
+    antiguedadDelComplejo = haceCuanto(diaDelComplejo, hoy)
   }
 
   // Cada fila lleva al listado que la detalla
@@ -177,6 +194,8 @@ export default async function AdminHomePage() {
       <ParaResolver
         disputasAbiertas={disputasAbiertas}
         antiguedadDeLaDisputa={antiguedadDeLaDisputa}
+        complejosPorAprobar={complejosPorAprobar}
+        antiguedadDelComplejo={antiguedadDelComplejo}
       />
 
       <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">

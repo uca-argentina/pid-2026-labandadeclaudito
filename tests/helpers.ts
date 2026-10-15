@@ -112,8 +112,10 @@ export const datosDeCanchas = {
 
 // Crea directo en la DB un complejo con 2 canchas (08 a 12 hs, turnos de 1 hora)
 export async function crearComplejoConCanchas(duenioId: string) {
+  // Aprobado: los tests que buscan y reservan necesitan un complejo visible.
+  // Los de aprobación lo pasan a PENDIENTE a mano.
   const complejo = await db.complejo.create({
-    data: { ...datosDeComplejo, duenioId },
+    data: { ...datosDeComplejo, duenioId, estadoAprobacion: 'APROBADO' },
   })
   const cancha1 = await db.cancha.create({
     data: {

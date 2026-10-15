@@ -4,6 +4,7 @@ import { ArrowRight, Search } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { dondeProximas, pendientesVencidas } from '@/lib/bookings'
+import { complejoVisible } from '@/lib/complejos'
 import { venceLaSena } from '@/lib/estado-reserva'
 import { diaCercano, diaEnPalabras, proximoSabado, saludoSegunHora } from '@/lib/fechas'
 import { diaDeHoy, diaDeReserva } from '@/lib/time'
@@ -41,7 +42,7 @@ export default async function JugadorHomePage() {
         where: { jugadorId: session.user.id, NOT: pendientesVencidas() },
       }),
       db.complejo.count({
-        where: { activo: true, canchas: { some: { activo: true } } },
+        where: { ...complejoVisible(), canchas: { some: { activo: true } } },
       }),
     ])
 

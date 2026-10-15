@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth-helpers'
 import { precioDelTurno, precioProporcional } from '@/lib/availability'
 import { getBlocksOfDay, isSlotBlocked } from '@/lib/blocks'
 import { pendientesVencidas } from '@/lib/bookings'
+import { complejoVisible } from '@/lib/complejos'
 import {
   DIAS_MAXIMOS_DE_ANTICIPACION,
   diaSemanaDeReserva,
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
     where: {
       id: parsed.data.canchaId,
       activo: true,
-      complejo: { activo: true, duenio: { activo: true } },
+      complejo: complejoVisible(),
     },
     include: {
       preciosEspeciales: { where: { activo: true } },
