@@ -5,8 +5,13 @@ import { ArrowLeft, BadgeCheck, MapPin, Phone } from 'lucide-react'
 import { getComplexDetail, filtersToQueryString } from '@/lib/court-search'
 import { searchCourtsSchema } from '@/lib/validations/court-search'
 import { deportesDistintos } from '@/lib/resumen-complejo'
-import { bloqueosDelDia, textoDelBloqueo } from '@/lib/blocks'
-import { diaDeHoy } from '@/lib/time'
+import {
+  bloqueosDelDia,
+  bloqueosEnLaFranja,
+  textoDelBloqueo,
+  type BloqueoDelDia,
+} from '@/lib/blocks'
+import { diaEnPalabras } from '@/lib/fechas'
 import { CourtCard } from '@/components/court-card'
 import { ComplexGallery } from '@/components/complex-gallery'
 import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
@@ -43,12 +48,17 @@ export default async function ComplejoDetallePage({
     </span>
   )
 
-  // Bloqueos del día que se está mirando: el de la búsqueda o, si no hay, hoy
-  const idsDeCanchas: string[] = []
-  for (const cancha of complejo.canchas) {
-    idsDeCanchas.push(cancha.id)
+  // Igual que en la búsqueda: los bloqueos se avisan solo si el jugador eligió
+  // un día (y, si eligió horario, los de ese horario), nombrando el día.
+  let bloqueos: BloqueoDelDia[] = []
+  if (filtros.fecha !== undefined) {
+    const idsDeCanchas: string[] = []
+    for (const cancha of complejo.canchas) {
+      idsDeCanchas.push(cancha.id)
+    }
+    const bloqueosDelDiaBuscado = await bloqueosDelDia(idsDeCanchas, new Date(filtros.fecha))
+    bloqueos = bloqueosEnLaFranja(bloqueosDelDiaBuscado, filtros.horaDesde, filtros.horaHasta)
   }
-  const bloqueos = await bloqueosDelDia(idsDeCanchas, new Date(filtros.fecha ?? diaDeHoy()))
 
   return (
     <main>
@@ -104,8 +114,8 @@ export default async function ComplejoDetallePage({
                     cancha={cancha}
                     fechaInicial={filtros.fecha}
                     bloqueo={
-                      bloqueosDeLaCancha.length > 0
-                        ? textoDelBloqueo(bloqueosDeLaCancha, false)
+                      filtros.fecha !== undefined && bloqueosDeLaCancha.length > 0
+                        ? `${diaEnPalabras(filtros.fecha)} · ${textoDelBloqueo(bloqueosDeLaCancha, false)}`
                         : undefined
                     }
                   />

@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   blockOverlapsBooking,
   blocksOverlap,
+  bloqueosEnLaFranja,
   isSlotBlocked,
   resumenBloqueosDelComplejo,
+  resumenBloqueosParaElJugador,
   textoDelBloqueo,
 } from './blocks'
 
@@ -217,5 +219,44 @@ describe('resumenBloqueosDelComplejo', () => {
 
   it('todas', () => {
     expect(resumenBloqueosDelComplejo(3, 3)).toBe('Todas las canchas bloqueadas')
+  })
+})
+
+describe('bloqueosEnLaFranja', () => {
+  const deTarde = { courtId: 'c1', startTime: '14:00', endTime: '18:00', reason: null }
+  const hastaMedianoche = { courtId: 'c1', startTime: '22:00', endTime: '00:00', reason: null }
+
+  it('sin franja, sirven todos', () => {
+    expect(bloqueosEnLaFranja([deTarde], undefined, undefined)).toEqual([deTarde])
+  })
+
+  it('una franja que se cruza con el bloqueo lo incluye', () => {
+    expect(bloqueosEnLaFranja([deTarde], '17:00', '20:00')).toEqual([deTarde])
+  })
+
+  it('una franja que termina justo cuando empieza el bloqueo no lo incluye', () => {
+    expect(bloqueosEnLaFranja([deTarde], '10:00', '14:00')).toEqual([])
+  })
+
+  it('una franja que arranca justo cuando termina el bloqueo no lo incluye', () => {
+    expect(bloqueosEnLaFranja([deTarde], '18:00', undefined)).toEqual([])
+  })
+
+  it('un bloqueo que termina a medianoche se cruza con una franja nocturna', () => {
+    expect(bloqueosEnLaFranja([hastaMedianoche], '23:00', undefined)).toEqual([hastaMedianoche])
+  })
+})
+
+describe('resumenBloqueosParaElJugador', () => {
+  it('sin bloqueos, nada', () => {
+    expect(resumenBloqueosParaElJugador(0, 3)).toBeNull()
+  })
+
+  it('complejo de una sola cancha', () => {
+    expect(resumenBloqueosParaElJugador(1, 1)).toBe('Tiene horarios bloqueados')
+  })
+
+  it('varias canchas', () => {
+    expect(resumenBloqueosParaElJugador(2, 3)).toBe('2 de 3 canchas con horarios bloqueados')
   })
 })
