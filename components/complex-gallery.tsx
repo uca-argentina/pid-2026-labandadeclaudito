@@ -12,12 +12,16 @@ type ImagenDeGaleria = {
 // Galería de fotos de un complejo. Al hacer click en cualquier foto se abre
 // un visor a pantalla completa (overlay fijo, sin librería nueva) con
 // flechas para moverse entre todas las fotos.
+// children (opcional): lo que va escrito encima de la portada, abajo a la
+// izquierda (el nombre y la dirección del complejo).
 export function ComplexGallery({
   imagenes,
   nombreComplejo,
+  children,
 }: {
   imagenes: ImagenDeGaleria[]
   nombreComplejo: string
+  children?: React.ReactNode
 }) {
   const [indiceAbierto, setIndiceAbierto] = useState<number | null>(null)
 
@@ -58,34 +62,55 @@ export function ComplexGallery({
 
   return (
     <>
-      <div className="mb-6 space-y-2.5">
-        {/* Proporción bien panorámica (no aspect-video): así la portada ocupa
-            poco alto y, al entrar al complejo, entran en pantalla la foto,
-            el título "Canchas disponibles" y al menos una fila de canchas
-            sin tener que scrollear. Las miniaturas también van más bajas
-            (16:9 en vez de 4:3) por la misma razón. */}
-        <button
-          type="button"
-          onClick={() => setIndiceAbierto(0)}
-          className="relative aspect-3/1 w-full overflow-hidden rounded-2xl border"
-        >
-          <Image
-            src={portada.url}
-            alt={`Foto de ${nombreComplejo}`}
-            fill
-            priority
-            sizes="(min-width: 1024px) 1024px, 100vw"
-            className="object-cover"
-          />
-        </button>
+      {/* La portada en grande y, al costado, las dos fotos que siguen (desde
+          sm). Si hay más, la última dice cuántas faltan; todas se ven en el
+          visor. */}
+      <div
+        className={
+          otrasFotos.length > 0
+            ? 'mb-7 grid h-56 gap-3 sm:h-75 sm:grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)]'
+            : 'mb-7 grid h-56 sm:h-75'
+        }
+      >
+        <div className="relative overflow-hidden rounded-3xl">
+          <button
+            type="button"
+            aria-label="Ver las fotos"
+            onClick={() => setIndiceAbierto(0)}
+            className="absolute inset-0"
+          >
+            <Image
+              src={portada.url}
+              alt={`Foto de ${nombreComplejo}`}
+              fill
+              priority
+              sizes="(min-width: 1024px) 1024px, 100vw"
+              className="object-cover"
+            />
+          </button>
+          {children && (
+            <>
+              {/* Degradé oscuro para que el texto se lea sobre cualquier foto.
+                  pointer-events-none: el click pasa a la foto de abajo. */}
+              <div
+                aria-hidden
+                className="from-sidebar/90 via-sidebar/75 pointer-events-none absolute inset-x-0 bottom-0 h-4/5 bg-linear-to-t via-45% to-transparent"
+              />
+              <div className="text-sidebar-foreground pointer-events-none absolute inset-x-6 bottom-5 sm:inset-x-7 sm:bottom-6">
+                {children}
+              </div>
+            </>
+          )}
+        </div>
+
         {otrasFotos.length > 0 && (
-          <div className="grid grid-cols-4 gap-2.5">
-            {otrasFotos.map((foto, indice) => (
+          <div className="hidden grid-rows-2 gap-3 sm:grid">
+            {otrasFotos.slice(0, 2).map((foto, indice) => (
               <button
                 key={foto.id}
                 type="button"
                 onClick={() => irA(indice + 1)}
-                className="relative aspect-video overflow-hidden rounded-lg border"
+                className="relative overflow-hidden rounded-2xl"
               >
                 <Image
                   src={foto.url}
@@ -94,6 +119,11 @@ export function ComplexGallery({
                   sizes="25vw"
                   className="object-cover"
                 />
+                {indice === 1 && otrasFotos.length > 2 && (
+                  <span className="bg-sidebar/70 text-sidebar-foreground absolute inset-0 flex items-center justify-center text-lg font-semibold">
+                    +{otrasFotos.length - 2}
+                  </span>
+                )}
               </button>
             ))}
           </div>

@@ -8,9 +8,12 @@ import {
   isTooSoonToBook,
   minutesToTimeText,
   refundsDeposit,
+  sumarDias,
   sumarMinutos,
   timeTextToMinutes,
   turnoYaPaso,
+  diasParaReservar,
+  ultimoDiaParaReservar,
 } from './time'
 
 describe('generateSlots', () => {
@@ -260,5 +263,43 @@ describe('franjaDentroDelHorario', () => {
     expect(franjaDentroDelHorario('10:00', '12:00', '20:00', '03:00')).toBe(false)
     // Pisa los dos tramos y el hueco del medio, en que la cancha está cerrada
     expect(franjaDentroDelHorario('01:00', '21:00', '20:00', '03:00')).toBe(false)
+  })
+})
+
+describe('sumarDias', () => {
+  test('suma días dentro del mismo mes', () => {
+    expect(sumarDias('2026-10-05', 3)).toBe('2026-10-08')
+  })
+
+  test('resta días pasando al mes anterior', () => {
+    expect(sumarDias('2026-10-05', -29)).toBe('2026-09-06')
+  })
+
+  test('cruza el fin de año', () => {
+    expect(sumarDias('2026-12-30', 3)).toBe('2027-01-02')
+  })
+
+  test('tiene en cuenta los años bisiestos', () => {
+    expect(sumarDias('2028-02-28', 1)).toBe('2028-02-29')
+  })
+})
+
+describe('ultimoDiaParaReservar', () => {
+  test('30 días después de hoy', () => {
+    expect(ultimoDiaParaReservar('2026-10-07')).toBe('2026-11-06')
+  })
+
+  test('cruza fin de año', () => {
+    expect(ultimoDiaParaReservar('2026-12-15')).toBe('2027-01-14')
+  })
+})
+
+describe('diasParaReservar', () => {
+  test('de hoy al último día que se puede reservar, sin saltear ninguno', () => {
+    const dias = diasParaReservar('2026-10-07')
+    expect(dias).toHaveLength(31)
+    expect(dias[0]).toBe('2026-10-07')
+    expect(dias[1]).toBe('2026-10-08')
+    expect(dias[30]).toBe(ultimoDiaParaReservar('2026-10-07'))
   })
 })

@@ -6,7 +6,7 @@ export type SesionDeTest = {
     id: string
     name: string
     email: string
-    rol: 'JUGADOR' | 'DUENIO'
+    rol: 'JUGADOR' | 'DUENIO' | 'ADMIN'
   }
 }
 

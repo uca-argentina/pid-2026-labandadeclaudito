@@ -15,10 +15,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const reserva = await db.reserva.findUnique({
     where: { id },
-    include: { cancha: { include: { complejo: true } } },
+    include: { cancha: { include: { complejo: true } }, disputa: true },
   })
   if (!reserva || reserva.cancha.complejo.duenioId !== session.user.id) {
     return NextResponse.json({ error: 'Reserva no encontrada' }, { status: 404 })
+  }
+
+  // Con una disputa abierta el dueño no puede cambiar la marca mientras el
+  // admin la revisa; con una resuelta, la decisión del admin es definitiva.
+  if (reserva.disputa) {
+    return NextResponse.json({ error: 'La reserva tiene una disputa' }, { status: 409 })
   }
 
   const body = await request.json()
@@ -46,7 +52,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     )
   }
 
-  await db.reserva.update({ where: { id }, data: { asistio: parsed.data.asistio } })
+  // La fecha de la marca es el arranque del plazo para disputar: se guarda de
+  // nuevo en cada corrección, así el jugador siempre tiene el plazo completo.
+  await db.reserva.update({
+    where: { id },
+    data: { asistio: parsed.data.asistio, asistenciaMarcadaEn: new Date() },
+  })
 
   return NextResponse.json({ ok: true }, { status: 200 })
 }

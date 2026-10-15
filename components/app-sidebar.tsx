@@ -2,7 +2,18 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Building2, CalendarDays, Equal, Home, Search, X } from 'lucide-react'
+import {
+  Building2,
+  CalendarDays,
+  ChartColumn,
+  Equal,
+  Home,
+  Scale,
+  Search,
+  Users,
+  X,
+} from 'lucide-react'
+import { homePorRol } from '@/lib/home-por-rol'
 import { Button } from '@/components/ui/button'
 import {
   Sidebar,
@@ -18,7 +29,8 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { iniciales } from '@/lib/iniciales'
 import { SignOutButton } from '@/components/sign-out-button'
 import { Logo } from '@/components/logo'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -29,7 +41,7 @@ type ItemNav = {
   icon: typeof Home
 }
 
-const navPorRol: Record<'JUGADOR' | 'DUENIO', ItemNav[]> = {
+const navPorRol: Record<'JUGADOR' | 'DUENIO' | 'ADMIN', ItemNav[]> = {
   JUGADOR: [
     { href: '/jugador', label: 'Inicio', icon: Home },
     { href: '/jugador/canchas', label: 'Buscar canchas', icon: Search },
@@ -39,7 +51,23 @@ const navPorRol: Record<'JUGADOR' | 'DUENIO', ItemNav[]> = {
     { href: '/dueno', label: 'Inicio', icon: Home },
     { href: '/dueno/complejos', label: 'Mis complejos', icon: Building2 },
     { href: '/dueno/reservas', label: 'Reservas', icon: CalendarDays },
+    { href: '/dueno/dashboard', label: 'Estadísticas', icon: ChartColumn },
   ],
+  ADMIN: [
+    { href: '/admin', label: 'Inicio', icon: Home },
+    { href: '/admin/usuarios', label: 'Usuarios', icon: Users },
+    { href: '/admin/complejos', label: 'Complejos', icon: Building2 },
+    { href: '/admin/reservas', label: 'Reservas', icon: CalendarDays },
+    { href: '/admin/disputas', label: 'Disputas', icon: Scale },
+  ],
+}
+
+// El Inicio de cada rol es prefijo de todas sus páginas (/admin lo es de
+// /admin/usuarios), así que ese se compara exacto; el resto se ilumina también
+// en sus subrutas (/admin/disputas/[id], /dueno/complejos/[id]/canchas).
+function esElItemActivo(href: string, pathname: string, home: string): boolean {
+  if (href === home) return pathname === href
+  return pathname === href || pathname.startsWith(`${href}/`)
 }
 
 // Botón de la barra de arriba en mobile para abrir el sidebar (dos líneas)
@@ -58,32 +86,25 @@ export function MobileMenuButton() {
   )
 }
 
-function iniciales(nombre: string) {
-  return nombre
-    .split(' ')
-    .map((palabra) => palabra[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-}
-
 export function AppSidebar({
   rol,
   nombre,
   email,
+  imagenUrl,
 }: {
-  rol: 'JUGADOR' | 'DUENIO'
+  rol: 'JUGADOR' | 'DUENIO' | 'ADMIN'
   nombre: string
   email: string
+  imagenUrl: string | null
 }) {
   const pathname = usePathname()
   // En mobile el sidebar es un panel encima de la página: lo cerramos al navegar
   const { isMobile, setOpenMobile } = useSidebar()
   const items = navPorRol[rol]
-  const home = rol === 'DUENIO' ? '/dueno' : '/jugador'
+  const home = homePorRol(rol)
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="group-data-[side=left]:border-r-0">
       <SidebarHeader className="h-16 justify-center px-2 py-0">
         {/* Sidebar abierto: logo y nombre a la izquierda, y a la derecha el botón
             de plegar (desktop) o una cruz para cerrar (mobile).
@@ -95,9 +116,9 @@ export function AppSidebar({
             className="flex items-center gap-2"
             onClick={() => setOpenMobile(false)}
           >
-            <Logo className="size-8" />
+            <Logo className="size-8" sobreFondoOscuro />
             <span className="font-brand text-xl font-extrabold tracking-tight">
-              Toca<span className="text-primary">Y</span>Juga
+              Toca<span className="text-sidebar-primary">Y</span>Juga
             </span>
           </Link>
           {isMobile ? (
@@ -121,7 +142,7 @@ export function AppSidebar({
             href={home}
             className="flex size-8 items-center justify-center transition-opacity group-hover/logo:opacity-0"
           >
-            <Logo className="size-8" />
+            <Logo className="size-8" sobreFondoOscuro />
           </Link>
           <SidebarTrigger className="absolute inset-0 size-8 opacity-0 transition-opacity group-hover/logo:opacity-100" />
         </div>
@@ -135,9 +156,9 @@ export function AppSidebar({
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     render={<Link href={item.href} onClick={() => setOpenMobile(false)} />}
-                    isActive={pathname === item.href}
+                    isActive={esElItemActivo(item.href, pathname, home)}
                     tooltip={item.label}
-                    className="h-10 text-base [&_svg]:size-5 group-data-[collapsible=icon]:p-1.5!"
+                    className="text-sidebar-foreground/80 data-active:[&_svg]:text-sidebar-primary h-11 gap-3 px-3.5 text-base [&_svg]:size-5 group-data-[collapsible=icon]:p-1.5!"
                   >
                     <item.icon />
                     <span>{item.label}</span>
@@ -149,19 +170,49 @@ export function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="gap-2">
-        <div className="flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:justify-center">
-          <Avatar className="size-7 shrink-0">
-            <AvatarFallback>{iniciales(nombre)}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-            <p className="truncate text-sm font-medium">{nombre}</p>
-            <p className="text-muted-foreground truncate text-xs">{email}</p>
+      <SidebarFooter>
+        {/* Tarjeta del perfil: avatar, nombre, cerrar sesión y tema. Con el
+            sidebar plegado queda solo el avatar con el botón de tema abajo.
+            El botón de cerrar sesión va afuera del link: un <button> no puede
+            ir adentro de un <a>. */}
+        <div className="bg-sidebar-accent space-y-2 rounded-2xl p-2.5 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0">
+          <div className="flex items-center gap-2.5 group-data-[collapsible=icon]:flex-col">
+            {rol === 'ADMIN' ? (
+              // El admin es una cuenta de la app: no tiene perfil que editar
+              <div className="flex min-w-0 flex-1 items-center gap-2.5" title={email}>
+                <Avatar className="size-9 shrink-0 group-data-[collapsible=icon]:size-8">
+                  <AvatarImage src={imagenUrl ?? undefined} alt="" />
+                  <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground font-heading font-bold">
+                    {iniciales(nombre)}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
+                  {nombre}
+                </p>
+              </div>
+            ) : (
+              <Link
+                href="/perfil"
+                onClick={() => setOpenMobile(false)}
+                title="Editar mi perfil"
+                className="hover:bg-sidebar-accent flex min-w-0 flex-1 items-center gap-2.5 rounded-xl transition-colors"
+              >
+                <Avatar className="size-9 shrink-0 group-data-[collapsible=icon]:size-8">
+                  <AvatarImage src={imagenUrl ?? undefined} alt="" />
+                  <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground font-heading font-bold">
+                    {iniciales(nombre)}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
+                  {nombre}
+                </p>
+              </Link>
+            )}
+            <ThemeToggle />
           </div>
-        </div>
-        <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-          <SignOutButton className="flex-1 group-data-[collapsible=icon]:hidden" />
-          <ThemeToggle />
+          <div className="group-data-[collapsible=icon]:hidden">
+            <SignOutButton />
+          </div>
         </div>
       </SidebarFooter>
 

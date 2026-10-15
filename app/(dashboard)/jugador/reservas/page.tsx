@@ -1,24 +1,64 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { CalendarCheck, Clock, Hourglass, MapPin, Wallet } from 'lucide-react'
+import { CalendarDays, CircleDot, Clock, LandPlot, Search, ShieldAlert, Wallet } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { pendientesVencidas } from '@/lib/bookings'
-import { deporteLabels, formatPrecio } from '@/lib/labels'
+import type { Prisma } from '@/lib/generated/prisma/client'
+import { dondeHistorial, dondeProximas } from '@/lib/bookings'
+import { sePuedeDisputar } from '@/lib/disputas'
+import { formatPrecio } from '@/lib/labels'
 import { montoDelHistorial } from '@/lib/historial'
-import { estadoDeReserva, venceLaSena } from '@/lib/estado-reserva'
-import { diaDeReserva, formatearDia, momentoActual, refundsDeposit, turnoYaPaso } from '@/lib/time'
+import { venceLaSena } from '@/lib/estado-reserva'
+import { calcularPagina } from '@/lib/paginacion'
+import { diaEnPalabras } from '@/lib/fechas'
+import { diaDeReserva, momentoActual, refundsDeposit, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { CancelBookingButton } from '@/components/cancel-booking-button'
-import { CollapsibleSection } from '@/components/collapsible-section'
+import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
+import { CeldaCancha, CeldaMonto } from '@/components/celdas-reserva'
+import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
+import { EstadoDeDisputa } from '@/components/estado-de-disputa'
+import { EstadoVacio } from '@/components/estado-vacio'
+import { DisputeFormDialog } from '@/components/dispute-form-dialog'
+import { FranjaDeCancha } from '@/components/franja-de-cancha'
+import { Button } from '@/components/ui/button'
+import { FechaDelTurno } from '@/components/fecha-del-turno'
+import { TituloConIcono } from '@/components/titulo-con-icono'
+import { Paginacion } from '@/components/paginacion'
+import {
+  leerVista,
+  PestaniasDeReservas,
+  urlDeReservas,
+  type VistaDeReservas,
+} from '@/components/pestanias-reservas'
 import { PayDepositButton } from '@/components/pay-deposit-button'
 import { RefreshWhenDepositExpires } from '@/components/refresh-when-deposit-expires'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
-async function getReservas(jugadorId: string) {
+// Próximas se muestran como tarjetas (tienen acciones: pagar, cancelar).
+// Historial y canceladas, como tabla: son solo para consultar.
+const TARJETAS_POR_PAGINA = 12
+const FILAS_POR_PAGINA = 20
+
+async function getReservas(
+  where: Prisma.ReservaWhereInput,
+  orden: 'asc' | 'desc',
+  skip: number,
+  take: number,
+) {
   return db.reserva.findMany({
-    where: { jugadorId, NOT: pendientesVencidas() },
-    include: { cancha: { include: { complejo: true } }, pago: true },
-    orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
+    where,
+    include: { cancha: { include: { complejo: true } }, pago: true, disputa: true },
+    orderBy: [{ fecha: orden }, { horaInicio: orden }],
+    skip,
+    take,
   })
 }
 
@@ -30,80 +70,226 @@ const tonos = {
   peligro: 'text-destructive',
 }
 
-export default async function MisReservasPage() {
+export default async function MisReservasPage({ searchParams }: PageProps<'/jugador/reservas'>) {
   const session = await auth()
   if (!session) redirect('/login')
+  const jugadorId = session.user.id
 
-  const reservas = await getReservas(session.user.id)
+  // ?vista=historial|canceladas elige la pestaña (sin vista = próximas)
+  // ?pagina=2 elige la página dentro de esa pestaña
+  const { vista: vistaPedida, pagina } = await searchParams
+  const vista = leerVista(vistaPedida)
+
+  // Qué es "próxima" o "historial" lo decide la base (ver dondeProximas),
+  // así cuenta y pagina sin traer todas las reservas.
   const ahora = momentoActual()
-
-  // Próximas: las que todavía se van a jugar (la que está en curso también),
-  // de la más cercana a la más lejana. Historial: las que ya pasaron.
-  // Canceladas: aparte, con o sin seña devuelta. Estas dos, de la más
-  // reciente a la más vieja.
-  const esProxima = (r: Reserva) => {
-    const dia = diaDeReserva(r.fecha)
-    const visible = estadoDeReserva(
-      { estado: r.estado, asistio: r.asistio, dia, horaInicio: r.horaInicio, horaFin: r.horaFin },
-      ahora,
-    )
-    if (visible === 'CONFIRMADA' || visible === 'EN_CURSO') return true
-    // Una pendiente que nunca se pagó deja de ser próxima cuando empieza el turno.
-    return visible === 'PENDIENTE' && !turnoYaPaso(dia, r.horaInicio)
+  const dondePorVista: Record<VistaDeReservas, Prisma.ReservaWhereInput> = {
+    proximas: { jugadorId, ...dondeProximas(ahora) },
+    historial: { jugadorId, ...dondeHistorial(ahora) },
+    canceladas: { jugadorId, estado: 'CANCELADA' },
   }
-  const proximas = reservas.filter(esProxima).reverse()
-  const historial = reservas.filter((r) => !esProxima(r) && r.estado !== 'CANCELADA')
-  const canceladas = reservas.filter((r) => r.estado === 'CANCELADA')
+
+  const [totalProximas, totalHistorial, totalCanceladas] = await Promise.all([
+    db.reserva.count({ where: dondePorVista.proximas }),
+    db.reserva.count({ where: dondePorVista.historial }),
+    db.reserva.count({ where: dondePorVista.canceladas }),
+  ])
+  const totales = {
+    proximas: totalProximas,
+    historial: totalHistorial,
+    canceladas: totalCanceladas,
+  }
+
+  const porPagina = vista === 'proximas' ? TARJETAS_POR_PAGINA : FILAS_POR_PAGINA
+  const { paginaActual, totalPaginas, skip } = calcularPagina(pagina, totales[vista], porPagina)
+
+  // Próximas: de la más cercana a la más lejana.
+  // Historial y canceladas: de la más reciente a la más vieja.
+  const reservas = await getReservas(
+    dondePorVista[vista],
+    vista === 'proximas' ? 'asc' : 'desc',
+    skip,
+    porPagina,
+  )
+
+  const paginacion = (
+    <Paginacion
+      paginaActual={paginaActual}
+      totalPaginas={totalPaginas}
+      desde={skip + 1}
+      hasta={skip + reservas.length}
+      total={totales[vista]}
+      urlAnterior={urlDeReservas('/jugador/reservas', vista, paginaActual - 1)}
+      urlSiguiente={urlDeReservas('/jugador/reservas', vista, paginaActual + 1)}
+    />
+  )
+
+  const noReservoNunca = totalProximas + totalHistorial + totalCanceladas === 0
 
   return (
-    <main className="mx-auto max-w-5xl px-6 pt-6 pb-12 md:pt-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-semibold">Mis reservas</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Tus próximos turnos y todo lo que reservaste antes.
-        </p>
+    <main>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <h1 className="font-heading text-4xl font-bold tracking-tight">Mis reservas</h1>
+          <p className="text-muted-foreground mt-1.5">
+            {totalProximas === 0 && 'Tus próximos turnos y todo lo que reservaste antes.'}
+            {totalProximas === 1 && 'Tenés 1 turno por jugar.'}
+            {totalProximas > 1 && `Tenés ${totalProximas} turnos por jugar.`}
+          </p>
+        </div>
+        <Button render={<Link href="/jugador/canchas" />}>
+          <Search className="size-4" />
+          Buscar canchas
+        </Button>
       </div>
 
-      {reservas.length === 0 ? (
-        <div className="border-border bg-card rounded-2xl border p-8 text-center">
-          <CalendarCheck className="text-muted-foreground mx-auto mb-3 size-8" />
-          <p className="text-muted-foreground text-sm">Todavía no reservaste ninguna cancha.</p>
-          <Link
-            href="/jugador/canchas"
-            className="text-primary mt-2 inline-block text-sm font-medium"
-          >
-            Buscar canchas
-          </Link>
-        </div>
+      {noReservoNunca ? (
+        <EstadoVacio
+          titulo="Todavía no reservaste ninguna cancha"
+          texto="Cuando reserves un turno, lo vas a ver acá."
+        />
       ) : (
-        <div className="space-y-8">
-          {proximas.length > 0 && (
-            <section className="space-y-4">
-              <h2 className="text-muted-foreground text-sm font-medium">Próximos</h2>
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {proximas.map((reserva) => (
+        <>
+          <PestaniasDeReservas ruta="/jugador/reservas" vista={vista} totales={totales} />
+
+          {reservas.length === 0 && (
+            <p className="text-muted-foreground text-sm">
+              {vista === 'proximas' && 'No tenés turnos próximos.'}
+              {vista === 'historial' && 'Todavía no jugaste ningún turno.'}
+              {vista === 'canceladas' && 'No tenés reservas canceladas.'}
+            </p>
+          )}
+
+          {reservas.length > 0 && vista === 'proximas' && (
+            <>
+              {/* Tarjetas de ancho acotado: no se estiran para llenar la fila */}
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(17rem,19rem))] gap-5">
+                {reservas.map((reserva) => (
                   <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
                 ))}
               </div>
-            </section>
+              {/* Con una sola página de tarjetas no hace falta el pie */}
+              {totalPaginas > 1 && (
+                <div className="bg-card shadow-card mt-4 overflow-hidden rounded-2xl">
+                  {paginacion}
+                </div>
+              )}
+            </>
           )}
-          {historial.length > 0 && (
-            <CollapsibleSection title="Historial" /* count={historial.length} */>
-              {historial.map((reserva) => (
-                <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
-              ))}
-            </CollapsibleSection>
+
+          {reservas.length > 0 && vista !== 'proximas' && (
+            <div className="bg-card shadow-card overflow-hidden rounded-2xl">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="pl-4">
+                      <TituloConIcono icono={CalendarDays}>Turno</TituloConIcono>
+                    </TableHead>
+                    <TableHead className="hidden sm:table-cell">
+                      <TituloConIcono icono={LandPlot}>Cancha</TituloConIcono>
+                    </TableHead>
+                    <TableHead>
+                      <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
+                    </TableHead>
+                    <TableHead className="hidden pr-4 sm:table-cell">
+                      <TituloConIcono icono={Wallet}>Monto</TituloConIcono>
+                    </TableHead>
+                    {vista === 'historial' && (
+                      <TableHead className="pr-4 text-right">
+                        <TituloConIcono icono={ShieldAlert}>Disputa</TituloConIcono>
+                      </TableHead>
+                    )}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reservas.map((reserva) => (
+                    <FilaReserva
+                      key={reserva.id}
+                      reserva={reserva}
+                      ahora={ahora}
+                      conDisputa={vista === 'historial'}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+              {paginacion}
+            </div>
           )}
-          {canceladas.length > 0 && (
-            <CollapsibleSection title="Canceladas" /* count={canceladas.length} */>
-              {canceladas.map((reserva) => (
-                <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
-              ))}
-            </CollapsibleSection>
-          )}
-        </div>
+        </>
       )}
     </main>
+  )
+}
+
+// Una fila de la tabla de historial o canceladas. En el historial lleva la
+// disputa: el botón para abrirla, o en qué está la que ya abrió.
+function FilaReserva({
+  reserva,
+  ahora,
+  conDisputa,
+}: {
+  reserva: Reserva
+  ahora: { dia: string; hora: string }
+  conDisputa: boolean
+}) {
+  const dia = diaDeReserva(reserva.fecha)
+  const monto = montoDelHistorial(
+    {
+      estado: reserva.estado,
+      asistio: reserva.asistio,
+      precioTurno: reserva.precioTurno.toString(),
+      pago: reserva.pago && { ...reserva.pago, monto: reserva.pago.monto.toString() },
+    },
+    turnoYaPaso(dia, reserva.horaInicio),
+    'JUGADOR',
+  )
+
+  return (
+    <TableRow>
+      <TableCell className="pl-4">
+        <FechaDelTurno dia={dia} horaInicio={reserva.horaInicio} horaFin={reserva.horaFin} />
+      </TableCell>
+      {/* En celular no entra: se ven el turno y el estado */}
+      <TableCell className="hidden sm:table-cell">
+        <CeldaCancha
+          nombre={reserva.cancha.nombre}
+          deporte={reserva.cancha.deporte}
+          complejo={reserva.cancha.complejo.nombre}
+        />
+      </TableCell>
+      <TableCell>
+        <BookingStatusBadge
+          estado={reserva.estado}
+          asistio={reserva.asistio}
+          dia={dia}
+          horaInicio={reserva.horaInicio}
+          horaFin={reserva.horaFin}
+          ahoraInicial={ahora}
+        />
+      </TableCell>
+      <TableCell className="hidden pr-4 sm:table-cell">
+        <CeldaMonto monto={monto} />
+      </TableCell>
+      {conDisputa && (
+        <TableCell className="pr-4 text-right">
+          {reserva.disputa ? (
+            <EstadoDeDisputa disputa={reserva.disputa} vista="JUGADOR" />
+          ) : (
+            sePuedeDisputar(
+              {
+                estado: reserva.estado,
+                asistio: reserva.asistio,
+                dia,
+                horaInicio: reserva.horaInicio,
+                horaFin: reserva.horaFin,
+                asistenciaMarcadaEn: reserva.asistenciaMarcadaEn,
+              },
+              ahora,
+            ) && <DisputeFormDialog bookingId={reserva.id} />
+          )}
+        </TableCell>
+      )}
+    </TableRow>
   )
 }
 
@@ -135,7 +321,7 @@ function TarjetaReserva({
 
   const muestraPagar = reserva.estado === 'PENDIENTE' && !yaPaso
   const muestraCancelar = !cancelada && !yaPaso
-  const horaLimiteSena = momentoActual(venceLaSena(reserva.createdAt)).hora
+  const venceSena = venceLaSena(reserva.createdAt).toISOString()
 
   // Aviso para el diálogo de cancelar: mismo cálculo que hace el endpoint.
   let avisoSena: string | null = null
@@ -150,78 +336,88 @@ function TarjetaReserva({
       avisoSena = `Faltan menos de ${horas} hs para el turno: la seña de ${montoPagado} no se devuelve.`
     }
   }
-  const mostrarFooter = monto !== null || muestraPagar || muestraCancelar
 
   return (
     <div
       className={
         cancelada
-          ? 'border-border bg-card flex h-full flex-col rounded-2xl border p-5 opacity-60'
-          : 'border-border bg-card flex h-full flex-col rounded-2xl border p-5'
+          ? 'bg-card shadow-card flex h-full flex-col overflow-hidden rounded-2xl opacity-60'
+          : 'bg-card shadow-card flex h-full flex-col overflow-hidden rounded-2xl'
       }
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-lg font-bold">{reserva.cancha.nombre}</span>
-        <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
-          {deporteLabels[reserva.cancha.deporte]}
-        </span>
-        <BookingStatusBadge
-          estado={reserva.estado}
-          asistio={reserva.asistio}
-          dia={dia}
-          horaInicio={reserva.horaInicio}
-          horaFin={reserva.horaFin}
-          ahoraInicial={ahora}
-        />
-      </div>
+      <FranjaDeCancha deporte={reserva.cancha.deporte} />
 
-      <div className="text-muted-foreground mt-2 mb-4 space-y-1.5 text-sm">
-        <p className="flex items-center gap-1.5">
-          <MapPin className="size-3.5 shrink-0" />
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <BookingStatusBadge
+            estado={reserva.estado}
+            asistio={reserva.asistio}
+            dia={dia}
+            horaInicio={reserva.horaInicio}
+            horaFin={reserva.horaFin}
+            ahoraInicial={ahora}
+          />
+          <EtiquetaDeporte deporte={reserva.cancha.deporte} />
+        </div>
+
+        <p className="font-heading mt-2 text-lg font-bold">{diaEnPalabras(dia)}</p>
+        <p className="flex items-center gap-1.5 text-sm font-medium">
+          <Clock className="size-3.5 shrink-0" />
+          {reserva.horaInicio} a {reserva.horaFin} hs
+        </p>
+        <p className="mt-2 text-sm font-semibold">{reserva.cancha.nombre}</p>
+        <p className="text-muted-foreground truncate text-sm">
           {reserva.cancha.complejo.nombre} · {reserva.cancha.complejo.direccion}
         </p>
-        <p className="flex items-center gap-1.5">
-          <Clock className="size-3.5 shrink-0" />
-          {formatearDia(dia)} · {reserva.horaInicio} a {reserva.horaFin} hs
-        </p>
-        {muestraPagar && (
-          <p className="text-foreground flex items-center gap-1.5 font-medium">
-            <Hourglass className="size-3.5 shrink-0" />
-            Pagá la seña antes de las {horaLimiteSena} hs o el turno se libera
-            <RefreshWhenDepositExpires venceEn={venceLaSena(reserva.createdAt).toISOString()} />
-          </p>
-        )}
-      </div>
 
-      {/* Footer con borde arriba, separado del cuerpo: precio a la izquierda,
-          acciones a la derecha. Evita que el precio quede flotando en un
-          lugar distinto según cuánto texto tenga el cuerpo de la tarjeta. */}
-      {mostrarFooter && (
-        <div className="border-border mt-auto flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-          <div>
-            {monto && (
-              <>
-                <div className="text-muted-foreground text-xs">{monto.etiqueta}</div>
-                <div className={`flex items-center gap-1.5 text-lg font-bold ${tonos[monto.tono]}`}>
-                  <Wallet className="size-4 shrink-0" />
-                  {monto.monto}
-                </div>
-                {monto.detalle && (
-                  <div className="text-muted-foreground text-xs">{monto.detalle}</div>
-                )}
-              </>
-            )}
-          </div>
+        {/* De acá para abajo todas las tarjetas tienen lo mismo a la misma
+            altura, esté o no pagada la seña: un renglón con su barra, el
+            monto y los botones. */}
+        <div className="mt-auto pt-3.5">
+          {muestraPagar ? (
+            <>
+              <CuentaRegresivaSena venceEn={venceSena} />
+              <RefreshWhenDepositExpires venceEn={venceSena} />
+            </>
+          ) : (
+            // Mismo alto que la cuenta regresiva: un renglón y, donde iría la
+            // barra, una línea divisoria (una barra llena parecía otro reloj)
+            <div className="space-y-1.5">
+              <p className="text-muted-foreground flex h-7 items-center text-sm">
+                {monto?.detalle}
+              </p>
+              <div className="flex h-1.5 items-center">
+                <div className="bg-border h-px flex-1" />
+              </div>
+            </div>
+          )}
+
+          {monto && (
+            <div className="mt-3.5">
+              <p className="text-muted-foreground text-xs">{monto.etiqueta}</p>
+              <p className={`font-heading text-xl leading-tight font-bold ${tonos[monto.tono]}`}>
+                {monto.monto}
+              </p>
+            </div>
+          )}
+
           {(muestraPagar || muestraCancelar) && (
-            <div className="flex flex-wrap items-center gap-2">
-              {muestraPagar && <PayDepositButton bookingId={reserva.id} montoSena={montoSena} />}
+            <div className="mt-3 flex gap-2">
+              {muestraPagar && (
+                <PayDepositButton className="flex-1" bookingId={reserva.id} montoSena={montoSena} />
+              )}
               {muestraCancelar && (
-                <CancelBookingButton bookingId={reserva.id} avisoSena={avisoSena} />
+                <CancelBookingButton
+                  className={muestraPagar ? undefined : 'flex-1'}
+                  corto={muestraPagar}
+                  bookingId={reserva.id}
+                  avisoSena={avisoSena}
+                />
               )}
             </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   )
 }

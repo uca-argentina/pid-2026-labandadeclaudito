@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { complexImageSchema, createComplexSchema, esImagenReal, MAX_IMAGE_BYTES } from './complex'
+import {
+  complexImageSchema,
+  createComplexSchema,
+  decidirComplejoSchema,
+  esImagenReal,
+  MAX_IMAGE_BYTES,
+} from './complex'
 
 describe('complexImageSchema', () => {
   test('acepta una foto PNG chica', () => {
@@ -85,5 +91,29 @@ describe('esImagenReal', () => {
 
   test('rechaza un texto con extensión de imagen', () => {
     expect(esImagenReal(new TextEncoder().encode('hola\n'))).toBe(false)
+  })
+})
+
+describe('decidirComplejoSchema', () => {
+  test('aprobar no pide motivo', () => {
+    expect(decidirComplejoSchema.safeParse({ estadoAprobacion: 'APROBADO' }).success).toBe(true)
+  })
+
+  test('rechazar con motivo pasa', () => {
+    const datos = { estadoAprobacion: 'RECHAZADO', motivoRechazo: 'Faltan fotos de las canchas' }
+    expect(decidirComplejoSchema.safeParse(datos).success).toBe(true)
+  })
+
+  test('rechazar sin motivo falla', () => {
+    expect(decidirComplejoSchema.safeParse({ estadoAprobacion: 'RECHAZADO' }).success).toBe(false)
+  })
+
+  test('un motivo de solo espacios cuenta como vacío', () => {
+    const datos = { estadoAprobacion: 'RECHAZADO', motivoRechazo: '            ' }
+    expect(decidirComplejoSchema.safeParse(datos).success).toBe(false)
+  })
+
+  test('PENDIENTE no es una decisión', () => {
+    expect(decidirComplejoSchema.safeParse({ estadoAprobacion: 'PENDIENTE' }).success).toBe(false)
   })
 })

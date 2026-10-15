@@ -45,7 +45,15 @@ export function DeleteComplexImageDialog({
   return (
     <AlertDialog>
       <AlertDialogTrigger
-        render={<Button variant="destructive" size="icon-xs" aria-label="Quitar foto" />}
+        // Fondo sólido: el rojo translúcido no se ve encima de una foto
+        render={
+          <Button
+            variant="destructive"
+            size="icon-xs"
+            className="bg-card hover:bg-card/85 dark:bg-card dark:hover:bg-card/85"
+            aria-label="Quitar foto"
+          />
+        }
       >
         <Trash2 />
       </AlertDialogTrigger>

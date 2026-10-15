@@ -1,22 +1,74 @@
 import { redirect } from 'next/navigation'
-import { CalendarClock, Clock, MapPin, User, Wallet } from 'lucide-react'
+import {
+  CalendarDays,
+  CircleDot,
+  Clock,
+  LandPlot,
+  Mail,
+  Phone,
+  User,
+  UserCheck,
+  Wallet,
+} from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { pendientesVencidas } from '@/lib/bookings'
-import { deporteLabels } from '@/lib/labels'
+import type { Prisma } from '@/lib/generated/prisma/client'
+import { dondeHistorial, dondeProximas } from '@/lib/bookings'
+import { clasesGrillaAdaptable } from '@/lib/grid-columns'
 import { montoDelHistorial } from '@/lib/historial'
 import { estadoDeReserva, venceLaSena } from '@/lib/estado-reserva'
-import { diaDeReserva, formatearDia, momentoActual, turnoYaPaso } from '@/lib/time'
+import { calcularPagina } from '@/lib/paginacion'
+import { iniciales } from '@/lib/iniciales'
+import { diaEnPalabras } from '@/lib/fechas'
+import { diaDeReserva, momentoActual, turnoYaPaso } from '@/lib/time'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { AttendanceButtons } from '@/components/attendance-buttons'
-import { CollapsibleSection } from '@/components/collapsible-section'
+import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
+import { CeldaCancha, CeldaMonto } from '@/components/celdas-reserva'
+import { EstadoDeDisputa } from '@/components/estado-de-disputa'
+import { EstadoVacio } from '@/components/estado-vacio'
+import { EtiquetaDeporte } from '@/components/etiqueta-deporte'
+import { FranjaDeCancha } from '@/components/franja-de-cancha'
+import { FechaDelTurno } from '@/components/fecha-del-turno'
+import { TituloConIcono } from '@/components/titulo-con-icono'
+import { Paginacion } from '@/components/paginacion'
+import {
+  leerVista,
+  PestaniasDeReservas,
+  urlDeReservas,
+  type VistaDeReservas,
+} from '@/components/pestanias-reservas'
 import { RefreshWhenDepositExpires } from '@/components/refresh-when-deposit-expires'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
-async function getReservas(duenioId: string) {
+// Próximas se muestran como tarjetas, historial y canceladas como tabla.
+const TARJETAS_POR_PAGINA = 12
+const FILAS_POR_PAGINA = 20
+
+async function getReservas(
+  where: Prisma.ReservaWhereInput,
+  orden: 'asc' | 'desc',
+  skip: number,
+  take: number,
+) {
   return db.reserva.findMany({
-    where: { cancha: { complejo: { duenioId } }, NOT: pendientesVencidas() },
-    include: { cancha: { include: { complejo: true } }, jugador: true, pago: true },
-    orderBy: [{ fecha: 'desc' }, { horaInicio: 'desc' }],
+    where,
+    include: {
+      cancha: { include: { complejo: true } },
+      jugador: true,
+      pago: true,
+      disputa: true,
+    },
+    orderBy: [{ fecha: orden }, { horaInicio: orden }],
+    skip,
+    take,
   })
 }
 
@@ -28,77 +80,249 @@ const tonos = {
   peligro: 'text-destructive',
 }
 
-export default async function ReservasDelDuenioPage() {
+export default async function ReservasDelDuenioPage({
+  searchParams,
+}: PageProps<'/dueno/reservas'>) {
   const session = await auth()
   if (!session) redirect('/login')
 
-  const reservas = await getReservas(session.user.id)
-  const ahora = momentoActual()
+  // ?vista=historial|canceladas elige la pestaña, ?pagina=2 la página
+  const { vista: vistaPedida, pagina } = await searchParams
+  const vista = leerVista(vistaPedida)
 
-  // Próximas: las que todavía se van a jugar (la que está en curso también),
-  // de la más cercana a la más lejana. Historial: las que ya pasaron.
-  // Canceladas: aparte, con o sin seña devuelta. Estas dos, de la más
-  // reciente a la más vieja.
-  const esProxima = (r: Reserva) => {
-    const dia = diaDeReserva(r.fecha)
-    const visible = estadoDeReserva(
-      { estado: r.estado, asistio: r.asistio, dia, horaInicio: r.horaInicio, horaFin: r.horaFin },
-      ahora,
-    )
-    if (visible === 'CONFIRMADA' || visible === 'EN_CURSO') return true
-    // Una pendiente que nunca se pagó deja de ser próxima cuando empieza el turno.
-    return visible === 'PENDIENTE' && !turnoYaPaso(dia, r.horaInicio)
+  // Las reservas de todas las canchas de sus complejos. Qué es "próxima" o
+  // "historial" lo decide la base (ver dondeProximas).
+  const deSusCanchas = { cancha: { complejo: { duenioId: session.user.id } } }
+  const ahora = momentoActual()
+  const dondePorVista: Record<VistaDeReservas, Prisma.ReservaWhereInput> = {
+    proximas: { ...deSusCanchas, ...dondeProximas(ahora) },
+    historial: { ...deSusCanchas, ...dondeHistorial(ahora) },
+    canceladas: { ...deSusCanchas, estado: 'CANCELADA' },
   }
-  const proximas = reservas.filter(esProxima).reverse()
-  const historial = reservas.filter((r) => !esProxima(r) && r.estado !== 'CANCELADA')
-  const canceladas = reservas.filter((r) => r.estado === 'CANCELADA')
+
+  const [totalProximas, totalHistorial, totalCanceladas] = await Promise.all([
+    db.reserva.count({ where: dondePorVista.proximas }),
+    db.reserva.count({ where: dondePorVista.historial }),
+    db.reserva.count({ where: dondePorVista.canceladas }),
+  ])
+  const totales = {
+    proximas: totalProximas,
+    historial: totalHistorial,
+    canceladas: totalCanceladas,
+  }
+
+  const porPagina = vista === 'proximas' ? TARJETAS_POR_PAGINA : FILAS_POR_PAGINA
+  const { paginaActual, totalPaginas, skip } = calcularPagina(pagina, totales[vista], porPagina)
+
+  // Próximas: de la más cercana a la más lejana.
+  // Historial y canceladas: de la más reciente a la más vieja.
+  const reservas = await getReservas(
+    dondePorVista[vista],
+    vista === 'proximas' ? 'asc' : 'desc',
+    skip,
+    porPagina,
+  )
+
+  const paginacion = (
+    <Paginacion
+      paginaActual={paginaActual}
+      totalPaginas={totalPaginas}
+      desde={skip + 1}
+      hasta={skip + reservas.length}
+      total={totales[vista]}
+      urlAnterior={urlDeReservas('/dueno/reservas', vista, paginaActual - 1)}
+      urlSiguiente={urlDeReservas('/dueno/reservas', vista, paginaActual + 1)}
+    />
+  )
+
+  const nuncaReservaron = totalProximas + totalHistorial + totalCanceladas === 0
 
   return (
-    <main className="mx-auto max-w-5xl px-6 pt-6 pb-12 md:pt-4">
+    <main>
       <div className="mb-6">
-        <h1 className="text-3xl font-semibold">Reservas</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Los próximos turnos en tus canchas y todo lo que se reservó antes.
+        <h1 className="font-heading text-4xl font-bold tracking-tight">Reservas</h1>
+        <p className="text-muted-foreground mt-1.5">
+          {totalProximas === 0 &&
+            'Los próximos turnos en tus canchas y todo lo que se reservó antes.'}
+          {totalProximas === 1 && '1 turno por jugarse en tus canchas.'}
+          {totalProximas > 1 && `${totalProximas} turnos por jugarse en tus canchas.`}
         </p>
       </div>
 
-      {reservas.length === 0 ? (
-        <div className="border-border bg-card rounded-2xl border p-8 text-center">
-          <CalendarClock className="text-muted-foreground mx-auto mb-3 size-8" />
-          <p className="font-medium">Todavía no hay turnos reservados</p>
-          <p className="text-muted-foreground mt-1.5 text-sm">
-            Cuando un jugador reserve una de tus canchas, va a aparecer acá.
-          </p>
-        </div>
+      {nuncaReservaron ? (
+        <EstadoVacio
+          titulo="Todavía no hay turnos reservados"
+          texto="Cuando un jugador reserve una de tus canchas, va a aparecer acá."
+        />
       ) : (
-        <div className="space-y-8">
-          {proximas.length > 0 && (
-            <section className="space-y-4">
-              <h2 className="text-muted-foreground text-sm font-medium">Próximos</h2>
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {proximas.map((reserva) => (
-                  <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
-                ))}
+        <>
+          <PestaniasDeReservas ruta="/dueno/reservas" vista={vista} totales={totales} />
+
+          {reservas.length === 0 && (
+            <p className="text-muted-foreground text-sm">
+              {vista === 'proximas' && 'No hay turnos próximos en tus canchas.'}
+              {vista === 'historial' && 'Todavía no se jugó ningún turno en tus canchas.'}
+              {vista === 'canceladas' && 'No hay reservas canceladas.'}
+            </p>
+          )}
+
+          {reservas.length > 0 && vista === 'proximas' && (
+            <>
+              {/* Misma grilla que Mis complejos: hasta 4 tarjetas por fila, que
+                  se reparten todo el ancho (no sobra un hueco a la derecha) */}
+              <div className="@container">
+                <div className={`grid gap-5 ${clasesGrillaAdaptable(reservas.length)}`}>
+                  {reservas.map((reserva) => (
+                    <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
+                  ))}
+                </div>
               </div>
-            </section>
+              {/* Con una sola página de tarjetas no hace falta el pie */}
+              {totalPaginas > 1 && (
+                <div className="bg-card shadow-card mt-4 overflow-hidden rounded-2xl">
+                  {paginacion}
+                </div>
+              )}
+            </>
           )}
-          {historial.length > 0 && (
-            <CollapsibleSection title="Historial" /* count={historial.length} */>
-              {historial.map((reserva) => (
-                <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
-              ))}
-            </CollapsibleSection>
+
+          {reservas.length > 0 && vista !== 'proximas' && (
+            <div className="bg-card shadow-card overflow-hidden rounded-2xl">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="pl-4">
+                      <TituloConIcono icono={CalendarDays}>Turno</TituloConIcono>
+                    </TableHead>
+                    <TableHead className="hidden sm:table-cell">
+                      <TituloConIcono icono={LandPlot}>Cancha</TituloConIcono>
+                    </TableHead>
+                    <TableHead className="hidden lg:table-cell">
+                      <TituloConIcono icono={User}>Jugador</TituloConIcono>
+                    </TableHead>
+                    <TableHead className={vista === 'historial' ? 'hidden sm:table-cell' : ''}>
+                      <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
+                    </TableHead>
+                    <TableHead className="hidden xl:table-cell">
+                      <TituloConIcono icono={Wallet}>Monto</TituloConIcono>
+                    </TableHead>
+                    {vista === 'historial' && (
+                      <TableHead className="pr-4 text-right whitespace-normal">
+                        <TituloConIcono icono={UserCheck}>¿Se presentó?</TituloConIcono>
+                      </TableHead>
+                    )}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reservas.map((reserva) => (
+                    <FilaReserva
+                      key={reserva.id}
+                      reserva={reserva}
+                      ahora={ahora}
+                      conAsistencia={vista === 'historial'}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+              {paginacion}
+            </div>
           )}
-          {canceladas.length > 0 && (
-            <CollapsibleSection title="Canceladas" /* count={canceladas.length} */>
-              {canceladas.map((reserva) => (
-                <TarjetaReserva key={reserva.id} reserva={reserva} ahora={ahora} />
-              ))}
-            </CollapsibleSection>
-          )}
-        </div>
+        </>
       )}
     </main>
+  )
+}
+
+// Una fila de la tabla de historial o canceladas. En el historial lleva los
+// botones de asistencia: el dueño la marca recién cuando el turno terminó.
+function FilaReserva({
+  reserva,
+  ahora,
+  conAsistencia,
+}: {
+  reserva: Reserva
+  ahora: { dia: string; hora: string }
+  conAsistencia: boolean
+}) {
+  const dia = diaDeReserva(reserva.fecha)
+  const monto = montoDelHistorial(
+    {
+      estado: reserva.estado,
+      asistio: reserva.asistio,
+      precioTurno: reserva.precioTurno.toString(),
+      pago: reserva.pago && { ...reserva.pago, monto: reserva.pago.monto.toString() },
+    },
+    turnoYaPaso(dia, reserva.horaInicio),
+    'DUENIO',
+  )
+  const visible = estadoDeReserva(
+    {
+      estado: reserva.estado,
+      asistio: reserva.asistio,
+      dia,
+      horaInicio: reserva.horaInicio,
+      horaFin: reserva.horaFin,
+    },
+    ahora,
+  )
+  const seMarcaAsistencia =
+    visible === 'FINALIZADA' || visible === 'ASISTIO' || visible === 'NO_SHOW'
+
+  return (
+    <TableRow>
+      <TableCell className="pl-4">
+        <FechaDelTurno dia={dia} horaInicio={reserva.horaInicio} horaFin={reserva.horaFin} />
+      </TableCell>
+      <TableCell className="hidden sm:table-cell">
+        <CeldaCancha
+          nombre={reserva.cancha.nombre}
+          deporte={reserva.cancha.deporte}
+          complejo={reserva.cancha.complejo.nombre}
+        />
+      </TableCell>
+      <TableCell className="hidden lg:table-cell">
+        <div className="flex items-center gap-2.5">
+          <div className="bg-primary/15 text-primary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
+            {iniciales(reserva.jugador.nombre)}
+          </div>
+          <div>
+            <p className="font-medium">{reserva.jugador.nombre}</p>
+            <p className="text-muted-foreground flex items-center gap-1 text-xs">
+              <Phone className="size-3" />
+              {reserva.jugador.telefono ?? reserva.jugador.email}
+            </p>
+          </div>
+        </div>
+      </TableCell>
+      {/* En el historial, en celular no entra: los botones de asistencia ya
+          muestran si vino (verde) o no (rojo) */}
+      <TableCell className={conAsistencia ? 'hidden sm:table-cell' : ''}>
+        <BookingStatusBadge
+          estado={reserva.estado}
+          asistio={reserva.asistio}
+          dia={dia}
+          horaInicio={reserva.horaInicio}
+          horaFin={reserva.horaFin}
+          ahoraInicial={ahora}
+        />
+      </TableCell>
+      <TableCell className="hidden xl:table-cell">
+        <CeldaMonto monto={monto} />
+      </TableCell>
+      {conAsistencia && (
+        <TableCell className="pr-4 text-right">
+          {/* Con una disputa la marca queda congelada: mientras está abierta la
+              revisa el admin, y una vez resuelta su decisión es definitiva */}
+          {reserva.disputa ? (
+            <EstadoDeDisputa disputa={reserva.disputa} vista="DUENIO" />
+          ) : (
+            seMarcaAsistencia && (
+              <AttendanceButtons bookingId={reserva.id} asistio={reserva.asistio} />
+            )
+          )}
+        </TableCell>
+      )}
+    </TableRow>
   )
 }
 
@@ -123,87 +347,97 @@ function TarjetaReserva({
     'DUENIO',
   )
 
-  // El dueño marca la asistencia recién cuando el turno terminó.
-  const visible = estadoDeReserva(
-    {
-      estado: reserva.estado,
-      asistio: reserva.asistio,
-      dia,
-      horaInicio: reserva.horaInicio,
-      horaFin: reserva.horaFin,
-    },
-    ahora,
-  )
-  const seMarcaAsistencia =
-    visible === 'FINALIZADA' || visible === 'ASISTIO' || visible === 'NO_SHOW'
-  const mostrarFooter = monto !== null || seMarcaAsistencia
+  const esperaLaSena = reserva.estado === 'PENDIENTE'
+  const venceSena = venceLaSena(reserva.createdAt).toISOString()
 
   return (
     <div
       className={
         cancelada
-          ? 'border-border bg-card flex h-full flex-col rounded-2xl border p-5 opacity-60'
-          : 'border-border bg-card flex h-full flex-col rounded-2xl border p-5'
+          ? 'bg-card shadow-card flex h-full flex-col overflow-hidden rounded-2xl opacity-60'
+          : 'bg-card shadow-card flex h-full flex-col overflow-hidden rounded-2xl'
       }
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-lg font-bold">{reserva.cancha.nombre}</span>
-        <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
-          {deporteLabels[reserva.cancha.deporte]}
-        </span>
-        <BookingStatusBadge
-          estado={reserva.estado}
-          asistio={reserva.asistio}
-          dia={dia}
-          horaInicio={reserva.horaInicio}
-          horaFin={reserva.horaFin}
-          ahoraInicial={ahora}
-        />
-      </div>
+      <FranjaDeCancha deporte={reserva.cancha.deporte} />
 
-      <div className="text-muted-foreground mt-2 mb-4 space-y-1.5 text-sm">
-        <p className="flex items-center gap-1.5">
-          <MapPin className="size-3.5 shrink-0" />
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <BookingStatusBadge
+            estado={reserva.estado}
+            asistio={reserva.asistio}
+            dia={dia}
+            horaInicio={reserva.horaInicio}
+            horaFin={reserva.horaFin}
+            ahoraInicial={ahora}
+          />
+          <EtiquetaDeporte deporte={reserva.cancha.deporte} />
+        </div>
+
+        <p className="font-heading mt-2 text-lg font-bold">{diaEnPalabras(dia)}</p>
+        <p className="flex items-center gap-1.5 text-sm font-medium">
+          <Clock className="size-3.5 shrink-0" />
+          {reserva.horaInicio} a {reserva.horaFin} hs
+        </p>
+        <p className="text-muted-foreground mt-2 truncate text-sm">
+          <span className="text-foreground font-semibold">{reserva.cancha.nombre}</span> ·{' '}
           {reserva.cancha.complejo.nombre}
         </p>
-        <p className="flex items-center gap-1.5">
-          <Clock className="size-3.5 shrink-0" />
-          {formatearDia(dia)} · {reserva.horaInicio} a {reserva.horaFin} hs
-        </p>
-        <p className="flex items-center gap-1.5">
-          <User className="size-3.5 shrink-0" />
-          {reserva.jugador.nombre} · {reserva.jugador.email}
-          {reserva.jugador.telefono ? ` · ${reserva.jugador.telefono}` : ''}
-        </p>
-      </div>
-      {reserva.estado === 'PENDIENTE' && (
-        <RefreshWhenDepositExpires venceEn={venceLaSena(reserva.createdAt).toISOString()} />
-      )}
 
-      {/* Footer con borde arriba, separado del cuerpo: precio a la izquierda,
-          acciones a la derecha. Evita que el precio quede flotando en un
-          lugar distinto según cuánto texto tenga el cuerpo de la tarjeta. */}
-      {mostrarFooter && (
-        <div className="border-border mt-auto flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-          <div>
-            {monto && (
-              <>
-                <div className="text-muted-foreground text-xs">{monto.etiqueta}</div>
-                <div className={`flex items-center gap-1.5 text-lg font-bold ${tonos[monto.tono]}`}>
-                  <Wallet className="size-4 shrink-0" />
-                  {monto.monto}
-                </div>
-                {monto.detalle && (
-                  <div className="text-muted-foreground text-xs">{monto.detalle}</div>
-                )}
-              </>
+        {/* Quién reservó: nombre arriba, y el contacto cada uno en su renglón */}
+        <div className="bg-muted/60 mt-3 flex items-center gap-2.5 rounded-xl px-2.5 py-2">
+          <div className="bg-primary/15 text-primary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
+            {iniciales(reserva.jugador.nombre)}
+          </div>
+          <div className="min-w-0 text-sm">
+            <p className="truncate font-semibold">{reserva.jugador.nombre}</p>
+            <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+              <Mail className="size-3 shrink-0" />
+              <span className="truncate">{reserva.jugador.email}</span>
+            </p>
+            {reserva.jugador.telefono && (
+              <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                <Phone className="size-3 shrink-0" />
+                {reserva.jugador.telefono}
+              </p>
             )}
           </div>
-          {seMarcaAsistencia && (
-            <AttendanceButtons bookingId={reserva.id} asistio={reserva.asistio} />
+        </div>
+
+        {/* De acá para abajo todas las tarjetas tienen lo mismo a la misma
+            altura, esté o no pagada la seña: un renglón con su barra y el
+            monto. */}
+        <div className="mt-auto pt-3.5">
+          {esperaLaSena ? (
+            // El dueño ve el mismo reloj que el jugador: cuándo se libera el
+            // turno si no pagan la seña
+            <>
+              <CuentaRegresivaSena venceEn={venceSena} />
+              <RefreshWhenDepositExpires venceEn={venceSena} />
+            </>
+          ) : (
+            // Mismo alto que la cuenta regresiva: un renglón y, donde iría la
+            // barra, una línea divisoria. min-h: en tarjetas angostas el texto
+            // ocupa dos renglones y empuja hacia arriba, sin pisar la línea
+            <div className="space-y-1.5">
+              <p className="text-muted-foreground flex min-h-7 items-center text-sm">
+                {monto?.detalle}
+              </p>
+              <div className="flex h-1.5 items-center">
+                <div className="bg-border h-px flex-1" />
+              </div>
+            </div>
+          )}
+
+          {monto && (
+            <div className="mt-3.5">
+              <p className="text-muted-foreground text-xs">{monto.etiqueta}</p>
+              <p className={`font-heading text-xl leading-tight font-bold ${tonos[monto.tono]}`}>
+                {monto.monto}
+              </p>
+            </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   )
 }

@@ -43,7 +43,7 @@ async function crearUsuario(
   nombre: string,
   email: string,
   password: string,
-  rol: 'JUGADOR' | 'DUENIO',
+  rol: 'JUGADOR' | 'DUENIO' | 'ADMIN',
   dni: string,
   telefono: string,
 ) {
@@ -196,6 +196,17 @@ async function main() {
     '11 6000-2222',
   )
 
+  // Administrador de la plataforma: no se puede registrar desde el form,
+  // solo existe si lo crea el seed
+  await crearUsuario(
+    'Admin TocaYJuga',
+    'admin@tocayjuga.com',
+    'Admin1234',
+    'ADMIN',
+    '20000000',
+    '11 4000-0000',
+  )
+
   // ----- Complejo 1: Palermo (admin@demo.com) -----
   // Seña 30%, reservar con 3 hs de anticipación, cancelar con 24 hs
   const palermo = await db.complejo.create({
@@ -205,6 +216,7 @@ async function main() {
       zona: 'Palermo',
       contacto: '11 4775-1234',
       duenioId: adminDemo.id,
+      estadoAprobacion: 'APROBADO',
       porcentajeSenaDefault: 30,
       minAdvanceMinutesDefault: 180,
       cancellationHours: 24,
@@ -315,6 +327,7 @@ async function main() {
       zona: 'Villa Urquiza',
       contacto: '11 4521-9090',
       duenioId: adminDemo.id,
+      estadoAprobacion: 'APROBADO',
       porcentajeSenaDefault: 50,
       minAdvanceMinutesDefault: 0,
       cancellationHours: 48,
@@ -382,6 +395,7 @@ async function main() {
       zona: 'Caballito',
       contacto: '11 4983-5566',
       duenioId: adminDev.id,
+      estadoAprobacion: 'APROBADO',
       porcentajeSenaDefault: 25,
       minAdvanceMinutesDefault: 120,
       cancellationHours: 12,
@@ -435,6 +449,7 @@ async function main() {
       zona: 'Olivos',
       contacto: '11 4799-3030',
       duenioId: adminDev.id,
+      estadoAprobacion: 'APROBADO',
       porcentajeSenaDefault: 30,
       minAdvanceMinutesDefault: 180,
       cancellationHours: 24,
@@ -488,6 +503,7 @@ async function main() {
       zona: 'Boedo',
       contacto: '11 4932-1212',
       duenioId: adminDev.id,
+      estadoAprobacion: 'APROBADO',
       activo: false,
     },
   })

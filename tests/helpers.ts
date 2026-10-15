@@ -11,17 +11,17 @@ type UsuarioDeTest = {
   id: string
   nombre: string
   email: string
-  rol: 'JUGADOR' | 'DUENIO'
+  rol: 'JUGADOR' | 'DUENIO' | 'ADMIN'
 }
 
 export function emailDeTest() {
   return `test-${randomUUID()}${DOMINIO_DE_TEST}`
 }
 
-export async function crearUsuario(rol: 'JUGADOR' | 'DUENIO') {
+export async function crearUsuario(rol: 'JUGADOR' | 'DUENIO' | 'ADMIN') {
   const usuario = await db.usuario.create({
     data: {
-      nombre: rol === 'DUENIO' ? 'Dueño de test' : 'Jugador de test',
+      nombre: `${rol} de test`,
       email: emailDeTest(),
       passwordHash: await hashPassword('password123'),
       rol,
@@ -43,7 +43,9 @@ export function sinSesion() {
 export function jsonRequest(method: string, body?: unknown) {
   return new Request('http://localhost/test', {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    // IP distinta por pedido: que los tests no choquen con el límite de
+    // registros por IP (lib/limite-intentos.ts)
+    headers: { 'Content-Type': 'application/json', 'x-forwarded-for': `test-${randomUUID()}` },
     body: body === undefined ? undefined : JSON.stringify(body),
   })
 }
@@ -110,8 +112,10 @@ export const datosDeCanchas = {
 
 // Crea directo en la DB un complejo con 2 canchas (08 a 12 hs, turnos de 1 hora)
 export async function crearComplejoConCanchas(duenioId: string) {
+  // Aprobado: los tests que buscan y reservan necesitan un complejo visible.
+  // Los de aprobación lo pasan a PENDIENTE a mano.
   const complejo = await db.complejo.create({
-    data: { ...datosDeComplejo, duenioId },
+    data: { ...datosDeComplejo, duenioId, estadoAprobacion: 'APROBADO' },
   })
   const cancha1 = await db.cancha.create({
     data: {
@@ -143,6 +147,9 @@ export async function crearComplejoConCanchas(duenioId: string) {
 }
 
 export async function limpiarDatosDeTest() {
+  // Las IPs de test empiezan con "test-" (ver jsonRequest)
+  await db.intento.deleteMany({ where: { clave: { contains: 'test-' } } })
+
   const usuarios = await db.usuario.findMany({
     where: { email: { endsWith: DOMINIO_DE_TEST } },
   })

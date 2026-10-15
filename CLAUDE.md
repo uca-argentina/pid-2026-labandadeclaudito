@@ -135,12 +135,13 @@ app/                        RUTAS (URL) + UI
                             nada de header ni sidebar (cada grupo pone el suyo)
 
   (public)/                 grupo — NO agrega segmento a la URL. Páginas sin
-                            login: trae el toggle de tema arriba a la derecha
+                            login: trae el botón de tema arriba a la derecha
     layout.tsx                monta <ThemeToggle /> + <main>
     page.tsx                  landing /
     estilo/page.tsx           /estilo — referencia visual
     (auth)/                   grupo anidado — tampoco agrega segmento
       layout.tsx              split screen: <LoginHero /> (solo desktop) + formulario
+                              (en celular, el logo arriba del formulario)
       login/page.tsx          /login — formulario (fetch al endpoint de Auth.js)
       register/page.tsx       /register — formulario (fetch a /api/users)
 
@@ -181,6 +182,7 @@ lib/
   availability.ts           calcular turnos libres de una cancha en una fecha (+ test)
   bookings.ts               lógica compartida de reservas (cancelación, etc.)
   time.ts                   helpers de fecha/hora — turnos que cruzan medianoche (+ test)
+  fechas.ts                 fechas en palabras para mostrar ("Sábado 10 de octubre") (+ test)
   labels.ts                 traducción de enums (Deporte, TipoSuperficie, EstadoReserva) a texto UI
   validations/              SCHEMAS ZOD. Compartidos entre formulario y endpoint.
     user.ts                   registerSchema, loginSchema
@@ -196,9 +198,14 @@ components/
   logo.tsx                  logo real de TocaYJuga (PNG claro/oscuro)
   app-sidebar.tsx           sidebar de las páginas con sesión — nav por rol,
                             perfil (nombre/email/avatar) y cerrar sesión abajo
-  sign-out-button.tsx       botón de logout, reusado en el sidebar
+  sign-out-button.tsx       link de logout, va en la tarjeta del perfil del sidebar
   theme-provider.tsx, theme-toggle.tsx   modo claro/oscuro
-  stat-card.tsx             card de métrica (usado en homes de rol)
+  stat-card.tsx             card de métrica (sin uso desde el rebranding)
+  estado-vacio.tsx          bloque para pantallas sin nada que mostrar
+  franja-de-cancha.tsx      franja con la cancha del deporte, arriba de una tarjeta
+  proximo-turno-destacado.tsx  el próximo turno en grande, sobre el verde (Inicio)
+  fila-de-turno.tsx         fila de un turno: cancha en diagonal, día en grande y hora
+  quien-reservo.tsx         iniciales y nombre del jugador, a la derecha de una fila
   complex-gallery.tsx, complex-photos-editor.tsx   galería de imágenes de un complejo
   complex-edit-form.tsx, form-nuevo-complejo.tsx   alta/edición de complejo
   court-edit-form.tsx, court-batch-form.tsx, court-row-actions.tsx, court-slot-picker.tsx
@@ -290,48 +297,103 @@ Cambia el schema y qué se hace en el medio, nada más.
 
 Definido una vez acá para que las pantallas de los 3 se vean como una sola app.
 **Referencia viva:** `npm run dev` → `/estilo` — muestra colores, tipografía,
-botones y un card de ejemplo renderizados de verdad. Si hay dudas de cómo se ve
-algo, mirar esa página, no adivinar.
+botones, tarjetas y un estado vacío renderizados de verdad. Si hay dudas de
+cómo se ve algo, mirar esa página, no adivinar.
 
-- **Paleta**: base crema tirando a verde (no blanco/negro puro) + verde cancha
-  como color de marca (`--background`/`--primary` en `app/globals.css`, ya
-  cargados, con su versión para modo oscuro). Se usa con las clases de
-  Tailwind (`bg-background`, `bg-primary`, `text-primary-foreground`),
-  **nunca** un hex escrito a mano en un componente.
-- **Paleta completa** son los tokens que ya trae shadcn: `background`,
-  `foreground`, `card`, `secondary`, `muted`, `accent`, `destructive`,
-  `border`. Cada uno tiene su clase (`bg-muted`, `text-muted-foreground`, etc.)
-  — se usan esas, no grises sueltos tipo `text-gray-500` (además acá
-  desentonarían: son neutros, la paleta tiene un tinte cálido/verde).
-- **Tipografía**: Geist (ya viene de `create-next-app`, wireado en
-  `app/layout.tsx`). Escala de títulos: `h1` = `text-3xl font-semibold`, `h2` =
-  `text-2xl font-semibold`, `h3` = `text-xl font-semibold`. Cuerpo = `text-base`.
-  Texto secundario (ayuda, metadata) = `text-sm text-muted-foreground`.
-- **Radios y espaciado**: los que ya definen shadcn/Tailwind (`--radius`,
-  escala de `space-y-*`/`gap-*` de Tailwind). No inventar valores en píxeles
-  sueltos.
+- **Idea general**: **sidebar verde oscuro** (en los dos temas) y, apoyada
+  sobre ese verde, el contenido como una hoja crema con las esquinas
+  izquierdas redondeadas (lo arma `app/(dashboard)/layout.tsx`). Las tarjetas
+  son claras y se separan del fondo con **sombra, no con borde**. En cada pantalla hay una sola cosa protagonista (el próximo
+  partido, el precio, el botón principal); el resto acompaña.
+- **Paleta**: los tokens están en `app/globals.css`, con su versión para modo
+  oscuro. Se usan con las clases de Tailwind, **nunca** un hex escrito a mano
+  en un componente.
+  - `primary` (verde cancha): la acción principal, los precios y el número
+    protagonista de una pantalla.
+  - `clay` / `clay-foreground` (polvo de ladrillo): acento cálido para
+    momentos secundarios (un aviso amable, cómo funciona la seña). De fondo va
+    `bg-clay/12`; para texto, `text-clay-foreground`. Nunca para la acción
+    principal.
+  - `sand`: fondo suave para bloques de apoyo.
+  - `highlight` / `highlight-foreground` (amarillo pelota): contadores y
+    sellos chicos (la pestaña elegida, "Verificado").
+  - `sidebar-*`: dentro del sidebar y en los pocos lugares que tienen que ser
+    oscuros en los dos temas (la pestaña elegida, el degradé sobre una foto).
+  - El resto son los tokens de shadcn (`background`, `foreground`, `card`,
+    `secondary`, `muted`, `accent`, `destructive`, `border`). No usar grises
+    sueltos tipo `text-gray-500`: desentonan con el tinte cálido de la paleta.
+- **Tipografía**: Geist para todo el texto. **Bricolage Grotesque**
+  (`font-heading`) para títulos, precios y números destacados.
+  - `h1` = `font-heading text-4xl font-bold tracking-tight`
+  - `h2` = `font-heading text-xl font-bold`
+  - precio = `font-heading text-primary text-2xl font-bold`
+  - cuerpo = `text-base`; texto secundario = `text-sm text-muted-foreground`
+- **Tarjetas**: `bg-card shadow-card rounded-2xl` (las grandes, `rounded-3xl`).
+  Sin `border`. Hay tres sombras: `shadow-card` (tarjetas), `shadow-soft`
+  (controles claros: botón outline, días, horarios) y `shadow-button` (ya viene
+  puesta en el botón principal).
+- **Botones**: 44px de alto por defecto. `size="sm"` (36px) para tarjetas
+  compactas y tablas; `size="lg"` (48px) para el botón que cierra un flujo
+  (Reservar). Uno solo `default` (verde) por pantalla. `outline`/`secondary`
+  para acciones secundarias. `destructive` solo para cancelar/borrar con
+  consecuencia real.
+- **Campos**: `Input` y `Select` miden 44px. Los `<select>` nativos copian esas
+  clases (ver `zona-filter.tsx`).
+- **Fechas**: en palabras, con `lib/fechas.ts` (`diaEnPalabras` → "Sábado 10 de
+  octubre"). `formatearDia` (dd/mm/aaaa) queda para tablas.
+- **La cancha como identidad**: `DibujoDeCancha` dibuja la cancha de cada
+  deporte. Se usa como franja en diagonal (`CourtCard`, el próximo partido del
+  Inicio), como franja de arriba en una tarjeta de reserva (`FranjaDeCancha`) y
+  como miniatura en listas. La clase `fondo-cancha` es el verde con franjas de
+  césped de la tarjeta destacada.
+- **Estados vacíos**: con `EstadoVacio` (título, explicación y el botón que
+  saca de ese estado), no con un ícono gris suelto.
+- **Voz**: se le habla al jugador, en voseo y sin vueltas: "¡Buenas, Juan!",
+  "Decinos dónde y cuándo querés jugar". Los textos dicen qué puede hacer la
+  persona, no describen la pantalla.
+- **Estructura de pantalla tipo**: el ancho y el padding los pone el layout del
+  dashboard. La página arranca con el `h1`, una línea de bajada y, si hay, el
+  botón principal a la derecha.
 - **Componentes**: shadcn/ui primero (`npx shadcn add <componente>`) antes de
-  escribir un componente de UI a mano. Ya instalados: `button`, `card`, `badge`.
-- **Estructura de pantalla tipo**: contenido en un `<main>` con
-  `mx-auto max-w-3xl px-4 py-10` (ajustar el ancho según la pantalla — un
-  listado puede ser más ancho que un form). Listados de Cancha/Complejo van en
-  `Card`. Tablas (admin) con el componente `table` de shadcn cuando se agregue.
-- **Botones**: uno solo `default` (verde, acción principal) por pantalla.
-  `outline`/`secondary` para acciones secundarias. `destructive` solo para
-  cancelar/borrar con consecuencia real (cancelar reserva, borrar cancha).
+  escribir un componente de UI a mano.
 - **Modo claro/oscuro**: andando con `next-themes`. `ThemeProvider` envuelve
   todo en `app/layout.tsx` (`attribute="class"`, sigue el tema del sistema por
   default). El botón está en `components/theme-toggle.tsx` — cambia con clases
   `dark:` de Tailwind, no con JS condicional, para no pelear con SSR.
-- **Logo**: `components/logo.tsx` (dos PNG, claro y oscuro). Las páginas
-  públicas (`app/(public)/layout.tsx`) no tienen header: solo el toggle de
-  tema arriba a la derecha.
+- **Logo**: `components/logo.tsx` (dos PNG, claro y oscuro). Sobre el sidebar,
+  que es oscuro en los dos temas, va con `sobreFondoOscuro`.
 - **Sidebar**: `components/app-sidebar.tsx` — solo en páginas con sesión
-  (`app/(dashboard)/layout.tsx`). Plegable a solo-íconos (shadcn `Sidebar`
-  `collapsible="icon"`), nav según `rol` (array `navPorRol` adentro del
-  componente — agregar el link ahí cuando exista la página real, no antes),
-  perfil (avatar con iniciales + nombre + email) y botón de cerrar sesión
-  abajo del todo.
+  (`app/(dashboard)/layout.tsx`). Plegable a solo-íconos, nav según `rol`
+  (array `navPorRol` adentro del componente — agregar el link ahí cuando
+  exista la página real, no antes). Abajo, la tarjeta del perfil: avatar con
+  iniciales, nombre, "Cerrar sesión" y el botón de tema.
+- **Login y registro**: pantalla partida (`app/(public)/(auth)/layout.tsx`). A
+  la izquierda, el panel en el verde del sidebar (`bg-sidebar`, igual en los
+  dos temas) con el logo, el título y la animación. A la derecha, el
+  formulario en una tarjeta `rounded-3xl`, sobre una "hoja" con las esquinas
+  redondeadas igual que el contenido de la app. Los campos llevan el ícono
+  adentro (`left-3.5` + `pl-11` en el `Input`) y el botón es `size="lg"` a todo
+  el ancho. Los errores van en una caja `bg-destructive/10` arriba del botón.
+- **Inicio (jugador y dueño)**: misma estructura. Arriba, el día, el saludo y
+  una bajada; a la izquierda, `ProximoTurnoDestacado` (el próximo turno sobre
+  el verde) y debajo las filas de `FilaDeTurno`; a la derecha, un número
+  protagonista con dos de apoyo y una tarjeta en arcilla. En las filas del
+  dueño va `QuienReservo` a la derecha (los nombres quedan alineados).
+- **Formularios del dueño**: los campos van adentro de una tarjeta
+  (`bg-card shadow-card rounded-3xl p-6`) con su título en `font-heading`; los
+  botones Cancelar/Guardar, afuera y a la derecha. Al costado, la vista previa
+  (con el cartelito "Vista previa") o `AyudaComplejo`. Lo que borra algo va en
+  una caja `bg-destructive/8`, sin borde.
+- **Listas del dueño (canchas, precios, bloqueos)**: tabla en `lg` y lista en
+  celular, las dos en `bg-card shadow-card rounded-2xl`. Arriba del `h1` va un
+  renglón chico con el complejo (y la cancha).
+- **Usuarios (admin)**: los cuatro totales van en una sola tarjeta separados
+  por una línea (el general en verde, el de suspendidas en rojo). El filtro
+  Todas/Suspendidas son pestañas como las de Reservas. Cada rol tiene su color,
+  el mismo en el avatar y en la etiqueta: jugador verde, dueño arcilla, admin
+  verde oscuro. La fila de una cuenta suspendida va con fondo rojo suave.
+- Todas las pantallas (jugador, dueño, admin, login y registro) ya están en
+  este estilo: una pantalla nueva arranca copiando la que más se le parezca.
 
 ## Seguridad (no negociable)
 

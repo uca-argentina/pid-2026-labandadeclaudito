@@ -39,17 +39,33 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     reserva.cancha.porcentajeSena ?? reserva.cancha.complejo.porcentajeSenaDefault
   const montoSena = reserva.precioTurno.mul(porcentajeSena).div(100)
 
-  await db.$transaction([
-    db.pago.create({
+  // Entre que se leyó la reserva y ahora, el jugador pudo haberla cancelado
+  // (o tocado "Pagar" dos veces). Por eso pasa a CONFIRMADA solo si sigue
+  // PENDIENTE: si no, no se cobra nada. Y el pago se crea en la misma
+  // transacción, así nunca queda uno sin el otro.
+  const pagada = await db.$transaction(async (tx) => {
+    const confirmadas = await tx.reserva.updateMany({
+      where: { id, estado: 'PENDIENTE' },
+      data: { estado: 'CONFIRMADA' },
+    })
+    if (confirmadas.count === 0) return false
+
+    await tx.pago.create({
       data: {
         reservaId: id,
         monto: montoSena,
         porcentaje: porcentajeSena,
         cancellationHours: reserva.cancha.complejo.cancellationHours,
       },
-    }),
-    db.reserva.update({ where: { id }, data: { estado: 'CONFIRMADA' } }),
-  ])
+    })
+    return true
+  })
+  if (!pagada) {
+    return NextResponse.json(
+      { error: 'La reserva cambió mientras pagabas. Recargá la página.' },
+      { status: 409 },
+    )
+  }
 
   return NextResponse.json({ ok: true }, { status: 200 })
 }

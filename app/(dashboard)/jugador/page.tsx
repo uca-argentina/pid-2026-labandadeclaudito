@@ -1,65 +1,82 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import {
-  ArrowRight,
-  Building2,
-  CalendarCheck,
-  CalendarClock,
-  Clock,
-  MapPin,
-  Search,
-} from 'lucide-react'
+import { ArrowRight, Search } from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
-import { pendientesVencidas } from '@/lib/bookings'
-import { deporteLabels } from '@/lib/labels'
-import { diaDeHoy, diaDeReserva, formatearDia } from '@/lib/time'
-import { StatCard } from '@/components/stat-card'
+import { dondeProximas, pendientesVencidas } from '@/lib/bookings'
+import { complejoVisible } from '@/lib/complejos'
+import { venceLaSena } from '@/lib/estado-reserva'
+import { diaCercano, diaEnPalabras, proximoSabado, saludoSegunHora } from '@/lib/fechas'
+import { diaDeHoy, diaDeReserva } from '@/lib/time'
 import { Button } from '@/components/ui/button'
+import { EstadoVacio } from '@/components/estado-vacio'
+import { CuentaRegresivaSena } from '@/components/cuenta-regresiva-sena'
+import { RefreshWhenDepositExpires } from '@/components/refresh-when-deposit-expires'
+import { FilaDeTurno } from '@/components/fila-de-turno'
+import { ProximoTurnoDestacado } from '@/components/proximo-turno-destacado'
 
 export default async function JugadorHomePage() {
   const session = await auth()
   if (!session) redirect('/login')
 
-  const desdeHoy = new Date(diaDeHoy())
+  // Las cuatro consultas no dependen entre sí: se hacen a la vez (una sola
+  // espera a la base en lugar de cuatro seguidas).
+  const [proximasReservas, totalProximasReservas, totalReservas, totalComplejos] =
+    await Promise.all([
+      db.reserva.findMany({
+        where: {
+          jugadorId: session.user.id,
+          ...dondeProximas(),
+        },
+        include: { cancha: { include: { complejo: true } } },
+        orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
+        take: 3,
+      }),
+      db.reserva.count({
+        where: {
+          jugadorId: session.user.id,
+          ...dondeProximas(),
+        },
+      }),
+      db.reserva.count({
+        where: { jugadorId: session.user.id, NOT: pendientesVencidas() },
+      }),
+      db.complejo.count({
+        where: { ...complejoVisible(), canchas: { some: { activo: true } } },
+      }),
+    ])
 
-  const proximasReservas = await db.reserva.findMany({
-    where: {
-      jugadorId: session.user.id,
-      estado: { not: 'CANCELADA' },
-      NOT: pendientesVencidas(),
-      fecha: { gte: desdeHoy },
-    },
-    include: { cancha: { include: { complejo: true } } },
-    orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }],
-    take: 3,
-  })
+  // El primero va destacado arriba; los otros dos, como tarjetas debajo.
+  const [proximoTurno, ...otrosTurnos] = proximasReservas
 
-  const totalProximasReservas = await db.reserva.count({
-    where: {
-      jugadorId: session.user.id,
-      estado: { not: 'CANCELADA' },
-      NOT: pendientesVencidas(),
-      fecha: { gte: desdeHoy },
-    },
-  })
+  const primerNombre = (session.user.name ?? '').split(' ')[0]
+  const hoy = diaDeHoy()
 
-  const totalReservas = await db.reserva.count({
-    where: { jugadorId: session.user.id, NOT: pendientesVencidas() },
-  })
-
-  const totalComplejos = await db.complejo.count({
-    where: { activo: true, canchas: { some: { activo: true } } },
-  })
+  // La frase de arriba cuenta cuándo es el próximo partido
+  let bajada = 'Buscá una cancha libre y reservá tu próximo partido.'
+  let cuando: 'hoy' | 'mañana' | null = null
+  if (proximoTurno !== undefined) {
+    const diaDelTurno = diaDeReserva(proximoTurno.fecha)
+    const zona = proximoTurno.cancha.complejo.zona
+    cuando = diaCercano(diaDelTurno, hoy)
+    if (cuando === 'hoy') {
+      bajada = `Hoy te toca jugar en ${zona}.`
+    } else if (cuando === 'mañana') {
+      bajada = `Mañana te toca jugar en ${zona}.`
+    } else {
+      bajada = `Tu próximo partido es el ${diaEnPalabras(diaDelTurno).toLowerCase()}.`
+    }
+  }
 
   return (
-    <div className="mx-auto max-w-5xl px-6 pt-6 pb-12 md:pt-4">
-      <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <div className="mb-7 flex flex-wrap items-end justify-between gap-5">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Hola, {session.user.name}</h1>
-          <p className="text-muted-foreground mt-2">
-            Buscá una cancha libre y reservá tu próximo partido.
-          </p>
+          <p className="text-muted-foreground text-sm font-medium">{diaEnPalabras(hoy)}</p>
+          <h1 className="font-heading mt-1 text-4xl font-bold tracking-tight">
+            ¡{saludoSegunHora()}, {primerNombre}!
+          </h1>
+          <p className="text-muted-foreground mt-1.5">{bajada}</p>
         </div>
         <Button render={<Link href="/jugador/canchas" />}>
           <Search className="size-4" />
@@ -67,79 +84,135 @@ export default async function JugadorHomePage() {
         </Button>
       </div>
 
-      <div className="mb-10 grid gap-5 sm:grid-cols-3">
-        <StatCard
-          icon={CalendarClock}
-          label="Próximos turnos"
-          value={totalProximasReservas}
-          detalle="Reservas de hoy en adelante"
-        />
-        <StatCard
-          icon={CalendarCheck}
-          label="Reservas totales"
-          value={totalReservas}
-          detalle="Desde que te registraste"
-        />
-        <StatCard
-          icon={Building2}
-          label="Complejos"
-          value={totalComplejos}
-          detalle="Disponibles para reservar"
-        />
-      </div>
-
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Tus próximos turnos</h2>
-        <Link
-          href="/jugador/reservas"
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm font-medium"
-        >
-          Ver todas
-          <ArrowRight className="size-3.5" />
-        </Link>
-      </div>
-
-      {proximasReservas.length === 0 ? (
-        <div className="border-border bg-card rounded-2xl border p-10 text-center">
-          <CalendarClock className="text-muted-foreground mx-auto mb-4 size-8" />
-          <p className="font-medium">No tenés turnos reservados</p>
-          <p className="text-muted-foreground mt-1.5 text-sm">
-            Elegí un complejo y reservá el horario que te sirva.
-          </p>
-          <Button variant="outline" className="mt-5" render={<Link href="/jugador/canchas" />}>
-            Buscar canchas
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {proximasReservas.map((reserva) => (
-            <div
-              key={reserva.id}
-              className="border-border bg-card flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-6"
+      <div className="grid gap-7 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        {/* min-w-0: sin esto, en celular la columna se ensancha hasta el texto
+            más largo de las filas y la página se desborda de costado */}
+        <section className="min-w-0">
+          {proximoTurno === undefined ? (
+            <EstadoVacio
+              titulo="No tenés turnos reservados"
+              texto="Elegí un complejo y reservá el horario que te sirva."
             >
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <span className="font-semibold">{reserva.cancha.nombre}</span>
-                  <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs">
-                    {deporteLabels[reserva.cancha.deporte]}
-                  </span>
-                </div>
-                <p className="text-muted-foreground mt-1.5 flex items-center gap-1.5 text-sm">
-                  <MapPin className="size-3.5 shrink-0" />
-                  {reserva.cancha.complejo.nombre} · {reserva.cancha.complejo.zona}
+              <Button render={<Link href="/jugador/canchas" />}>
+                <Search className="size-4" />
+                Buscar canchas
+              </Button>
+            </EstadoVacio>
+          ) : (
+            <>
+              <ProximoTurnoDestacado
+                etiqueta={cuando === null ? 'Tu próximo partido' : `Tu próximo partido · ${cuando}`}
+                dia={diaDeReserva(proximoTurno.fecha)}
+                horaInicio={proximoTurno.horaInicio}
+                horaFin={proximoTurno.horaFin}
+                cancha={proximoTurno.cancha.nombre}
+                deporte={proximoTurno.cancha.deporte}
+                lugar={`${proximoTurno.cancha.complejo.nombre} · ${proximoTurno.cancha.complejo.zona}`}
+              >
+                {/* Pendiente de seña: la cuenta regresiva va sobre fondo
+                    claro, porque sus colores no se leen sobre el verde */}
+                {proximoTurno.estado === 'PENDIENTE' ? (
+                  <div className="bg-background text-foreground mt-5 space-y-3 rounded-2xl p-4">
+                    <CuentaRegresivaSena
+                      venceEn={venceLaSena(proximoTurno.createdAt).toISOString()}
+                    />
+                    <RefreshWhenDepositExpires
+                      venceEn={venceLaSena(proximoTurno.createdAt).toISOString()}
+                    />
+                    <Button size="sm" render={<Link href="/jugador/reservas" />}>
+                      Pagar seña
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    className="mt-5"
+                    render={<Link href="/jugador/reservas" />}
+                  >
+                    Ver mi reserva
+                    <ArrowRight className="size-4" />
+                  </Button>
+                )}
+              </ProximoTurnoDestacado>
+
+              {otrosTurnos.length > 0 && (
+                <>
+                  <div className="mt-7 mb-3.5 flex items-baseline justify-between px-1">
+                    <h2 className="font-heading text-xl font-bold">Próximas reservas</h2>
+                    <Link
+                      href="/jugador/reservas"
+                      className="text-primary inline-flex items-center gap-1.5 text-sm font-semibold"
+                    >
+                      Ver todas
+                      <ArrowRight className="size-3.5" />
+                    </Link>
+                  </div>
+
+                  <div className="space-y-3">
+                    {otrosTurnos.map((reserva) => (
+                      <FilaDeTurno
+                        key={reserva.id}
+                        href="/jugador/reservas"
+                        dia={diaDeReserva(reserva.fecha)}
+                        hoy={hoy}
+                        horaInicio={reserva.horaInicio}
+                        horaFin={reserva.horaFin}
+                        deporte={reserva.cancha.deporte}
+                        detalle={`${reserva.cancha.nombre} · ${reserva.cancha.complejo.nombre}, ${reserva.cancha.complejo.zona}`}
+                      >
+                        <span className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-full">
+                          <ArrowRight className="size-4" />
+                        </span>
+                      </FilaDeTurno>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </section>
+
+        <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+          {/* Un número protagonista y dos de apoyo, en vez de tres tarjetas iguales */}
+          <div className="bg-card shadow-card rounded-3xl p-7">
+            <p className="text-muted-foreground text-sm font-semibold">Desde que te sumaste</p>
+            <div className="mt-1.5 flex items-baseline gap-3">
+              <span className="font-heading text-primary text-7xl font-extrabold tracking-tighter">
+                {totalReservas}
+              </span>
+              <span className="leading-snug font-semibold">
+                {totalReservas === 1 ? 'partido reservado' : 'partidos reservados'}
+              </span>
+            </div>
+            <div className="border-border mt-5 flex gap-5 border-t pt-4">
+              <div className="min-w-0 flex-1">
+                <p className="font-heading text-2xl font-bold">{totalProximasReservas}</p>
+                <p className="text-muted-foreground text-sm">
+                  {totalProximasReservas === 1 ? 'próximo turno' : 'próximos turnos'}
                 </p>
               </div>
-              <div className="text-right">
-                <p className="font-medium">{formatearDia(diaDeReserva(reserva.fecha))}</p>
-                <p className="text-muted-foreground flex items-center justify-end gap-1.5 text-sm">
-                  <Clock className="size-3.5 shrink-0" />
-                  {reserva.horaInicio} a {reserva.horaFin} hs
-                </p>
+              <div className="border-border min-w-0 flex-1 border-l pl-5">
+                <p className="font-heading text-2xl font-bold">{totalComplejos}</p>
+                <p className="text-muted-foreground text-sm">complejos para elegir</p>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+
+          <div className="bg-clay/12 rounded-3xl px-7 py-6">
+            <p className="font-heading text-xl font-bold">¿Sale partido el finde?</p>
+            <p className="text-foreground/80 mt-1.5 text-sm">
+              Mirá qué canchas quedan libres este sábado.
+            </p>
+            <Link
+              href={`/jugador/canchas?fecha=${proximoSabado(hoy)}`}
+              className="text-clay-foreground mt-3 inline-flex items-center gap-1.5 text-sm font-semibold"
+            >
+              Ver canchas libres
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+        </aside>
+      </div>
     </div>
   )
 }

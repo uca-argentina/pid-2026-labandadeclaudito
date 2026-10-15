@@ -1,5 +1,12 @@
-import type { Deporte, TipoSuperficie } from '@/lib/generated/prisma/client'
+import type {
+  DecisionDisputa,
+  Deporte,
+  EstadoAprobacion,
+  EstadoDisputa,
+  TipoSuperficie,
+} from '@/lib/generated/prisma/client'
 import type { EstadoVisible } from '@/lib/estado-reserva'
+import type { GrupoDeEstado } from '@/lib/admin-bookings'
 
 export const deporteLabels: Record<Deporte, string> = {
   FUTBOL_5: 'Fútbol 5',
@@ -40,6 +47,85 @@ export const estadoVisibleLabels: Record<EstadoVisible, string> = {
   CANCELADA: 'Cancelada',
 }
 
+export const estadoDisputaLabels: Record<EstadoDisputa, string> = {
+  ABIERTA: 'Disputa abierta',
+  RESUELTA: 'Disputa resuelta',
+}
+
+export const estadoAprobacionLabels: Record<EstadoAprobacion, string> = {
+  PENDIENTE: 'En revisión',
+  APROBADO: 'Aprobado',
+  RECHAZADO: 'Rechazado',
+}
+
+export const decisionDisputaLabels: Record<DecisionDisputa, string> = {
+  A_FAVOR_JUGADOR: 'A favor del jugador',
+  A_FAVOR_DUENIO: 'A favor del complejo',
+}
+
+// El índice es el día de la semana de Date.getUTCDay(): 0 = domingo
+export const nombresDeDias = [
+  'Domingo',
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+]
+
+export const nombresCortosDeDias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
+export const nombresDeMeses = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+]
+
+// Cuántos juegan por lado, para el cartel de la cancha ilustrada
+export const formatoDeJuego: Record<Deporte, string> = {
+  FUTBOL_5: '5 vs 5',
+  FUTBOL_7: '7 vs 7',
+  FUTBOL_11: '11 vs 11',
+  TENIS: 'Singles o dobles',
+  PADEL: '2 vs 2',
+  BASQUET: '5 vs 5',
+}
+
 export function formatPrecio(precio: number | string): string {
   return `$${Number(precio).toLocaleString('es-AR')}`
+}
+
+export const mesesCortos = [
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
+]
+
+// En plural: son los títulos de las pestañas de conteo de /admin/reservas
+export const grupoDeEstadoLabels: Record<GrupoDeEstado, string> = {
+  PENDIENTE: 'Pendientes',
+  CONFIRMADA: 'Confirmadas',
+  EN_CURSO: 'En curso',
+  FINALIZADA: 'Finalizadas',
+  NO_SHOW: 'Ausentes',
+  CANCELADA: 'Canceladas',
 }
