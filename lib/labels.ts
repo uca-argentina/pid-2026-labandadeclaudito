@@ -1,6 +1,7 @@
 import type {
   DecisionDisputa,
   Deporte,
+  EstadoAprobacion,
   EstadoDisputa,
   TipoSuperficie,
 } from '@/lib/generated/prisma/client'
@@ -49,6 +50,12 @@ export const estadoVisibleLabels: Record<EstadoVisible, string> = {
 export const estadoDisputaLabels: Record<EstadoDisputa, string> = {
   ABIERTA: 'Disputa abierta',
   RESUELTA: 'Disputa resuelta',
+}
+
+export const estadoAprobacionLabels: Record<EstadoAprobacion, string> = {
+  PENDIENTE: 'En revisión',
+  APROBADO: 'Aprobado',
+  RECHAZADO: 'Rechazado',
 }
 
 export const decisionDisputaLabels: Record<DecisionDisputa, string> = {

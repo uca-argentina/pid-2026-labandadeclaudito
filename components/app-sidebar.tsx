@@ -53,10 +53,10 @@ const navPorRol: Record<'JUGADOR' | 'DUENIO' | 'ADMIN', ItemNav[]> = {
     { href: '/dueno/reservas', label: 'Reservas', icon: CalendarDays },
     { href: '/dueno/dashboard', label: 'Estadísticas', icon: ChartColumn },
   ],
-  // ponytail: complejos suma su link en su tarjeta
   ADMIN: [
     { href: '/admin', label: 'Inicio', icon: Home },
     { href: '/admin/usuarios', label: 'Usuarios', icon: Users },
+    { href: '/admin/complejos', label: 'Complejos', icon: Building2 },
     { href: '/admin/reservas', label: 'Reservas', icon: CalendarDays },
     { href: '/admin/disputas', label: 'Disputas', icon: Scale },
   ],

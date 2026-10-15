@@ -7,6 +7,7 @@ import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import { clasesGrillaAdaptable } from '@/lib/grid-columns'
 import { bloqueosDelDia, resumenBloqueosDelComplejo } from '@/lib/blocks'
+import { estadoAprobacionLabels } from '@/lib/labels'
 import { diaDeHoy } from '@/lib/time'
 import { AvisoBloqueo } from '@/components/aviso-bloqueo'
 import { Button } from '@/components/ui/button'
@@ -113,6 +114,13 @@ export default async function MisComplejosPage() {
                           <ImageIcon className="size-5" />
                           Sin fotos
                         </div>
+                      )}
+                      {complejo.estadoAprobacion !== 'APROBADO' && (
+                        <span
+                          className={`bg-card absolute top-3 left-3 rounded-full px-2.5 py-0.5 text-xs font-semibold ${complejo.estadoAprobacion === 'RECHAZADO' ? 'text-destructive' : 'text-clay-foreground'}`}
+                        >
+                          {estadoAprobacionLabels[complejo.estadoAprobacion]}
+                        </span>
                       )}
                       <span className="bg-card absolute bottom-3 left-3 rounded-full px-2.5 py-0.5 text-xs font-semibold">
                         {complejo.canchas.length === 1
