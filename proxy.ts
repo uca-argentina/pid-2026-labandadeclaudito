@@ -8,6 +8,11 @@ export default auth((req) => {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
+  // /perfil es la misma pantalla para todos los roles: solo pide estar logueado
+  if (req.nextUrl.pathname === '/perfil') {
+    return
+  }
+
   // cada rol solo puede entrar a su sección: si no es la suya, lo mandamos a su inicio
   const home = homePorRol(req.auth.user.rol)
   if (!req.nextUrl.pathname.startsWith(home)) {
@@ -16,5 +21,5 @@ export default auth((req) => {
 })
 
 export const config = {
-  matcher: ['/dueno/:path*', '/jugador/:path*', '/admin/:path*'],
+  matcher: ['/dueno/:path*', '/jugador/:path*', '/admin/:path*', '/perfil'],
 }

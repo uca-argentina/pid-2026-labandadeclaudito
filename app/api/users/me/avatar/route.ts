@@ -1,0 +1,87 @@
+import { NextResponse } from 'next/server'
+import { del, put } from '@vercel/blob'
+import { auth } from '@/auth'
+import { avatarSchema } from '@/lib/validations/user'
+import { esImagenReal } from '@/lib/validations/complex'
+import { db } from '@/lib/db'
+
+// Subir (o reemplazar) la foto de perfil
+export async function POST(request: Request) {
+  const session = await auth()
+  if (!session) {
+    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+  }
+  if (session.user.rol === 'ADMIN') {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  }
+
+  const formData = await request.formData()
+  const parsed = avatarSchema.safeParse({ imagen: formData.get('imagen') })
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+  }
+
+  const archivo = parsed.data.imagen
+  const bytes = new Uint8Array(await archivo.arrayBuffer())
+  if (!esImagenReal(bytes)) {
+    return NextResponse.json({ error: 'Solo se aceptan fotos JPG, PNG o WebP.' }, { status: 400 })
+  }
+
+  // Si put() falla y no lo agarramos, Next devuelve un 500 con el body vacío
+  // y el cliente no puede mostrar ningún mensaje.
+  let urlDeLaFoto = ''
+  try {
+    const blob = await put(`usuarios/${session.user.id}/${archivo.name}`, archivo, {
+      access: 'public',
+      addRandomSuffix: true,
+    })
+    urlDeLaFoto = blob.url
+  } catch (error) {
+    console.error('Error al subir la foto a Vercel Blob:', error)
+    return NextResponse.json(
+      { error: 'No se pudo guardar la foto. Revisá BLOB_READ_WRITE_TOKEN.' },
+      { status: 502 },
+    )
+  }
+
+  const usuario = await db.usuario.findUnique({
+    where: { id: session.user.id },
+    select: { imagenUrl: true },
+  })
+
+  await db.usuario.update({
+    where: { id: session.user.id },
+    data: { imagenUrl: urlDeLaFoto },
+  })
+
+  // Borrar la anterior para no dejar archivos huérfanos en el Blob
+  if (usuario?.imagenUrl) {
+    await del(usuario.imagenUrl)
+  }
+
+  return NextResponse.json({ url: urlDeLaFoto }, { status: 201 })
+}
+
+// Quitar la foto de perfil: vuelven las iniciales
+export async function DELETE() {
+  const session = await auth()
+  if (!session) {
+    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+  }
+
+  const usuario = await db.usuario.findUnique({
+    where: { id: session.user.id },
+    select: { imagenUrl: true },
+  })
+  if (!usuario?.imagenUrl) {
+    return NextResponse.json({ error: 'No tenés foto de perfil' }, { status: 404 })
+  }
+
+  await db.usuario.update({
+    where: { id: session.user.id },
+    data: { imagenUrl: null },
+  })
+  await del(usuario.imagenUrl)
+
+  return NextResponse.json({ ok: true }, { status: 200 })
+}

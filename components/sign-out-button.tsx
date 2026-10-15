@@ -10,7 +10,9 @@ export function SignOutButton({ className }: { className?: string }) {
     <button
       type="button"
       className={cn(
-        'text-sidebar-foreground/80 hover:text-sidebar-foreground py-0.5 text-xs underline underline-offset-4',
+        // Más oscuro que la tarjeta del perfil (que es un blanco al 10% sobre
+        // el verde): el bg-sidebar es el verde de fondo, y el hover lo oscurece.
+        'text-sidebar-foreground/90 border-sidebar-border bg-sidebar hover:bg-black/25 w-full rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors',
         className,
       )}
       onClick={() => signOut({ callbackUrl: '/login' })}
