@@ -177,23 +177,21 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
             </>
           )}
 
-          {/* max-w: esta tabla tiene pocas columnas y en una pantalla grande le
-              sobraba medio ancho, que se veía como un hueco en el medio de la fila */}
           {reservas.length > 0 && vista !== 'proximas' && (
-            <div className="bg-card shadow-card max-w-3xl overflow-hidden rounded-2xl">
+            <div className="bg-card shadow-card overflow-hidden rounded-2xl">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="px-3 pl-4">
                       <TituloConIcono icono={CalendarDays}>Turno</TituloConIcono>
                     </TableHead>
-                    {/* w-full en estas dos: se reparten el ancho que sobra, así
-                        las demás quedan pegadas a su contenido y ningún hueco
-                        se hace muy grande */}
-                    <TableHead className="w-full px-3">
+                    {/* Esta tabla tiene pocas columnas y le sobra ancho. Cancha
+                        se queda con la mitad (es el texto más largo) y el resto
+                        se reparte entre las demás, en vez de juntarse en un hueco */}
+                    <TableHead className="w-1/2 px-3">
                       <TituloConIcono icono={LandPlot}>Cancha</TituloConIcono>
                     </TableHead>
-                    <TableHead className="w-full px-3">
+                    <TableHead className="px-3">
                       <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
                     </TableHead>
                     {/* Sin la columna de disputa (Canceladas), el monto es la
@@ -256,14 +254,14 @@ function FilaReserva({
       <TableCell className="px-3 pl-4">
         <FechaDelTurno dia={dia} horaInicio={reserva.horaInicio} horaFin={reserva.horaFin} />
       </TableCell>
-      <TableCell className="w-full px-3">
+      <TableCell className="w-1/2 px-3">
         <CeldaCancha
           nombre={reserva.cancha.nombre}
           deporte={reserva.cancha.deporte}
           complejo={reserva.cancha.complejo.nombre}
         />
       </TableCell>
-      <TableCell className="w-full px-3">
+      <TableCell className="px-3">
         <BookingStatusBadge
           estado={reserva.estado}
           asistio={reserva.asistio}
