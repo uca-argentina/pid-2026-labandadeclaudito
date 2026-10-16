@@ -9,14 +9,20 @@ type DisputaParaMostrar = {
   comentarioAdmin: string | null
 }
 
+// Los tres de una disputa resuelta llevan hover: ese pill se puede tocar para
+// leer la resolución, y el color más fuerte es lo que lo da a entender.
 const estilos = {
   ABIERTA: 'bg-accent text-accent-foreground',
-  GANADA: 'bg-green-600/15 text-green-700 dark:text-green-500',
-  PERDIDA: 'bg-destructive/15 text-destructive',
-  NEUTRAL: 'bg-muted text-muted-foreground',
+  GANADA:
+    'bg-green-600/15 text-green-700 hover:bg-green-600/30 dark:text-green-500 dark:hover:bg-green-600/35',
+  PERDIDA:
+    'bg-destructive/15 text-destructive hover:bg-destructive/30 dark:hover:bg-destructive/35',
+  NEUTRAL: 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground',
 }
 
 const clasesDelPill = 'inline-flex items-center gap-1.5 rounded-2xl px-2.5 py-1 text-xs font-medium'
+
+const clasesDelDisparador = `${clasesDelPill} cursor-pointer transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50`
 
 // Verde si la disputa salió a favor de quien la mira, rojo si salió en contra.
 // El admin no es parte, así que lo ve neutro.
@@ -40,7 +46,9 @@ export function EstadoDeDisputa({ disputa, vista }: { disputa: DisputaParaMostra
 
   return (
     <Popover>
-      <PopoverTrigger className={`${clasesDelPill} ${estiloDeDecision(disputa.decision, vista)}`}>
+      <PopoverTrigger
+        className={`${clasesDelDisparador} ${estiloDeDecision(disputa.decision, vista)}`}
+      >
         {estadoDisputaCorto.RESUELTA}
         <Info className="size-3.5 shrink-0" />
       </PopoverTrigger>
