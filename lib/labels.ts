@@ -45,12 +45,12 @@ export const rolLabels: Record<Rol, string> = {
 }
 
 export const estadoVisibleLabels: Record<EstadoVisible, string> = {
-  PENDIENTE: 'Pendiente de seña',
+  PENDIENTE: 'Pendiente',
   CONFIRMADA: 'Confirmada',
   EN_CURSO: 'En curso',
   FINALIZADA: 'Finalizada',
   ASISTIO: 'Asistió',
-  NO_SHOW: 'No se presentó',
+  NO_SHOW: 'Ausente',
   CANCELADA: 'Cancelada',
 }
 
