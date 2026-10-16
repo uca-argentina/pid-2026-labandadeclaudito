@@ -59,6 +59,13 @@ export const estadoDisputaLabels: Record<EstadoDisputa, string> = {
   RESUELTA: 'Disputa resuelta',
 }
 
+// Para el pill del historial de reservas, donde el contexto ya dice que es una
+// disputa: el texto largo no entraba en una celda de la tabla
+export const estadoDisputaCorto: Record<EstadoDisputa, string> = {
+  ABIERTA: 'Abierta',
+  RESUELTA: 'Resuelta',
+}
+
 export const estadoAprobacionLabels: Record<EstadoAprobacion, string> = {
   PENDIENTE: 'En revisión',
   APROBADO: 'Aprobado',
