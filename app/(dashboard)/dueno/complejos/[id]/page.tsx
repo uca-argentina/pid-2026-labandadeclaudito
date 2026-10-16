@@ -2,7 +2,9 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import {
   ArrowLeft,
+  ArrowRight,
   ChartColumn,
+  ChevronDown,
   ImageIcon,
   ImagePlus,
   MapPin,
@@ -65,6 +67,21 @@ export default async function DetalleComplejoDuenoPage({
   const bloqueos = await bloqueosDelDia(idsDeCanchas, new Date(diaDeHoy()))
 
   const hoy = diaDeHoy()
+
+  const filasDeTurnos = proximosTurnos.map((reserva) => (
+    <FilaDeTurno
+      key={reserva.id}
+      href="/dueno/reservas"
+      dia={diaDeReserva(reserva.fecha)}
+      hoy={hoy}
+      horaInicio={reserva.horaInicio}
+      horaFin={reserva.horaFin}
+      deporte={reserva.cancha.deporte}
+      detalle={reserva.cancha.nombre}
+    >
+      <QuienReservo nombre={reserva.jugador.nombre} />
+    </FilaDeTurno>
+  ))
 
   return (
     <main>
@@ -183,30 +200,37 @@ export default async function DetalleComplejoDuenoPage({
             </div>
           )}
 
-          <h2 className="font-heading mb-3.5 px-1 text-xl font-bold">Próximos turnos</h2>
+          <div className="mb-3.5 flex items-baseline justify-between gap-3 px-1">
+            <h2 className="font-heading text-xl font-bold">Próximos turnos</h2>
+            {proximosTurnos.length > 0 && (
+              <Link
+                href={`/dueno/reservas?complejoId=${id}`}
+                className="text-primary inline-flex items-center gap-1.5 text-sm font-semibold"
+              >
+                Ver todas
+                <ArrowRight className="size-3.5" />
+              </Link>
+            )}
+          </div>
 
           {proximosTurnos.length === 0 ? (
             <EstadoVacio
               titulo="No hay turnos reservados en este complejo"
               texto="Cuando un jugador reserve una de estas canchas, va a aparecer acá."
             />
+          ) : proximosTurnos.length === 1 ? (
+            <div className="space-y-3">{filasDeTurnos}</div>
           ) : (
-            <div className="space-y-3">
-              {proximosTurnos.map((reserva) => (
-                <FilaDeTurno
-                  key={reserva.id}
-                  href="/dueno/reservas"
-                  dia={diaDeReserva(reserva.fecha)}
-                  hoy={hoy}
-                  horaInicio={reserva.horaInicio}
-                  horaFin={reserva.horaFin}
-                  deporte={reserva.cancha.deporte}
-                  detalle={reserva.cancha.nombre}
-                >
-                  <QuienReservo nombre={reserva.jugador.nombre} />
-                </FilaDeTurno>
-              ))}
-            </div>
+            // Con más de un turno la lista estiraba mucho la página, así que
+            // arranca plegada. <details> nativo: no hace falta estado ni
+            // componente cliente.
+            <details className="group">
+              <summary className="bg-card shadow-card hover:bg-accent flex h-14 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-5 transition-colors [&::-webkit-details-marker]:hidden">
+                <span className="font-semibold">{proximosTurnos.length} turnos reservados</span>
+                <ChevronDown className="text-muted-foreground size-4 shrink-0 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="mt-3 space-y-3">{filasDeTurnos}</div>
+            </details>
           )}
         </section>
 
