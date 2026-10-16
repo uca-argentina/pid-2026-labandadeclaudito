@@ -131,8 +131,8 @@ export default async function ListadoCanchasPage({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Cancha</TableHead>
-                  <TableHead>Superficie</TableHead>
+                  <TableHead className="w-full">Cancha</TableHead>
+                  <TableHead className="w-full">Superficie</TableHead>
                   <TableHead>Precio / turno</TableHead>
                   <TableHead>Horario</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
@@ -146,7 +146,7 @@ export default async function ListadoCanchasPage({
                       key={cancha.id}
                       className={bloqueo ? 'opacity-60 grayscale' : undefined}
                     >
-                      <TableCell className="whitespace-normal">
+                      <TableCell className="w-full whitespace-normal">
                         <span className="mb-1 block font-semibold">{cancha.nombre}</span>
                         <EtiquetaDeporte deporte={cancha.deporte} />
                         {bloqueo && (
@@ -155,7 +155,7 @@ export default async function ListadoCanchasPage({
                           </div>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="w-full">
                         <Badge variant="secondary">{superficieLabels[cancha.tipoSuperficie]}</Badge>
                       </TableCell>
                       <TableCell className="font-heading text-primary text-base font-bold">
