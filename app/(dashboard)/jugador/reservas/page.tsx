@@ -185,12 +185,13 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
                     <TableHead className="px-3 pl-4">
                       <TituloConIcono icono={CalendarDays}>Turno</TituloConIcono>
                     </TableHead>
-                    {/* w-full: esta columna se queda con el ancho que sobra, así
-                        las demás no quedan separadas entre sí */}
+                    {/* w-full en estas dos: se reparten el ancho que sobra, así
+                        las demás quedan pegadas a su contenido y ningún hueco
+                        se hace muy grande */}
                     <TableHead className="w-full px-3">
                       <TituloConIcono icono={LandPlot}>Cancha</TituloConIcono>
                     </TableHead>
-                    <TableHead className="px-3">
+                    <TableHead className="w-full px-3">
                       <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
                     </TableHead>
                     {/* Sin la columna de disputa (Canceladas), el monto es la
@@ -260,7 +261,7 @@ function FilaReserva({
           complejo={reserva.cancha.complejo.nombre}
         />
       </TableCell>
-      <TableCell className="px-3">
+      <TableCell className="w-full px-3">
         <BookingStatusBadge
           estado={reserva.estado}
           asistio={reserva.asistio}

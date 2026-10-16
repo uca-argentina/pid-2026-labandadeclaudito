@@ -1,5 +1,5 @@
 import { Clock } from 'lucide-react'
-import { mesesCortos, nombresCortosDeDias } from '@/lib/labels'
+import { mesesCortos, nombresDeDias } from '@/lib/labels'
 import { diaDeHoy } from '@/lib/time'
 
 // Un mini calendario con el día y el mes, y al lado el día de la semana y la
@@ -15,7 +15,7 @@ export function FechaDelTurno({
 }) {
   const [anio, mes, diaDelMes] = dia.split('-')
   // dia es YYYY-MM-DD: leído en UTC no se corre de día por la zona horaria
-  const diaDeLaSemana = nombresCortosDeDias[new Date(`${dia}T00:00:00Z`).getUTCDay()]
+  const diaDeLaSemana = nombresDeDias[new Date(`${dia}T00:00:00Z`).getUTCDay()]
   const esDeOtroAnio = anio !== diaDeHoy().slice(0, 4)
 
   return (

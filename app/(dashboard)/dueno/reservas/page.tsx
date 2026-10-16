@@ -264,12 +264,13 @@ export default async function ReservasDelDuenioPage({
                     <TableHead className="px-3 pl-4">
                       <TituloConIcono icono={CalendarDays}>Turno</TituloConIcono>
                     </TableHead>
-                    {/* w-full: esta columna se queda con el ancho que sobra, así
-                        las demás no quedan separadas entre sí */}
+                    {/* w-full en estas dos: se reparten el ancho que sobra, así
+                        las demás quedan pegadas a su contenido y ningún hueco
+                        se hace muy grande */}
                     <TableHead className="w-full px-3">
                       <TituloConIcono icono={LandPlot}>Cancha</TituloConIcono>
                     </TableHead>
-                    <TableHead className="px-3">
+                    <TableHead className="w-full px-3">
                       <TituloConIcono icono={User}>Jugador</TituloConIcono>
                     </TableHead>
                     <TableHead className="px-3">
@@ -354,7 +355,7 @@ function FilaReserva({
           complejo={reserva.cancha.complejo.nombre}
         />
       </TableCell>
-      <TableCell className="px-3">
+      <TableCell className="w-full px-3">
         {/* -ml: el círculo queda alineado con el título de la columna */}
         <ContactoDelJugador jugador={reserva.jugador} className="-ml-2.5 max-w-60" />
       </TableCell>

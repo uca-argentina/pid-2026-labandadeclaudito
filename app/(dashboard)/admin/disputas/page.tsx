@@ -114,19 +114,19 @@ export default async function DisputasDelAdminPage({ searchParams }: PageProps<'
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="pl-4">
+                    <TableHead className="w-full pl-4">
                       <TituloConIcono icono={User}>Jugador</TituloConIcono>
                     </TableHead>
-                    <TableHead className="hidden sm:table-cell">
+                    <TableHead>
                       <TituloConIcono icono={CalendarDays}>Turno</TituloConIcono>
                     </TableHead>
-                    <TableHead className="hidden lg:table-cell">
+                    <TableHead className="w-full">
                       <TituloConIcono icono={LandPlot}>Cancha</TituloConIcono>
                     </TableHead>
-                    <TableHead className="hidden xl:table-cell">
+                    <TableHead>
                       <TituloConIcono icono={CalendarPlus}>Abierta</TituloConIcono>
                     </TableHead>
-                    <TableHead className="hidden sm:table-cell">
+                    <TableHead>
                       <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
                     </TableHead>
                     <TableHead className="pr-4 text-right">
@@ -137,7 +137,7 @@ export default async function DisputasDelAdminPage({ searchParams }: PageProps<'
                 <TableBody>
                   {disputas.map((disputa) => (
                     <TableRow key={disputa.id}>
-                      <TableCell className="pl-4">
+                      <TableCell className="w-full pl-4">
                         <div className="flex items-center gap-2.5">
                           <div className="bg-primary/15 text-primary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
                             {iniciales(disputa.jugador.nombre)}
@@ -148,23 +148,23 @@ export default async function DisputasDelAdminPage({ searchParams }: PageProps<'
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">
+                      <TableCell>
                         <FechaDelTurno
                           dia={diaDeReserva(disputa.reserva.fecha)}
                           horaInicio={disputa.reserva.horaInicio}
                           horaFin={disputa.reserva.horaFin}
                         />
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">
+                      <TableCell className="w-full">
                         <p className="font-medium">{disputa.reserva.cancha.nombre}</p>
                         <p className="text-muted-foreground text-xs">
                           {disputa.reserva.cancha.complejo.nombre}
                         </p>
                       </TableCell>
-                      <TableCell className="text-muted-foreground hidden text-sm xl:table-cell">
+                      <TableCell className="text-muted-foreground text-sm">
                         {formatearDia(momentoActual(disputa.createdAt).dia)}
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">
+                      <TableCell>
                         <EstadoDeDisputa disputa={disputa} vista="ADMIN" />
                       </TableCell>
                       <TableCell className="pr-4 text-right">
