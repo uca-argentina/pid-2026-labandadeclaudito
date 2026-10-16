@@ -177,8 +177,10 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
             </>
           )}
 
+          {/* max-w: esta tabla tiene pocas columnas y en una pantalla grande le
+              sobraba medio ancho, que se veía como un hueco en el medio de la fila */}
           {reservas.length > 0 && vista !== 'proximas' && (
-            <div className="bg-card shadow-card overflow-hidden rounded-2xl">
+            <div className="bg-card shadow-card max-w-4xl overflow-hidden rounded-2xl">
               <Table>
                 <TableHeader>
                   <TableRow>
