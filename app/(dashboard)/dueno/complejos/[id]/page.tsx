@@ -226,7 +226,7 @@ export default async function DetalleComplejoDuenoPage({
             // componente cliente.
             <details className="group">
               <summary className="bg-card shadow-card hover:bg-accent flex h-14 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-5 transition-colors [&::-webkit-details-marker]:hidden">
-                <span className="font-semibold">{proximosTurnos.length} turnos reservados</span>
+                <span className="font-semibold">{proximosTurnos.length} próximos turnos</span>
                 <ChevronDown className="text-muted-foreground size-4 shrink-0 transition-transform group-open:rotate-180" />
               </summary>
               <div className="mt-3 space-y-3">{filasDeTurnos}</div>
