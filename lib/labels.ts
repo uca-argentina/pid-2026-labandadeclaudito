@@ -3,6 +3,7 @@ import type {
   Deporte,
   EstadoAprobacion,
   EstadoDisputa,
+  Rol,
   TipoSuperficie,
 } from '@/lib/generated/prisma/client'
 import type { EstadoVisible } from '@/lib/estado-reserva'
@@ -35,6 +36,12 @@ export const superficiesPorDeporte: Record<Deporte, TipoSuperficie[]> = {
   TENIS: ['POLVO_DE_LADRILLO', 'CESPED_NATURAL', 'CEMENTO'],
   PADEL: ['CESPED_SINTETICO', 'CEMENTO'],
   BASQUET: ['PARQUET', 'CEMENTO'],
+}
+
+export const rolLabels: Record<Rol, string> = {
+  JUGADOR: 'Jugador',
+  DUENIO: 'Dueño',
+  ADMIN: 'Administrador',
 }
 
 export const estadoVisibleLabels: Record<EstadoVisible, string> = {
