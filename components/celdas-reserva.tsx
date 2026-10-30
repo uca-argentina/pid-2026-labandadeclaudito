@@ -22,7 +22,8 @@ export function CeldaCancha({
         <EtiquetaDeporte deporte={deporte} />
       </div>
       <p className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
-        <MapPin className="size-3 shrink-0" />
+        {/* En celular el ancho es lo que falta: el ícono vuelve a partir de sm */}
+        <MapPin className="hidden size-3 shrink-0 sm:inline-block" />
         {complejo}
       </p>
     </div>
@@ -42,7 +43,7 @@ export function CeldaMonto({ monto }: { monto: MontoDelHistorial | null }) {
   return (
     <div>
       <p className={`inline-flex items-center gap-1 font-semibold ${tonos[monto.tono]}`}>
-        <Wallet className="size-3.5" />
+        <Wallet className="hidden size-3.5 shrink-0 sm:inline-block" />
         {monto.monto}
       </p>
       <p className="text-muted-foreground text-xs">{monto.etiqueta}</p>

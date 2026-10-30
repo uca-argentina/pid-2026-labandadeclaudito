@@ -112,8 +112,8 @@ export default async function ListadoPreciosPage({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Día</TableHead>
-                  <TableHead>Horario</TableHead>
+                  <TableHead className="w-full">Día</TableHead>
+                  <TableHead className="w-full">Horario</TableHead>
                   <TableHead>Precio</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
@@ -121,12 +121,12 @@ export default async function ListadoPreciosPage({
               <TableBody>
                 {preciosEspeciales.map((precioEspecial) => (
                   <TableRow key={precioEspecial.id}>
-                    <TableCell>
+                    <TableCell className="w-full">
                       {precioEspecial.diaSemana === null
                         ? 'Todos los días'
                         : diasSemana[precioEspecial.diaSemana]}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
+                    <TableCell className="text-muted-foreground w-full text-sm">
                       {precioEspecial.horaInicio
                         ? `${precioEspecial.horaInicio} – ${precioEspecial.horaFin}`
                         : 'Todo el día'}

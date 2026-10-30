@@ -30,7 +30,8 @@ export function FechaDelTurno({
           {esDeOtroAnio && <span className="text-muted-foreground font-normal"> · {anio}</span>}
         </p>
         <p className="text-muted-foreground flex items-center gap-1 text-xs">
-          <Clock className="size-3" />
+          {/* En celular el ancho es lo que falta: el ícono vuelve a partir de sm */}
+          <Clock className="hidden size-3 shrink-0 sm:inline-block" />
           {horaInicio} a {horaFin}
         </p>
       </div>

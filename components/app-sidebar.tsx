@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import { homePorRol } from '@/lib/home-por-rol'
+import { rolLabels } from '@/lib/labels'
 import { Button } from '@/components/ui/button'
 import {
   Sidebar,
@@ -186,9 +187,10 @@ export function AppSidebar({
                     {iniciales(nombre)}
                   </AvatarFallback>
                 </Avatar>
-                <p className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
-                  {nombre}
-                </p>
+                <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+                  <p className="truncate text-sm font-semibold">{nombre}</p>
+                  <p className="text-sidebar-foreground/60 truncate text-xs">{rolLabels[rol]}</p>
+                </div>
               </div>
             ) : (
               <Link
@@ -203,9 +205,10 @@ export function AppSidebar({
                     {iniciales(nombre)}
                   </AvatarFallback>
                 </Avatar>
-                <p className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
-                  {nombre}
-                </p>
+                <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+                  <p className="truncate text-sm font-semibold">{nombre}</p>
+                  <p className="text-sidebar-foreground/60 truncate text-xs">{rolLabels[rol]}</p>
+                </div>
               </Link>
             )}
             <ThemeToggle />

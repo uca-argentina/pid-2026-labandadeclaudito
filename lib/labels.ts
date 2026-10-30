@@ -3,6 +3,7 @@ import type {
   Deporte,
   EstadoAprobacion,
   EstadoDisputa,
+  Rol,
   TipoSuperficie,
 } from '@/lib/generated/prisma/client'
 import type { EstadoVisible } from '@/lib/estado-reserva'
@@ -37,19 +38,32 @@ export const superficiesPorDeporte: Record<Deporte, TipoSuperficie[]> = {
   BASQUET: ['PARQUET', 'CEMENTO'],
 }
 
+export const rolLabels: Record<Rol, string> = {
+  JUGADOR: 'Jugador',
+  DUENIO: 'Dueño',
+  ADMIN: 'Administrador',
+}
+
 export const estadoVisibleLabels: Record<EstadoVisible, string> = {
-  PENDIENTE: 'Pendiente de seña',
+  PENDIENTE: 'Pendiente',
   CONFIRMADA: 'Confirmada',
   EN_CURSO: 'En curso',
   FINALIZADA: 'Finalizada',
   ASISTIO: 'Asistió',
-  NO_SHOW: 'No se presentó',
+  NO_SHOW: 'Ausente',
   CANCELADA: 'Cancelada',
 }
 
 export const estadoDisputaLabels: Record<EstadoDisputa, string> = {
   ABIERTA: 'Disputa abierta',
   RESUELTA: 'Disputa resuelta',
+}
+
+// Para el pill del historial de reservas, donde el contexto ya dice que es una
+// disputa: el texto largo no entraba en una celda de la tabla
+export const estadoDisputaCorto: Record<EstadoDisputa, string> = {
+  ABIERTA: 'Abierta',
+  RESUELTA: 'Resuelta',
 }
 
 export const estadoAprobacionLabels: Record<EstadoAprobacion, string> = {
