@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@/lib/generated/prisma/client'
 import { registerSchema } from '@/lib/validations/user'
 import { hashPassword } from '@/lib/passwords'
 import { db } from '@/lib/db'
@@ -40,7 +41,11 @@ export async function POST(request: Request) {
       },
     })
     return NextResponse.json({ ok: true }, { status: 201 })
-  } catch {
-    return NextResponse.json({ error: 'Email ya registrado' }, { status: 409 })
+  } catch (e) {
+    // El email es único en la DB: si ya existe, el índice único lo corta.
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      return NextResponse.json({ error: 'Ese email ya tiene una cuenta' }, { status: 409 })
+    }
+    throw e
   }
 }
