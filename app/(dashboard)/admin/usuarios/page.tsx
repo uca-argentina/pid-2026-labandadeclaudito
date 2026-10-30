@@ -186,19 +186,19 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="pl-4">
+                <TableHead className="w-full pl-4">
                   <TituloConIcono icono={User}>Usuario</TituloConIcono>
                 </TableHead>
-                <TableHead className="hidden sm:table-cell">
+                <TableHead>
                   <TituloConIcono icono={IdCard}>Rol</TituloConIcono>
                 </TableHead>
-                <TableHead className="hidden sm:table-cell">
+                <TableHead>
                   <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
                 </TableHead>
-                <TableHead className="hidden xl:table-cell">
+                <TableHead className="w-full">
                   <TituloConIcono icono={Activity}>Actividad</TituloConIcono>
                 </TableHead>
-                <TableHead className="hidden xl:table-cell">
+                <TableHead>
                   <TituloConIcono icono={CalendarPlus}>Alta</TituloConIcono>
                 </TableHead>
                 <TableHead className="pr-4 text-right">
@@ -212,10 +212,8 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
 
                 return (
                   <TableRow key={usuario.id} className={usuario.activo ? '' : 'bg-destructive/5'}>
-                    <TableCell className="pl-4">
-                      {/* Hasta xl el nombre se corta para que el botón de la
-                          derecha entre sin deslizar la tabla */}
-                      <div className="flex max-w-36 items-center gap-3 sm:max-w-48 xl:max-w-none">
+                    <TableCell className="w-full pl-4">
+                      <div className="flex items-center gap-3">
                         <div
                           className={`flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                             usuario.activo ? estilo.color : 'bg-muted text-muted-foreground'
@@ -230,17 +228,14 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
                       </div>
                     </TableCell>
 
-                    <TableCell className="hidden sm:table-cell">
+                    <TableCell>
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${estilo.color}`}
                       >
                         {estilo.label}
                       </span>
                     </TableCell>
-
-                    {/* En celular no entra: la fila suspendida ya va en rojo y su
-                        botón dice "Reactivar" */}
-                    <TableCell className="hidden sm:table-cell">
+                    <TableCell>
                       <span
                         className={
                           usuario.activo
@@ -256,7 +251,7 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
                     </TableCell>
 
                     {/* A un jugador le importan sus reservas, a un dueño sus complejos */}
-                    <TableCell className="text-muted-foreground hidden xl:table-cell">
+                    <TableCell className="text-muted-foreground w-full">
                       {usuario.rol === 'JUGADOR' &&
                         `${usuario._count.reservas} ${usuario._count.reservas === 1 ? 'reserva' : 'reservas'}`}
                       {usuario.rol === 'DUENIO' &&
@@ -264,7 +259,7 @@ export default async function AdminUsuariosPage({ searchParams }: PageProps<'/ad
                       {usuario.rol === 'ADMIN' && '—'}
                     </TableCell>
 
-                    <TableCell className="text-muted-foreground hidden xl:table-cell">
+                    <TableCell className="text-muted-foreground">
                       {usuario.createdAt.toLocaleDateString('es-AR', {
                         month: 'short',
                         year: 'numeric',

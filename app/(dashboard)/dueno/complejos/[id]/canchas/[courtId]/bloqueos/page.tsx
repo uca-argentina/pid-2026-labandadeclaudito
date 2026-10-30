@@ -108,9 +108,9 @@ export default async function ListadoBloqueosPage({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Fechas</TableHead>
+                  <TableHead className="w-full">Fechas</TableHead>
                   <TableHead>Horario</TableHead>
-                  <TableHead>Motivo</TableHead>
+                  <TableHead className="w-full">Motivo</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -120,14 +120,14 @@ export default async function ListadoBloqueosPage({
                   const hasta = formatearDia(diaDeReserva(bloqueo.endDate))
                   return (
                     <TableRow key={bloqueo.id}>
-                      <TableCell>
+                      <TableCell className="w-full">
                         {desde}
                         {desde !== hasta && <> – {hasta}</>}
                       </TableCell>
                       <TableCell>
                         {bloqueo.startTime} – {bloqueo.endTime}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm whitespace-normal">
+                      <TableCell className="text-muted-foreground w-full text-sm whitespace-normal">
                         {bloqueo.reason || '—'}
                       </TableCell>
                       <TableCell className="text-right">

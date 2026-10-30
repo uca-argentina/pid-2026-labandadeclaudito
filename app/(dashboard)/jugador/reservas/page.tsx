@@ -182,20 +182,25 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="pl-4">
+                    <TableHead className="px-3 pl-4">
                       <TituloConIcono icono={CalendarDays}>Turno</TituloConIcono>
                     </TableHead>
-                    <TableHead className="hidden sm:table-cell">
+                    {/* Esta tabla tiene pocas columnas y le sobra ancho. Cancha
+                        se queda con la mitad (es el texto más largo) y el resto
+                        se reparte entre las demás, en vez de juntarse en un hueco */}
+                    <TableHead className="w-1/2 px-3">
                       <TituloConIcono icono={LandPlot}>Cancha</TituloConIcono>
                     </TableHead>
-                    <TableHead>
+                    <TableHead className="px-3">
                       <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
                     </TableHead>
-                    <TableHead className="hidden pr-4 sm:table-cell">
+                    {/* Sin la columna de disputa (Canceladas), el monto es la
+                        última: ahí lleva el padding del borde de la tarjeta */}
+                    <TableHead className={vista === 'historial' ? 'px-3' : 'px-3 pr-4'}>
                       <TituloConIcono icono={Wallet}>Monto</TituloConIcono>
                     </TableHead>
                     {vista === 'historial' && (
-                      <TableHead className="pr-4 text-right">
+                      <TableHead className="px-3 pr-4 text-right">
                         <TituloConIcono icono={ShieldAlert}>Disputa</TituloConIcono>
                       </TableHead>
                     )}
@@ -246,18 +251,17 @@ function FilaReserva({
 
   return (
     <TableRow>
-      <TableCell className="pl-4">
+      <TableCell className="px-3 pl-4">
         <FechaDelTurno dia={dia} horaInicio={reserva.horaInicio} horaFin={reserva.horaFin} />
       </TableCell>
-      {/* En celular no entra: se ven el turno y el estado */}
-      <TableCell className="hidden sm:table-cell">
+      <TableCell className="w-1/2 px-3">
         <CeldaCancha
           nombre={reserva.cancha.nombre}
           deporte={reserva.cancha.deporte}
           complejo={reserva.cancha.complejo.nombre}
         />
       </TableCell>
-      <TableCell>
+      <TableCell className="px-3">
         <BookingStatusBadge
           estado={reserva.estado}
           asistio={reserva.asistio}
@@ -267,11 +271,11 @@ function FilaReserva({
           ahoraInicial={ahora}
         />
       </TableCell>
-      <TableCell className="hidden pr-4 sm:table-cell">
+      <TableCell className={conDisputa ? 'px-3' : 'px-3 pr-4'}>
         <CeldaMonto monto={monto} />
       </TableCell>
       {conDisputa && (
-        <TableCell className="pr-4 text-right">
+        <TableCell className="px-3 pr-4 text-right">
           {reserva.disputa ? (
             <EstadoDeDisputa disputa={reserva.disputa} vista="JUGADOR" />
           ) : (

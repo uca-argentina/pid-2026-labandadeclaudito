@@ -261,24 +261,29 @@ export default async function ReservasDelDuenioPage({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="pl-4">
+                    <TableHead className="px-3 pl-4">
                       <TituloConIcono icono={CalendarDays}>Turno</TituloConIcono>
                     </TableHead>
-                    <TableHead className="hidden sm:table-cell">
+                    {/* w-full en estas dos: se reparten el ancho que sobra, así
+                        las demás quedan pegadas a su contenido y ningún hueco
+                        se hace muy grande */}
+                    <TableHead className="w-full px-3">
                       <TituloConIcono icono={LandPlot}>Cancha</TituloConIcono>
                     </TableHead>
-                    <TableHead className="hidden lg:table-cell">
+                    <TableHead className="w-full px-3">
                       <TituloConIcono icono={User}>Jugador</TituloConIcono>
                     </TableHead>
-                    <TableHead className={vista === 'historial' ? 'hidden sm:table-cell' : ''}>
+                    <TableHead className="px-3">
                       <TituloConIcono icono={CircleDot}>Estado</TituloConIcono>
                     </TableHead>
-                    <TableHead className="hidden xl:table-cell">
+                    {/* Sin la columna de asistencia (Canceladas), el monto es la
+                        última: ahí lleva el padding del borde de la tarjeta */}
+                    <TableHead className={vista === 'historial' ? 'px-3' : 'px-3 pr-4'}>
                       <TituloConIcono icono={Wallet}>Monto</TituloConIcono>
                     </TableHead>
                     {vista === 'historial' && (
-                      <TableHead className="pr-4 text-right whitespace-normal">
-                        <TituloConIcono icono={UserCheck}>¿Se presentó?</TituloConIcono>
+                      <TableHead className="px-3 pr-4 text-right">
+                        <TituloConIcono icono={UserCheck}>Asistencia</TituloConIcono>
                       </TableHead>
                     )}
                   </TableRow>
@@ -340,23 +345,21 @@ function FilaReserva({
 
   return (
     <TableRow>
-      <TableCell className="pl-4">
+      <TableCell className="px-3 pl-4">
         <FechaDelTurno dia={dia} horaInicio={reserva.horaInicio} horaFin={reserva.horaFin} />
       </TableCell>
-      <TableCell className="hidden sm:table-cell">
+      <TableCell className="w-full px-3">
         <CeldaCancha
           nombre={reserva.cancha.nombre}
           deporte={reserva.cancha.deporte}
           complejo={reserva.cancha.complejo.nombre}
         />
       </TableCell>
-      <TableCell className="hidden lg:table-cell">
+      <TableCell className="w-full px-3">
         {/* -ml: el círculo queda alineado con el título de la columna */}
         <ContactoDelJugador jugador={reserva.jugador} className="-ml-2.5 max-w-60" />
       </TableCell>
-      {/* En el historial, en celular no entra: los botones de asistencia ya
-          muestran si vino (verde) o no (rojo) */}
-      <TableCell className={conAsistencia ? 'hidden sm:table-cell' : ''}>
+      <TableCell className="px-3">
         <BookingStatusBadge
           estado={reserva.estado}
           asistio={reserva.asistio}
@@ -366,11 +369,11 @@ function FilaReserva({
           ahoraInicial={ahora}
         />
       </TableCell>
-      <TableCell className="hidden xl:table-cell">
+      <TableCell className={conAsistencia ? 'px-3' : 'px-3 pr-4'}>
         <CeldaMonto monto={monto} />
       </TableCell>
       {conAsistencia && (
-        <TableCell className="pr-4 text-right">
+        <TableCell className="px-3 pr-4 text-right">
           {/* Con una disputa la marca queda congelada: mientras está abierta la
               revisa el admin, y una vez resuelta su decisión es definitiva */}
           {reserva.disputa ? (

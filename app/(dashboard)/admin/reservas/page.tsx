@@ -222,10 +222,10 @@ export default async function AdminReservasPage({ searchParams }: PageProps<'/ad
                 <TableHead className="pl-4">
                   <TituloConIcono icono={CalendarDays}>Turno</TituloConIcono>
                 </TableHead>
-                <TableHead className="hidden @xl:table-cell">
+                <TableHead className="hidden w-full @xl:table-cell">
                   <TituloConIcono icono={LandPlot}>Cancha</TituloConIcono>
                 </TableHead>
-                <TableHead className="hidden @3xl:table-cell">
+                <TableHead className="hidden w-full @3xl:table-cell">
                   <TituloConIcono icono={User}>Jugador</TituloConIcono>
                 </TableHead>
                 <TableHead className="pr-4 @5xl:pr-2">
@@ -321,7 +321,7 @@ function FilaReserva({
           {reserva.cancha.nombre} · {reserva.cancha.complejo.nombre}
         </div>
       </TableCell>
-      <TableCell className="hidden @xl:table-cell">
+      <TableCell className="hidden w-full @xl:table-cell">
         <div className="flex items-center gap-3">
           <MiniCancha deporte={reserva.cancha.deporte} className="h-10 w-16 rounded-lg" />
           <div>
@@ -341,7 +341,7 @@ function FilaReserva({
           </div>
         </div>
       </TableCell>
-      <TableCell className="hidden @3xl:table-cell">
+      <TableCell className="hidden w-full @3xl:table-cell">
         <div className="flex items-center gap-2.5">
           <div className="bg-primary/15 text-primary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
             {iniciales(reserva.jugador.nombre)}
