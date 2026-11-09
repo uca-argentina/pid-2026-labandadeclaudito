@@ -22,8 +22,20 @@ function dia(diasDesdeHoy: number): string {
   return fecha.toISOString().slice(0, 10)
 }
 
-function foto(id: string): string {
-  return `https://images.unsplash.com/${id}?w=1200&q=80`
+// Fotos locales de public/seed (el seed tiene que andar sin internet). Va
+// rotando entre las 4 que hay.
+const FOTOS_DEL_SEED = [
+  '/seed/cancha-1.jpg',
+  '/seed/cancha-2.jpg',
+  '/seed/cancha-3.jpg',
+  '/seed/cancha-4.jpg',
+]
+let fotosUsadas = 0
+
+function foto(): string {
+  const url = FOTOS_DEL_SEED[fotosUsadas % FOTOS_DEL_SEED.length]
+  fotosUsadas++
+  return url
 }
 
 // Orden según las FK: primero lo que apunta a otras tablas. Pago, fotos,
@@ -222,9 +234,9 @@ async function main() {
       cancellationHours: 24,
       imagenes: {
         create: [
-          { url: foto('photo-1529900748604-07564a03e7a6'), orden: 0 },
-          { url: foto('photo-1575361204480-aadea25e6e68'), orden: 1 },
-          { url: foto('photo-1551958219-acbc608c6377'), orden: 2 },
+          { url: foto(), orden: 0 },
+          { url: foto(), orden: 1 },
+          { url: foto(), orden: 2 },
         ],
       },
     },
@@ -333,9 +345,9 @@ async function main() {
       cancellationHours: 48,
       imagenes: {
         create: [
-          { url: foto('photo-1459865264687-595d652de67e'), orden: 0 },
-          { url: foto('photo-1554068865-24cecd4e34b8'), orden: 1 },
-          { url: foto('photo-1626224583764-f87db24ac4ea'), orden: 2 },
+          { url: foto(), orden: 0 },
+          { url: foto(), orden: 1 },
+          { url: foto(), orden: 2 },
         ],
       },
     },
@@ -401,8 +413,8 @@ async function main() {
       cancellationHours: 12,
       imagenes: {
         create: [
-          { url: foto('photo-1546519638-68e109498ffc'), orden: 0 },
-          { url: foto('photo-1574629810360-7efbbe195018'), orden: 1 },
+          { url: foto(), orden: 0 },
+          { url: foto(), orden: 1 },
         ],
       },
     },
@@ -455,8 +467,8 @@ async function main() {
       cancellationHours: 24,
       imagenes: {
         create: [
-          { url: foto('photo-1431324155629-1a6deb1dec8d'), orden: 0 },
-          { url: foto('photo-1522778119026-d647f0596c20'), orden: 1 },
+          { url: foto(), orden: 0 },
+          { url: foto(), orden: 1 },
         ],
       },
     },

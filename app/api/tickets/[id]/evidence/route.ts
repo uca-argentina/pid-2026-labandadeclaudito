@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
 import { esImagenReal } from '@/lib/validations/complex'
 import { ticketEvidenceSchema, MAX_EVIDENCIAS_POR_TICKET } from '@/lib/validations/ticket'
 import { requireRole } from '@/lib/auth-helpers'
+import { subirArchivo } from '@/lib/blob'
 import { db } from '@/lib/db'
 
 // El jugador responde (o apela) el ticket subiendo evidencia de que sí jugó.
@@ -52,15 +52,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     )
   }
 
-  // Si put() falla y no lo agarramos, Next devuelve un 500 con el body vacío
+  // Si subirArchivo() falla y no lo agarramos, Next devuelve un 500 con el body vacío
   // y el cliente no puede mostrar ningún mensaje.
   let urlDeLaPrueba = ''
   try {
-    const blob = await put(`tickets/${ticketId}/${archivo.name}`, archivo, {
-      access: 'public',
-      addRandomSuffix: true,
-    })
-    urlDeLaPrueba = blob.url
+    urlDeLaPrueba = await subirArchivo(`tickets/${ticketId}`, archivo)
   } catch (errorDeBlob) {
     console.error('Error al subir la evidencia a Vercel Blob:', errorDeBlob)
     return NextResponse.json(

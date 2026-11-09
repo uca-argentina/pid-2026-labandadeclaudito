@@ -1,6 +1,10 @@
 import 'dotenv/config'
 import { vi } from 'vitest'
 
+// Los tests usan el Blob simulado de más abajo, aunque el .env tenga
+// UPLOADS_LOCAL=true (modo sin internet).
+process.env.UPLOADS_LOCAL = 'false'
+
 // auth() real necesita cookies y NextAuth: se reemplaza por uno que devuelve
 // la sesión que eligió el test.
 vi.mock('@/auth', async () => {

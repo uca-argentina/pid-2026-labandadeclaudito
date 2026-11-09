@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "db:dev": "prisma dev",
+    "setup:local": "bash scripts/setup-local.sh",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:seed-demo": "tsx prisma/seed-demo.ts",

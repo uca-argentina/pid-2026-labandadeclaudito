@@ -61,3 +61,6 @@ branch_context.md
 /docs
 # Serena MCP tool config (local, per-dev)
 /.serena
+
+# Fotos subidas en modo sin internet (UPLOADS_LOCAL=true)
+/public/uploads

@@ -25,7 +25,27 @@ npm run dev                   # http://localhost:3000
 ```
 
 Para `DATABASE_URL` usá cualquier Postgres: `npx create-db` (Prisma Postgres gratis),
-`npm run db:dev` (local, sin Docker), o un string de Neon/Supabase.
+`npm run db:dev` (local, sin Docker, necesita internet), o un string de Neon/Supabase.
+
+## Sin internet (parcial)
+
+Todo anda sin conexión: base Postgres local, fuentes e imágenes del seed dentro del
+proyecto y fotos subidas guardadas en `public/uploads`.
+
+```bash
+# UNA VEZ, con internet
+brew install postgresql@15 && brew services start postgresql@15
+npm ci                        # deja los paquetes en node_modules (y en la caché de npm)
+
+# Sin internet
+npm run setup:local           # crea la base "tocayjuga", el .env, las tablas y los datos de prueba
+npm run dev                   # http://localhost:3000
+```
+
+- Si ya tenés un `.env` que apunta a otra base, el script se niega a seguir (el seed borra todo).
+- `npm run db:migrate` (con un modelo nuevo en `schema.prisma`) también anda sin internet; después `npm run db:generate`.
+- Usuarios del seed: `admin@demo.com` / `Admin1234` (dueño) y `jugador@demo.com` / `Jugador1234`.
+- No uses `npm run db:dev` (`prisma dev`): se cuelga sin internet.
 
 ## Scripts
 

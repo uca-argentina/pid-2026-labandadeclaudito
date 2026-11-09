@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
 import { complexImageSchema, esImagenReal, MAX_IMAGES_PER_COMPLEX } from '@/lib/validations/complex'
 import { requireRole } from '@/lib/auth-helpers'
+import { subirArchivo } from '@/lib/blob'
 import { getComplexByOwner } from '@/lib/ownership'
 import { db } from '@/lib/db'
 
@@ -35,15 +35,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const archivo = parsed.data.imagen
 
-  // Si put() falla y no lo agarramos, Next devuelve un 500 con el body vacío
+  // Si subirArchivo() falla y no lo agarramos, Next devuelve un 500 con el body vacío
   // y el cliente no puede mostrar ningún mensaje.
   let urlDeLaFoto = ''
   try {
-    const blob = await put(`complejos/${complejoId}/${archivo.name}`, archivo, {
-      access: 'public',
-      addRandomSuffix: true,
-    })
-    urlDeLaFoto = blob.url
+    urlDeLaFoto = await subirArchivo(`complejos/${complejoId}`, archivo)
   } catch (error) {
     console.error('Error al subir la foto a Vercel Blob:', error)
     return NextResponse.json(

@@ -1,22 +1,27 @@
 import type { Metadata } from 'next'
-import { Bricolage_Grotesque, Geist, Geist_Mono } from 'next/font/google'
+import localFont from 'next/font/local'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
-const geistSans = Geist({
+// Las fuentes están en app/fonts (no se bajan de Google): así la app anda sin
+// internet. Son variables (todos los pesos en un archivo), solo el subset latin.
+const geistSans = localFont({
+  src: './fonts/geist-latin-wght-normal.woff2',
   variable: '--font-geist-sans',
-  subsets: ['latin'],
+  weight: '100 900',
 })
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: './fonts/geist-mono-latin-wght-normal.woff2',
   variable: '--font-geist-mono',
-  subsets: ['latin'],
+  weight: '100 900',
 })
 
 // Solo para el nombre "TocaYJuga" (clase font-brand)
-const bricolage = Bricolage_Grotesque({
+const bricolage = localFont({
+  src: './fonts/bricolage-grotesque-latin-wght-normal.woff2',
   variable: '--font-bricolage',
-  subsets: ['latin'],
+  weight: '200 800',
 })
 
 export const metadata: Metadata = {

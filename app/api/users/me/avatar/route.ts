@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
 import { auth } from '@/auth'
 import { avatarSchema } from '@/lib/validations/user'
 import { esImagenReal } from '@/lib/validations/complex'
 import { db } from '@/lib/db'
-import { borrarDelBlob } from '@/lib/blob'
+import { borrarDelBlob, subirArchivo } from '@/lib/blob'
 
 // Subir (o reemplazar) la foto de perfil
 export async function POST(request: Request) {
@@ -28,15 +27,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Solo se aceptan fotos JPG, PNG o WebP.' }, { status: 400 })
   }
 
-  // Si put() falla y no lo agarramos, Next devuelve un 500 con el body vacío
+  // Si subirArchivo() falla y no lo agarramos, Next devuelve un 500 con el body vacío
   // y el cliente no puede mostrar ningún mensaje.
   let urlDeLaFoto = ''
   try {
-    const blob = await put(`usuarios/${session.user.id}/${archivo.name}`, archivo, {
-      access: 'public',
-      addRandomSuffix: true,
-    })
-    urlDeLaFoto = blob.url
+    urlDeLaFoto = await subirArchivo(`usuarios/${session.user.id}`, archivo)
   } catch (error) {
     console.error('Error al subir la foto a Vercel Blob:', error)
     return NextResponse.json(
