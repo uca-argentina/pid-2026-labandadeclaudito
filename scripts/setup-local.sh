@@ -36,6 +36,14 @@ if ! grep -qE '^DATABASE_URL=.*@(localhost|127\.0\.0\.1)[:/]' .env; then
   exit 1
 fi
 
-npx prisma migrate deploy
-npx prisma db seed
+# Si la carpeta trae respaldo.sql (lo deja scripts/entregar.sh), se carga ese
+# respaldo: tablas y datos tal cual estaban. Si no, migraciones + datos de prueba.
+if [ -f respaldo.sql ]; then
+  URL=$(grep '^DATABASE_URL=' .env | cut -d= -f2- | tr -d '"')
+  psql -q -v ON_ERROR_STOP=1 "${URL%%\?*}" -f respaldo.sql > /dev/null
+  echo "Respaldo cargado"
+else
+  npx prisma migrate deploy
+  npx prisma db seed
+fi
 echo "Listo. Ahora: npm run dev"

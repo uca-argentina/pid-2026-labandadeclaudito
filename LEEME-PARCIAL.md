@@ -26,6 +26,21 @@ DEMO_PASSWORD='<la clave de la demo>' npm run db:seed-demo
 Cuentas (todas con esa clave): `admin@tocayjuga.com` · `dueno@tocayjuga.com` · `jugador@tocayjuga.com` · `sofia.paz@tocayjuga.com` (dueña con un complejo por aprobar y uno rechazado).
 Las fechas son relativas al día en que corre el seed (10 días atrás a 5 adelante) y la reserva pendiente de pago vence a los 15 minutos: **volvé a correrlo el día del parcial**.
 
+## AL TERMINAR — entrega por pendrive (el proyecto tiene que levantar y llevar la base)
+Con Postgres andando, desde la carpeta del proyecto:
+```bash
+npm run entregar     # guarda la base en respaldo.sql y borra .next y .env
+```
+Después copian la carpeta. Quien la reciba, con Postgres instalado, hace:
+```bash
+npm ci               # o copiar node_modules si no hay internet
+npm run setup:local  # crea la base, el .env y carga respaldo.sql
+npm run dev
+```
+- Si agregaste un modelo, usá `npm run db:migrate` (deja la migración en `prisma/migrations`). Con `db push` no queda archivo.
+- Para seguir trabajando en tu máquina después de entregar: `npm run setup:local` (vuelve a crear el `.env` y carga el respaldo).
+- Ensayalo el miércoles: `npm run entregar`, copiá la carpeta a otro lugar y levantala ahí con los 3 pasos.
+
 ## Si el examen pide un modelo nuevo
 1. Agregar el modelo en `prisma/schema.prisma` (y la relación de vuelta en los otros modelos).
 2. `npm run db:migrate` (pide un nombre) → anda offline con Postgres local.
