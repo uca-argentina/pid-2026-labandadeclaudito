@@ -15,7 +15,16 @@ npm ci --offline            # o npm ci, si ya tenés node_modules
 npm run setup:local         # crea la base "tocayjuga", .env, tablas y datos de prueba
 npm run dev                 # http://localhost:3000
 ```
-Usuarios: `admin@demo.com` / `Admin1234` (dueño) · `jugador@demo.com` / `Jugador1234`.
+Usuarios de `setup:local` (casos de QA): `admin@demo.com` / `Admin1234` (dueño) · `jugador@demo.com` / `Jugador1234`.
+
+## Datos como los de prod (seed-demo)
+`seed-demo` es el script con el que se cargó la base de prod: 17 usuarios, 10 complejos reales, 27 canchas y ~266 reservas. Acá va con fotos locales (sin Unsplash) y usuarios sin foto (se ven las iniciales). **Borra todo** y solo corre si la base tiene únicamente usuarios `@tocayjuga.com`, así que primero hay que vaciarla:
+```bash
+psql -d tocayjuga -c "DO \$\$ DECLARE t text; BEGIN FOR t IN SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename <> '_prisma_migrations' LOOP EXECUTE format('TRUNCATE TABLE %I CASCADE', t); END LOOP; END \$\$;"
+DEMO_PASSWORD='<la clave de la demo>' npm run db:seed-demo
+```
+Cuentas (todas con esa clave): `admin@tocayjuga.com` · `dueno@tocayjuga.com` · `jugador@tocayjuga.com` · `sofia.paz@tocayjuga.com` (dueña con un complejo por aprobar y uno rechazado).
+Las fechas son relativas al día en que corre el seed (10 días atrás a 5 adelante) y la reserva pendiente de pago vence a los 15 minutos: **volvé a correrlo el día del parcial**.
 
 ## Si el examen pide un modelo nuevo
 1. Agregar el modelo en `prisma/schema.prisma` (y la relación de vuelta en los otros modelos).

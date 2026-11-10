@@ -52,12 +52,25 @@ function dia(diasDesdeHoy: number): string {
   return fecha.toISOString().slice(0, 10)
 }
 
-function foto(id: string): string {
-  return `https://images.unsplash.com/${id}?w=1200&q=80`
+// Versión OFFLINE: sin internet no se pueden mostrar fotos de Unsplash. Las de
+// complejos rotan entre las 4 de public/seed y los usuarios quedan sin foto (se
+// ven las iniciales del nombre).
+const FOTOS_LOCALES = [
+  '/seed/cancha-1.jpg',
+  '/seed/cancha-2.jpg',
+  '/seed/cancha-3.jpg',
+  '/seed/cancha-4.jpg',
+]
+let fotosUsadas = 0
+
+function foto(_id: string): string {
+  const url = FOTOS_LOCALES[fotosUsadas % FOTOS_LOCALES.length]
+  fotosUsadas++
+  return url
 }
 
-function avatar(id: string): string {
-  return `https://images.unsplash.com/${id}?w=256&h=256&fit=crop&crop=faces&q=80`
+function avatar(_id: string): string | undefined {
+  return undefined
 }
 
 async function borrarTodo() {
