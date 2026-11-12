@@ -603,8 +603,8 @@ COPY public."EtiquetaReserva" (id, "reservaId", "jugadorId", "etiquetadoPor", "c
 --
 
 COPY public."EvidenciaDisputa" (id, "disputaId", url, tipo, orden) FROM stdin;
-cmv9y4f9i009q0qoj5f7mt6lo	cmv9y4f59009p0qoj45vkkxdb	https://images.unsplash.com/photo-1600679472829-3044539ce8ed?w=1200&q=80	IMAGEN	0
-cmv9y4gb6009t0qoj1rqj64y2	cmv9y4g6z009s0qojdaiy35c6	https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=1200&q=80	IMAGEN	0
+cmv9y4f9i009q0qoj5f7mt6lo	cmv9y4f59009p0qoj45vkkxdb	/seed/cancha-1.jpg	IMAGEN	0
+cmv9y4gb6009t0qoj1rqj64y2	cmv9y4g6z009s0qojdaiy35c6	/seed/cancha-2.jpg	IMAGEN	0
 \.
 
 
@@ -621,24 +621,24 @@ COPY public."EvidenciaTicket" (id, "ticketId", url, tipo, orden) FROM stdin;
 --
 
 COPY public."ImagenComplejo" (id, "complejoId", url, orden, activo) FROM stdin;
-cmv9y3tng000i0qojnysqjasx	cmv9y3tja000h0qojv2nla6z4	https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=1200&q=80	0	t
-cmv9y3tng000j0qojtj7xmlx5	cmv9y3tja000h0qojv2nla6z4	https://images.unsplash.com/photo-1624880357913-a8539238245b?w=1200&q=80	1	t
-cmv9y3tng000k0qojkgzxt12a	cmv9y3tja000h0qojv2nla6z4	https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1200&q=80	2	t
-cmv9y3wjg000u0qoj91va9gmf	cmv9y3wfb000t0qojvjf1q4g9	https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=1200&q=80	0	t
-cmv9y3wjg000v0qojzzt55jl4	cmv9y3wfb000t0qojvjf1q4g9	https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=1200&q=80	1	t
-cmv9y3wjg000w0qojlgvzjbad	cmv9y3wfb000t0qojvjf1q4g9	https://images.unsplash.com/photo-1612534847738-b3af9bc31f0c?w=1200&q=80	2	t
-cmv9y3yuv00140qojf6h1i13c	cmv9y3yqp00130qojsdiqgsis	https://images.unsplash.com/photo-1459865264687-595d652de67e?w=1200&q=80	0	t
-cmv9y3yuv00150qojujkd62ye	cmv9y3yqp00130qojsdiqgsis	https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200&q=80	1	t
-cmv9y416l001d0qojjp2bd9qd	cmv9y412f001c0qojoqoizvrc	https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&q=80	0	t
-cmv9y416l001e0qojk4khamjs	cmv9y412f001c0qojoqoizvrc	https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=1200&q=80	1	t
-cmv9y416l001f0qoj1l6q8562	cmv9y412f001c0qojoqoizvrc	https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=1200&q=80	2	t
-cmv9y44ko001t0qojiq9gj2o7	cmv9y44gj001s0qojvn8rkgeg	https://images.unsplash.com/photo-1600679472829-3044539ce8ed?w=1200&q=80	0	t
-cmv9y44ko001u0qojifqiiz7p	cmv9y44gj001s0qojvn8rkgeg	https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=1200&q=80	1	t
-cmv9y47ch00230qojmvqg2l9e	cmv9y478b00220qojzi4ipl9t	https://images.unsplash.com/photo-1511886929837-354d827aae26?w=1200&q=80	0	t
-cmv9y493600290qojb3xy0bna	cmv9y48z000280qoj7831r45j	https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=1200&q=80	0	t
-cmv9y4a8q002d0qojvngdebjq	cmv9y4a4l002c0qojtucv4564	https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1200&q=80	0	t
-cmv9y4beb002h0qojkd5b929u	cmv9y4ba6002g0qojgbo7mkkl	https://images.unsplash.com/photo-1553778263-73a83bab9b0c?w=1200&q=80	0	t
-cmv9y4beb002i0qojc6keqady	cmv9y4ba6002g0qojgbo7mkkl	https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=1200&q=80	1	t
+cmv9y3tng000i0qojnysqjasx	cmv9y3tja000h0qojv2nla6z4	/seed/cancha-3.jpg	0	t
+cmv9y3tng000j0qojtj7xmlx5	cmv9y3tja000h0qojv2nla6z4	/seed/cancha-4.jpg	1	t
+cmv9y3tng000k0qojkgzxt12a	cmv9y3tja000h0qojv2nla6z4	/seed/cancha-1.jpg	2	t
+cmv9y3wjg000u0qoj91va9gmf	cmv9y3wfb000t0qojvjf1q4g9	/seed/cancha-2.jpg	0	t
+cmv9y3wjg000v0qojzzt55jl4	cmv9y3wfb000t0qojvjf1q4g9	/seed/cancha-3.jpg	1	t
+cmv9y3wjg000w0qojlgvzjbad	cmv9y3wfb000t0qojvjf1q4g9	/seed/cancha-4.jpg	2	t
+cmv9y3yuv00140qojf6h1i13c	cmv9y3yqp00130qojsdiqgsis	/seed/cancha-1.jpg	0	t
+cmv9y3yuv00150qojujkd62ye	cmv9y3yqp00130qojsdiqgsis	/seed/cancha-2.jpg	1	t
+cmv9y416l001d0qojjp2bd9qd	cmv9y412f001c0qojoqoizvrc	/seed/cancha-3.jpg	0	t
+cmv9y416l001e0qojk4khamjs	cmv9y412f001c0qojoqoizvrc	/seed/cancha-4.jpg	1	t
+cmv9y416l001f0qoj1l6q8562	cmv9y412f001c0qojoqoizvrc	/seed/cancha-1.jpg	2	t
+cmv9y44ko001t0qojiq9gj2o7	cmv9y44gj001s0qojvn8rkgeg	/seed/cancha-2.jpg	0	t
+cmv9y44ko001u0qojifqiiz7p	cmv9y44gj001s0qojvn8rkgeg	/seed/cancha-3.jpg	1	t
+cmv9y47ch00230qojmvqg2l9e	cmv9y478b00220qojzi4ipl9t	/seed/cancha-4.jpg	0	t
+cmv9y493600290qojb3xy0bna	cmv9y48z000280qoj7831r45j	/seed/cancha-1.jpg	0	t
+cmv9y4a8q002d0qojvngdebjq	cmv9y4a4l002c0qojtucv4564	/seed/cancha-2.jpg	0	t
+cmv9y4beb002h0qojkd5b929u	cmv9y4ba6002g0qojgbo7mkkl	/seed/cancha-3.jpg	0	t
+cmv9y4beb002i0qojc6keqady	cmv9y4ba6002g0qojgbo7mkkl	/seed/cancha-4.jpg	1	t
 \.
 
 
@@ -1242,22 +1242,22 @@ COPY public."Ticket" (id, "jugadorId", "adminId", "reservasInvalidas", "puntosAn
 
 COPY public."Usuario" (id, nombre, email, "passwordHash", dni, telefono, rol, activo, "createdAt", "updatedAt", "imagenUrl") FROM stdin;
 cmv9y3rec00000qojezt8jfku	Admin TocaYJuga	admin@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	\N	\N	ADMIN	t	2026-10-15 19:42:20.532	2026-10-15 19:42:20.532	\N
-cmv9y3rin00010qoj7laj7yi0	Martín Gómez	dueno@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111000	11 6000-1000	DUENIO	t	2026-10-15 19:42:20.687	2026-10-15 19:42:20.687	https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=256&h=256&fit=crop&crop=faces&q=80
-cmv9y3rmx00020qojj6dx0o5r	Laura Fernández	laura.fernandez@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111001	11 6000-1001	DUENIO	t	2026-10-15 19:42:20.841	2026-10-15 19:42:20.841	https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=256&h=256&fit=crop&crop=faces&q=80
-cmv9y3rr500030qoj79b4qxzf	Diego Sosa	diego.sosa@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111002	11 6000-1002	DUENIO	t	2026-10-15 19:42:20.993	2026-10-15 19:42:20.993	https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=256&h=256&fit=crop&crop=faces&q=80
-cmv9y3rvu00040qoj727mo1cb	Sofía Paz	sofia.paz@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111003	11 6000-1003	DUENIO	t	2026-10-15 19:42:21.162	2026-10-15 19:42:21.162	https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=256&h=256&fit=crop&crop=faces&q=80
-cmv9y3s0400050qojogu76dkr	Carlos Vega	carlos.vega@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111004	11 6000-1004	DUENIO	f	2026-10-15 19:42:21.316	2026-10-15 19:42:21.316	https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=256&h=256&fit=crop&crop=faces&q=80
-cmv9y3s8m00070qojs71grz9j	Lucas Martínez	lucas.martinez@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111006	11 6000-1006	JUGADOR	t	2026-10-15 19:42:21.622	2026-10-15 19:42:21.622	https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=256&h=256&fit=crop&crop=faces&q=80
-cmv9y3sct00080qoj4aw8dtds	Agustina Romero	agustina.romero@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111007	11 6000-1007	JUGADOR	t	2026-10-15 19:42:21.773	2026-10-15 19:42:21.773	https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=256&h=256&fit=crop&crop=faces&q=80
-cmv9y3sgz00090qojk4g6d84d	Tomás Álvarez	tomas.alvarez@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111008	11 6000-1008	JUGADOR	t	2026-10-15 19:42:21.923	2026-10-15 19:42:21.923	https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=256&h=256&fit=crop&crop=faces&q=80
-cmv9y3sl6000a0qojzojr1f1e	Valentina Torres	valentina.torres@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111009	11 6000-1009	JUGADOR	t	2026-10-15 19:42:22.074	2026-10-15 19:42:22.074	https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=256&h=256&fit=crop&crop=faces&q=80
-cmv9y3spc000b0qojzzl7f1z4	Nicolás Benítez	nicolas.benitez@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111010	11 6000-1010	JUGADOR	t	2026-10-15 19:42:22.224	2026-10-15 19:42:22.224	https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=256&h=256&fit=crop&crop=faces&q=80
-cmv9y3stj000c0qojpn896377	Martina Acosta	martina.acosta@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111011	11 6000-1011	JUGADOR	t	2026-10-15 19:42:22.375	2026-10-15 19:42:22.375	https://images.unsplash.com/photo-1517841905240-472988babdf9?w=256&h=256&fit=crop&crop=faces&q=80
-cmv9y3sxq000d0qojg4gcrl5t	Federico Díaz	federico.diaz@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111012	11 6000-1012	JUGADOR	t	2026-10-15 19:42:22.526	2026-10-15 19:42:22.526	https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=256&h=256&fit=crop&crop=faces&q=80
+cmv9y3rin00010qoj7laj7yi0	Martín Gómez	dueno@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111000	11 6000-1000	DUENIO	t	2026-10-15 19:42:20.687	2026-10-15 19:42:20.687	N
+cmv9y3rmx00020qojj6dx0o5r	Laura Fernández	laura.fernandez@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111001	11 6000-1001	DUENIO	t	2026-10-15 19:42:20.841	2026-10-15 19:42:20.841	N
+cmv9y3rr500030qoj79b4qxzf	Diego Sosa	diego.sosa@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111002	11 6000-1002	DUENIO	t	2026-10-15 19:42:20.993	2026-10-15 19:42:20.993	N
+cmv9y3rvu00040qoj727mo1cb	Sofía Paz	sofia.paz@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111003	11 6000-1003	DUENIO	t	2026-10-15 19:42:21.162	2026-10-15 19:42:21.162	N
+cmv9y3s0400050qojogu76dkr	Carlos Vega	carlos.vega@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111004	11 6000-1004	DUENIO	f	2026-10-15 19:42:21.316	2026-10-15 19:42:21.316	N
+cmv9y3s8m00070qojs71grz9j	Lucas Martínez	lucas.martinez@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111006	11 6000-1006	JUGADOR	t	2026-10-15 19:42:21.622	2026-10-15 19:42:21.622	N
+cmv9y3sct00080qoj4aw8dtds	Agustina Romero	agustina.romero@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111007	11 6000-1007	JUGADOR	t	2026-10-15 19:42:21.773	2026-10-15 19:42:21.773	N
+cmv9y3sgz00090qojk4g6d84d	Tomás Álvarez	tomas.alvarez@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111008	11 6000-1008	JUGADOR	t	2026-10-15 19:42:21.923	2026-10-15 19:42:21.923	N
+cmv9y3sl6000a0qojzojr1f1e	Valentina Torres	valentina.torres@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111009	11 6000-1009	JUGADOR	t	2026-10-15 19:42:22.074	2026-10-15 19:42:22.074	N
+cmv9y3spc000b0qojzzl7f1z4	Nicolás Benítez	nicolas.benitez@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111010	11 6000-1010	JUGADOR	t	2026-10-15 19:42:22.224	2026-10-15 19:42:22.224	N
+cmv9y3stj000c0qojpn896377	Martina Acosta	martina.acosta@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111011	11 6000-1011	JUGADOR	t	2026-10-15 19:42:22.375	2026-10-15 19:42:22.375	N
+cmv9y3sxq000d0qojg4gcrl5t	Federico Díaz	federico.diaz@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111012	11 6000-1012	JUGADOR	t	2026-10-15 19:42:22.526	2026-10-15 19:42:22.526	N
 cmv9y3t20000e0qojqflv5812	Santiago Herrera	santiago.herrera@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111013	11 6000-1013	JUGADOR	t	2026-10-15 19:42:22.68	2026-10-15 19:42:22.68	\N
 cmv9y3t69000f0qoj3mszpys3	Julieta Medina	julieta.medina@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111014	11 6000-1014	JUGADOR	t	2026-10-15 19:42:22.833	2026-10-15 19:42:22.833	\N
-cmv9y3tag000g0qoj8s6cgum5	Pablo Suárez	pablo.suarez@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111015	11 6000-1015	JUGADOR	f	2026-10-15 19:42:22.984	2026-10-15 19:42:22.984	https://images.unsplash.com/photo-1580489944761-15a19d654956?w=256&h=256&fit=crop&crop=faces&q=80
-cmv9y3s4e00060qoj7eq8hk4u	Juan Pérez	jugador@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$ELTfI1o1pCFJbtzjFivlHA$fW1Bb4PJkeJNjRvL6lMSNqEF1qS2KX1PWMTuipDc0gU	30111005	11 6000-1005	JUGADOR	t	2026-10-15 19:42:21.47	2026-10-15 19:42:21.47	https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=256&h=256&fit=crop&crop=faces&q=80
+cmv9y3tag000g0qoj8s6cgum5	Pablo Suárez	pablo.suarez@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$qrJvPiMokXJqI+CoM7L+Dw$1bDFSm5orphyged81Z+7UfkIMO0nTr/xVNluEx7laME	30111015	11 6000-1015	JUGADOR	f	2026-10-15 19:42:22.984	2026-10-15 19:42:22.984	N
+cmv9y3s4e00060qoj7eq8hk4u	Juan Pérez	jugador@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$ELTfI1o1pCFJbtzjFivlHA$fW1Bb4PJkeJNjRvL6lMSNqEF1qS2KX1PWMTuipDc0gU	30111005	11 6000-1005	JUGADOR	t	2026-10-15 19:42:21.47	2026-10-15 19:42:21.47	N
 cmvy8e1yn000308l2dlpy1pk6	Pipe Marino	pipe@tocayjuga.com	$argon2id$v=19$m=65536,p=4,t=3$7gwwuZEpEGgLzYhEfKW8dg$3y5+DGEPs4TaP5Xe9LB28ottWzn8IjRQRe9xgQAAhvI	\N	\N	JUGADOR	t	2026-11-01 19:36:45.167	2026-11-01 19:36:45.167	\N
 \.
 

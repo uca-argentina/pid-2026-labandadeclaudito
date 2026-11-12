@@ -18,7 +18,7 @@ npm run setup:local         # crea la base "tocayjuga", .env, tablas y datos de 
 npm run dev                 # http://localhost:3000
 ```
 
-Usuarios de `setup:local` (casos de QA): `admin@demo.com` / `Admin1234` (dueño) · `jugador@demo.com` / `Jugador1234`.
+`setup:local` carga `respaldo.sql` (datos como los de prod, fotos locales). Usuarios, todos con contraseña `Asd123`: `admin@tocayjuga.com` (admin) · `dueno@tocayjuga.com` (dueño) · `jugador@tocayjuga.com` (jugador). Sin `respaldo.sql` corre el seed: `admin@demo.com` / `Admin1234` (dueño) · `jugador@demo.com` / `Jugador1234`.
 
 ## Datos como los de prod (seed-demo)
 
