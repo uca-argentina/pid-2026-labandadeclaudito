@@ -18,10 +18,13 @@ if (volcado.status !== 0) {
   process.exit(1)
 }
 
-// Se sacan líneas que un pg_dump nuevo agrega y los Postgres más viejos no entienden.
+// Se sacan líneas que un pg_dump nuevo agrega y los Postgres más viejos no entienden,
+// y la extensión prisma_postgres: la trae la base de "prisma dev" y un Postgres común
+// no la tiene.
+const sobran = /^(SET transaction_timeout|\\restrict|\\unrestrict|.*EXTENSION .*prisma_postgres)/
 const sql = volcado.stdout
   .split('\n')
-  .filter((linea) => !/^(SET transaction_timeout|\\restrict|\\unrestrict)/.test(linea))
+  .filter((linea) => !sobran.test(linea))
   .join('\n')
 writeFileSync('respaldo.sql', sql)
 
