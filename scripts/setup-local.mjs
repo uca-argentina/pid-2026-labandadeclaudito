@@ -6,6 +6,9 @@
 //
 // Uso:  npm run setup:local [-- nombre_de_la_base]    (por defecto: tocayjuga)
 //
+// Sin respaldo.sql carga los datos de la demo (prisma/seed-demo.ts, iguales a prod).
+// La clave de todas las cuentas es Asd123, o la de la variable DEMO_PASSWORD.
+//
 // Si no hay .env, arma la conexión con estos datos (se pueden cambiar con variables):
 //   PGUSER      usuario    (Windows: postgres; Mac/Linux: tu usuario del sistema)
 //   PGPASSWORD  contraseña (Windows: te la pregunta; Mac con Homebrew: sin contraseña)
@@ -82,8 +85,19 @@ if (!existsSync('.env')) {
   console.log('.env creado')
 }
 
+// shell: true porque en Windows npm y npx son .cmd
+function correr(comando, entornoExtra = {}) {
+  const paso = spawnSync(comando, {
+    stdio: 'inherit',
+    shell: true,
+    env: { ...process.env, ...entornoExtra },
+  })
+  if (paso.status !== 0) fallar(`Falló: ${comando}`)
+}
+
 // 5) Si la carpeta trae respaldo.sql (lo deja npm run entregar), se carga ese
-// respaldo: tablas y datos tal cual estaban. Si no, migraciones + datos de prueba.
+// respaldo: tablas y datos tal cual estaban. Si no, migraciones + los datos de la
+// demo (los mismos que prod: prisma/seed-demo.ts).
 if (existsSync('respaldo.sql')) {
   const carga = psql(url, ['-q', '-v', 'ON_ERROR_STOP=1', '-f', 'respaldo.sql'], {
     stdio: ['ignore', 'ignore', 'inherit'],
@@ -91,10 +105,17 @@ if (existsSync('respaldo.sql')) {
   if (carga.status !== 0) fallar('No se pudo cargar respaldo.sql')
   console.log('Respaldo cargado')
 } else {
-  // shell: true porque en Windows npx es npx.cmd
-  for (const comando of ['npx prisma migrate deploy', 'npx prisma db seed']) {
-    const paso = spawnSync(comando, { stdio: 'inherit', shell: true })
-    if (paso.status !== 0) fallar(`Falló: ${comando}`)
-  }
+  correr('npx prisma migrate deploy')
+  // seed-demo no corre si ya hay usuarios que no son de la demo (por ejemplo los
+  // @demo.com de prisma/seed.ts), así que se vacían todas las tablas antes.
+  const vaciar = `DO $$ DECLARE t text; BEGIN
+    FOR t IN SELECT tablename FROM pg_tables
+      WHERE schemaname = 'public' AND tablename <> '_prisma_migrations'
+    LOOP EXECUTE format('TRUNCATE TABLE %I CASCADE', t); END LOOP;
+  END $$;`
+  const vaciado = psql(url, ['-c', vaciar])
+  if (vaciado.status !== 0) fallar(vaciado.stderr)
+  // La clave de todas las cuentas. Es una base local: sirve cualquiera.
+  correr('npm run db:seed-demo', { DEMO_PASSWORD: process.env.DEMO_PASSWORD ?? 'Asd123' })
 }
 console.log('Listo. Ahora: npm run dev')

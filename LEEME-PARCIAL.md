@@ -14,11 +14,11 @@ Probado el 2026-11-09 con la red bloqueada: `npm ci`, setup, `next dev`, `next b
 ```bash
 git clone <fork> && cd <fork>
 npm ci --offline            # o npm ci, si ya tenés node_modules
-npm run setup:local         # crea la base "tocayjuga", .env, tablas y datos de prueba
+npm run setup:local         # crea la base "tocayjuga", .env, tablas y los datos de la demo
 npm run dev                 # http://localhost:3000
 ```
 
-`setup:local` carga `respaldo.sql` (datos como los de prod, fotos locales). Usuarios, todos con contraseña `Asd123`: `admin@tocayjuga.com` (admin) · `dueno@tocayjuga.com` (dueño) · `jugador@tocayjuga.com` (jugador). Sin `respaldo.sql` corre el seed: `admin@demo.com` / `Admin1234` (dueño) · `jugador@demo.com` / `Jugador1234`.
+`setup:local` carga `respaldo.sql` (datos como los de prod, fotos locales). Usuarios, todos con contraseña `Asd123`: `admin@tocayjuga.com` (admin) · `dueno@tocayjuga.com` (dueño) · `jugador@tocayjuga.com` (jugador). Sin `respaldo.sql` corre `seed-demo` (los mismos datos y cuentas, ya no los `@demo.com`), con contraseña `Asd123` o la de la variable `DEMO_PASSWORD`. Los casos de QA de `prisma/seed.ts` (`admin@demo.com`, `jugador@demo.com`) quedan para `npm run db:seed` a mano.
 
 ## Datos como los de prod (seed-demo)
 
