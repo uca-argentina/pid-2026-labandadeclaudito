@@ -1,5 +1,3 @@
----
-
 ## Dónde va cada archivo nuevo
 
 | Qué estás escribiendo                  | Dónde va                                                                           |
