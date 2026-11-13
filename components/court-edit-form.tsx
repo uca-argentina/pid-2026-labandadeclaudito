@@ -39,6 +39,7 @@ export function CourtEditForm({
   const [horaCierre, setHoraCierre] = useState(cancha.horaCierre)
   // String para poder borrar y escribir libre
   const [capacidad, setCapacidad] = useState(String(cancha.capacidad))
+  const [intervaloMin, setIntervaloMin] = useState('60')
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cargando, setCargando] = useState(false)
@@ -59,6 +60,7 @@ export function CourtEditForm({
       horaApertura,
       horaCierre,
       duracionTurnoMin: form.get('duracionTurnoMin'),
+      intervaloMin,
       capacidad,
       // Campo vacío = usar el % de seña por defecto del complejo, no uno propio
       porcentajeSena: porcentajeSenaTexto === '' ? null : Number(porcentajeSenaTexto),
@@ -263,6 +265,25 @@ export function CourtEditForm({
                 min={30}
                 max={180}
                 defaultValue={cancha.duracionTurnoMin}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="intervaloMin">Intervalo entre turnos (min)</Label>
+              <Input
+                id="intervaloMin"
+                name="intervaloMin"
+                type="number"
+                min={0}
+                max={480}
+                value={intervaloMin}
+                onChange={(e) => setIntervaloMin(e.target.value)}
+                aria-invalid={!!fieldErrors.intervaloMin}
+                className={
+                  fieldErrors.intervaloMin
+                    ? 'border-destructive ring-destructive/20 ring-3'
+                    : undefined
+                }
               />
             </div>
 

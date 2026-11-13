@@ -36,6 +36,7 @@ export const createCourtSchema = z
     horaApertura: z.string().regex(horaRegex, 'Formato HH:MM'),
     horaCierre: z.string().regex(horaRegex, 'Formato HH:MM'),
     duracionTurnoMin: z.coerce.number().int().min(30).max(180),
+    intervaloMin: z.coerce.number().int().min(0).max(480),
     // Máximo de jugadores por reserva (ambos equipos). Al sumarse a un partido
     // incompleto, no se puede pasar de esto.
     capacidad: z.coerce
@@ -65,6 +66,7 @@ export const updateCourtSchema = z
     horaApertura: z.string().regex(horaRegex, 'Formato HH:MM'),
     horaCierre: z.string().regex(horaRegex, 'Formato HH:MM'),
     duracionTurnoMin: z.coerce.number().int().min(30).max(180),
+    intervaloMin: z.coerce.number().int().min(0).max(480),
     // Máximo de jugadores por reserva (ambos equipos). Al sumarse a un partido
     // incompleto, no se puede pasar de esto.
     capacidad: z.coerce

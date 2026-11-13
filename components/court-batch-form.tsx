@@ -22,6 +22,7 @@ import { capacidadPorDeporte } from '@/lib/jugadores'
 import { generateSlots } from '@/lib/time'
 
 const duracionOpciones: Record<string, string> = {
+  '0': '0 minutos',
   '30': '30 minutos',
   '45': '45 minutos',
   '60': '60 minutos (estándar)',
@@ -37,6 +38,7 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
   const [horaApertura, setHoraApertura] = useState('08:00')
   const [horaCierre, setHoraCierre] = useState('23:00')
   const [duracionTurnoMin, setDuracionTurnoMin] = useState('60')
+  const [intervaloMin, setIntervaloMin] = useState('60')
   // String para poder borrar y escribir libre; se precarga según el deporte
   const [capacidad, setCapacidad] = useState(String(capacidadPorDeporte.FUTBOL_5))
   const [error, setError] = useState('')
@@ -61,6 +63,7 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
       horaApertura,
       horaCierre,
       duracionTurnoMin,
+      intervaloMin,
       capacidad,
     }
 
@@ -213,6 +216,22 @@ export function CourtBatchForm({ complejoId }: { complejoId: string }) {
               <Label htmlFor="duracionTurnoMin">Duración de turno</Label>
               <Select value={duracionTurnoMin} onValueChange={(v) => v && setDuracionTurnoMin(v)}>
                 <SelectTrigger className="w-full" aria-label="Duración de turno">
+                  <SelectValue>{(v: string) => duracionOpciones[v]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(duracionOpciones).map(([valor, label]) => (
+                    <SelectItem key={valor} value={valor}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="intervaloMin">Intervalo entre turnos</Label>
+              <Select value={intervaloMin} onValueChange={(v) => v && setIntervaloMin(v)}>
+                <SelectTrigger className="w-full" aria-label="Intervalo entre turnos">
                   <SelectValue>{(v: string) => duracionOpciones[v]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>

@@ -148,6 +148,8 @@ model Cancha {
   horaApertura      String
   horaCierre        String
   duracionTurnoMin  Int            @default(60)
+  // Cuanto antes y desp de cada turno puede hacerse la reserva
+  intervaloMin Int              @default(0)
   // % de seña propio; si es null, se usa el porcentajeSenaDefault del complejo
   porcentajeSena    Int?
   // Anticipación mínima propia; si es null, se usa minAdvanceMinutesDefault del complejo
