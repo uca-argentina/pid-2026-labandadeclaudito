@@ -1,0 +1,37 @@
+import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
+import { db } from '@/lib/db'
+import { getComplexByOwner } from '@/lib/ownership'
+import { PreparationInput } from '@/components/preparation-input'
+
+export default async function NuevaPreparacionPage({
+  params,
+}: PageProps<'/dueno/complejos/[id]/canchas/[courtId]/preparacion/nuevo'>) {
+  const session = await auth()
+  if (!session) redirect('/login')
+
+  const { id, courtId } = await params
+  const complejo = await getComplexByOwner(id, session.user.id)
+  if (!complejo) redirect('/dueno')
+
+  const cancha = await db.cancha.findFirst({
+    where: { id: courtId, complejoId: id, activo: true },
+  })
+  if (!cancha) redirect(`/dueno/complejos/${id}/canchas`)
+  return (
+    <main>
+      <p className="text-muted-foreground text-sm font-medium">
+        {complejo.nombre} · {cancha.nombre}
+      </p>
+      <h1 className="font-heading mt-1 text-4xl font-bold tracking-tight">Nueva preparacion</h1>
+      <div className="mt-6">
+        <PreparationInput
+          complejoId={id}
+          courtId={courtId}
+          horaApertura={cancha.horaApertura}
+          horaCierre={cancha.horaCierre}
+        />
+      </div>
+    </main>
+  )
+}

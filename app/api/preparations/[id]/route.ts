@@ -1,0 +1,82 @@
+import { NextResponse } from 'next/server'
+import { updateBlockSchema } from '@/lib/validations/block'
+import { requireRole } from '@/lib/auth-helpers'
+import { getPreparationWithComplex } from '@/lib/ownership'
+import { findOverlappingBlock, findOverlappingBookingIds } from '@/lib/blocks'
+import { franjaDentroDelHorario, mensajeFueraDelHorario } from '@/lib/time'
+import { db } from '@/lib/db'
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { session, error, status } = await requireRole('DUENIO')
+  if (!session) return NextResponse.json({ error }, { status })
+
+  const { id } = await params
+  console.log('sdasdasdasd', params)
+  const block = await getPreparationWithComplex(id)
+
+  const body = await request.json()
+  const parsed = updateBlockSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
+  }
+
+  const { horaApertura, horaCierre } = block.preparation
+  const { startTime, endTime } = parsed.data
+  if (!franjaDentroDelHorario(startTime, endTime, horaApertura, horaCierre)) {
+    return NextResponse.json(
+      { error: mensajeFueraDelHorario(horaApertura, horaCierre) },
+      { status: 400 },
+    )
+  }
+
+  const idsDeReservas = await findOverlappingBookingIds(block.canchaId, parsed.data)
+
+  // Igual que al crear: cancelar reservas necesita confirmación del dueño.
+  if (idsDeReservas.length > 0 && body.confirmar !== true) {
+    return NextResponse.json(
+      { error: 'El bloqueo cancela reservas', reservasAfectadas: idsDeReservas.length },
+      { status: 409 },
+    )
+  }
+
+  // Estas cancelaciones las provoca el dueño, no el jugador: la seña se
+  // devuelve siempre, sin mirar la política de horas.
+  const [actualizado] = await db.$transaction([
+    db.preparation.update({
+      where: { id },
+      data: {
+        ...parsed.data,
+        startDate: new Date(parsed.data.startDate),
+        endDate: new Date(parsed.data.endDate),
+      },
+    }),
+    db.reserva.updateMany({
+      where: { id: { in: idsDeReservas } },
+      data: { estado: 'CANCELADA' },
+    }),
+    db.pago.updateMany({
+      where: { reservaId: { in: idsDeReservas } },
+      data: { devuelto: true },
+    }),
+  ])
+
+  return NextResponse.json(
+    { block: actualizado, reservasCanceladas: idsDeReservas.length },
+    { status: 200 },
+  )
+}
+
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { session, error, status } = await requireRole('DUENIO')
+  if (!session) return NextResponse.json({ error }, { status })
+
+  const { id } = await params
+  const block = await getPreparationWithComplex(id)
+  if (!block || block.preparation.complejo.duenioId !== session.user.id) {
+    return NextResponse.json({ error: 'Bloqueo no encontrado' }, { status: 404 })
+  }
+
+  await db.preparation.delete({ where: { id } })
+
+  return NextResponse.json({ ok: true }, { status: 200 })
+}

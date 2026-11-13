@@ -21,6 +21,13 @@ export async function getBlockWithComplex(blockId: string) {
   })
 }
 
+export async function getPreparationWithComplex(blockId: string) {
+  return db.preparation.findFirst({
+    where: { id: blockId, preparation: { activo: true, complejo: { activo: true } } },
+    include: { preparation: { include: { complejo: true } } },
+  })
+}
+
 export async function getPriceWithComplex(priceId: string) {
   return db.precioEspecial.findFirst({
     where: { id: priceId, activo: true, cancha: { activo: true, complejo: { activo: true } } },

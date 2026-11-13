@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { CalendarOff, DollarSign, Pencil } from 'lucide-react'
+import { Calendar, CalendarOff, DollarSign, Pencil, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { DeleteCourtDialog } from '@/components/delete-court-dialog'
@@ -20,6 +20,24 @@ export function CourtRowActions({
 
   return (
     <div className="flex justify-end gap-1.5">
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="outline"
+              size="icon-sm"
+              aria-label="Preparaciones"
+              render={
+                <Link href={`/dueno/complejos/${complejoId}/canchas/${courtId}/preparacion`} />
+              }
+            />
+          }
+        >
+          <Star />
+        </TooltipTrigger>
+        <TooltipContent>Preparaciones</TooltipContent>
+      </Tooltip>
+
       <Tooltip>
         <TooltipTrigger
           render={

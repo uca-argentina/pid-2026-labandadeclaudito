@@ -160,6 +160,7 @@ model Cancha {
   reservas          Reserva[]
   preciosEspeciales PrecioEspecial[]
   blocks            Block[]
+  preparation      Preparation[]
 
   @@index([complejoId])
   @@index([deporte])
@@ -421,4 +422,20 @@ model Calificacion {
   @@index([complejoId])
   // Cuántas calificó cada jugador (gamificación)
   @@index([jugadorId])
+}
+
+model Preparation {
+  id        String   @id @default(cuid())
+  canchaId   String
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  startTime String
+  endTime   String
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  preparation Cancha @relation(fields: [canchaId], references: [id], onDelete: Cascade)
+
+  @@index([canchaId, startDate, endDate])
 }

@@ -43,6 +43,7 @@ export function CourtEditForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cargando, setCargando] = useState(false)
   const [aviso, setAviso] = useState('')
+  const [preparacion, setPreparacion] = useState('')
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault()
