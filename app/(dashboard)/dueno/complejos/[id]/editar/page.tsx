@@ -55,6 +55,7 @@ export default async function EditarComplejoPage({
               contacto: complejo.contacto,
               porcentajeSenaDefault: complejo.porcentajeSenaDefault,
               minAdvanceMinutesDefault: complejo.minAdvanceMinutesDefault,
+              minPreparationMinutesDefault: complejo.minPreparationMinutesDefault,
               cancellationHours: complejo.cancellationHours,
             }}
           />

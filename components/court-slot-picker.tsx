@@ -85,6 +85,7 @@ export function CourtSlotPicker({
   const [cargando, setCargando] = useState(true)
   const [porcentajeSena, setPorcentajeSena] = useState(0)
   const [minAdvanceMinutes, setMinAdvanceMinutes] = useState(0)
+  const [minPreparationMinutes, setMinPreparationMinutes] = useState(0)
   const [horaSeleccionada, setHoraSeleccionada] = useState<string | null>(null)
   // Si el turno se reserva completo (default) o falta gente; cuántos hay.
   // La cantidad es string para poder borrarla y escribir libre: se normaliza
@@ -114,6 +115,7 @@ export function CourtSlotPicker({
     setSlots(json.slots)
     setPorcentajeSena(json.porcentajeSena)
     setMinAdvanceMinutes(json.minAdvanceMinutes)
+    setMinPreparationMinutes(json.minPreparationMinutes)
   }
 
   useEffect(() => {
@@ -140,6 +142,7 @@ export function CourtSlotPicker({
       setSlots(json.slots)
       setPorcentajeSena(json.porcentajeSena)
       setMinAdvanceMinutes(json.minAdvanceMinutes)
+      setMinPreparationMinutes(json.minPreparationMinutes)
     }
     cargar()
     return () => {
@@ -442,6 +445,12 @@ export function CourtSlotPicker({
           <p className="text-muted-foreground text-sm">
             Los turnos se reservan con al menos {formatAdvanceTime(minAdvanceMinutes)} de
             anticipación.
+          </p>
+        )}
+
+        {minPreparationMinutes > 0 && (
+          <p className="text-muted-foreground text-sm">
+            Entre los turnos deben existir {formatAdvanceTime(minPreparationMinutes)} minutos
           </p>
         )}
 

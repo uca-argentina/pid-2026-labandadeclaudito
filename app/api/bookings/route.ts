@@ -71,7 +71,13 @@ export async function POST(request: Request) {
     },
     include: {
       preciosEspeciales: { where: { activo: true } },
-      complejo: { select: { minAdvanceMinutesDefault: true, porcentajeSenaDefault: true } },
+      complejo: {
+        select: {
+          minAdvanceMinutesDefault: true,
+          porcentajeSenaDefault: true,
+          minPreparationMinutesDefault: true,
+        },
+      },
     },
   })
   if (!cancha) {
@@ -79,6 +85,8 @@ export async function POST(request: Request) {
   }
 
   const minAdvanceMinutes = cancha.minAdvanceMinutes ?? cancha.complejo.minAdvanceMinutesDefault
+  const minPreparationMinutes =
+    cancha.minPreparationMinutes ?? cancha.complejo.minPreparationMinutesDefault
   if (isTooSoonToBook(parsed.data.fecha, parsed.data.horaInicio, minAdvanceMinutes)) {
     if (minAdvanceMinutes === 0) {
       return NextResponse.json({ error: 'Ese turno ya pasó' }, { status: 400 })
@@ -91,6 +99,18 @@ export async function POST(request: Request) {
     )
   }
 
+  if (isTooSoonToBook(parsed.data.fecha, parsed.data.horaInicio, minPreparationMinutes)) {
+    //PARCIAL: aca buscaria poner horaFin para saber la diferencia entre la hora que termina y los minutos de preparacion. Si esta en ese rango no puede reservar
+    if (minPreparationMinutes === 0) {
+      return NextResponse.json({ error: 'Ese turno ya pasó' }, { status: 400 })
+    }
+    return NextResponse.json(
+      {
+        error: `Este turno aun no se puede reservar ya que hay ${formatAdvanceTime(minPreparationMinutes)} minutos de preparacion`,
+      },
+      { status: 400 },
+    )
+  }
   // La grilla de turnos también se muestra en el cliente, pero acá hay que
   // recalcularla: un POST directo podría pedir un horario fuera del horario
   // de la cancha o pisado entre dos turnos.

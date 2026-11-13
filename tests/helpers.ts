@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { hashPassword } from '@/lib/passwords'
 import { diaDeHoy } from '@/lib/time'
 import { guardarSesion } from './sesion'
+import { MinPreparationInput } from '@/components/min-preparation-input'
 
 // Todo lo que crean los tests usa este dominio: la limpieza borra solo eso.
 const DOMINIO_DE_TEST = '@tocayjuga.test'
@@ -96,6 +97,7 @@ export const datosDeComplejo = {
   contacto: '11 4589-2231',
   porcentajeSenaDefault: 30,
   minAdvanceMinutesDefault: 0,
+  minPreparationMinutesDefault: 15,
   cancellationHours: 24,
 }
 

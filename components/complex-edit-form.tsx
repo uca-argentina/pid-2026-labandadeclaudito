@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { MinAdvanceInput } from '@/components/min-advance-input'
+import { MinPreparationInput } from '@/components/min-preparation-input'
 import { ZonaSelect } from '@/components/zona-select'
 import { createComplexSchema } from '@/lib/validations/complex'
 import { timeTextToMinutes } from '@/lib/time'
@@ -20,6 +21,7 @@ type ComplejoAEditar = {
   contacto: string
   porcentajeSenaDefault: number
   minAdvanceMinutesDefault: number
+  minPreparationMinutesDefault: number
   cancellationHours: number
 }
 
@@ -57,6 +59,7 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
       porcentajeSenaDefault: Number(form.get('porcentajeSenaDefault')),
       // Campo vacío en el complejo = sin anticipación (0)
       minAdvanceMinutesDefault: timeTextToMinutes(form.get('minAdvance') as string) ?? 0,
+      minPreparationMinutesDefault: timeTextToMinutes(form.get('minPreparation') as string) ?? 0,
       cancellationHours: Number(form.get('cancellationHours')),
     }
 
@@ -170,6 +173,13 @@ export function ComplexEditForm({ complejo }: { complejo: ComplejoAEditar }) {
           error={fieldErrors.minAdvanceMinutesDefault}
         />
 
+        <MinPreparationInput
+          name="minPreparation"
+          label="Preparacion minima entre reservas"
+          defaultMinutes={complejo.minPreparationMinutesDefault}
+          help="Tiempo de preparacion minima entre reservas. 0 es valido ya que es hasta que empieza. Una cancha puede tener la suya (se configura al editarla)."
+          error={fieldErrors.minPreparationMinutesDefault}
+        />
         <div className="space-y-2">
           <Label htmlFor="cancellationHours">Cancelación con devolución (horas antes)</Label>
           <Input

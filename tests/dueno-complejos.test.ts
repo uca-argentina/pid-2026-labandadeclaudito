@@ -250,6 +250,7 @@ describe('Canchas del complejo', () => {
       capacidad: 14,
       porcentajeSena: null,
       minAdvanceMinutes: null,
+      minPreparationMinutes: null,
     }
 
     loginComo(otroDuenio)
@@ -327,6 +328,7 @@ describe('Franjas dentro del horario de la cancha', () => {
         capacidad: 10,
         porcentajeSena: null,
         minAdvanceMinutes: null,
+        minPreparationMinutes: null,
       }),
       conParams({ id: canchaId }),
     )

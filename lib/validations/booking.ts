@@ -5,6 +5,7 @@ export const createBookingSchema = z.object({
   canchaId: z.string().min(1),
   fecha: z.string().refine(esDiaReal, 'Fecha inválida'),
   horaInicio: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Formato HH:MM'),
+  //horaFin: z.string().regex() --> PARCIAL: buscaria poner esto para agarrarlo en route.ts de booking en la api
   // Ausente = reserva completa. Un número = incompleta (el server lo normaliza
   // al máximo del deporte). Nunca negativo.
   jugadores: z.number().int().min(1).optional(),

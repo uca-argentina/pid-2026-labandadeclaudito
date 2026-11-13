@@ -105,6 +105,7 @@ model Complejo {
   // cada Cancha puede pisarlo con el propio. 0 = hasta que empieza el turno.
   // Default 180 = 3 horas (mismo valor que arranca el form de alta)
   minAdvanceMinutesDefault Int              @default(180)
+  minPreparationMinutesDefault Int          @default(15)
   // Horas antes del turno hasta las que se puede cancelar con devolución de
   // la seña. Aplica a todas sus canchas (no hay override por cancha).
   cancellationHours        Int              @default(24)

@@ -264,6 +264,10 @@ export default async function DetalleComplejoDuenoPage({
                 <p className="font-semibold">
                   {formatAdvanceTime(complejo.minAdvanceMinutesDefault)}
                 </p>
+                <p className="text-muted-foreground text-sm">Preparacion minima entre reservas</p>
+                <p className="font-semibold">
+                  {formatAdvanceTime(complejo.minPreparationMinutesDefault)}
+                </p>
               </div>
             </div>
           </div>

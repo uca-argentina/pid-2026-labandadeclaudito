@@ -22,6 +22,7 @@ import { updateCourtSchema } from '@/lib/validations/court'
 import { deporteLabels, superficieLabels, superficiesPorDeporte } from '@/lib/labels'
 import { capacidadPorDeporte } from '@/lib/jugadores'
 import type { Cancha } from '@/lib/generated/prisma/client'
+import { MinPreparationInput } from './min-preparation-input'
 
 type CanchaConPrecioString = Omit<Cancha, 'precioBase'> & { precioBase: string }
 
@@ -64,6 +65,8 @@ export function CourtEditForm({
       porcentajeSena: porcentajeSenaTexto === '' ? null : Number(porcentajeSenaTexto),
       // Campo vacío = usar la anticipación mínima por defecto del complejo
       minAdvanceMinutes: timeTextToMinutes(form.get('minAdvance') as string),
+      // Campo vacío = usar la preparacion mínima por defecto del complejo
+      minPreparationMinutes: timeTextToMinutes(form.get('minPreparation') as string),
     }
 
     const parsed = updateCourtSchema.safeParse(datos)
@@ -300,6 +303,15 @@ export function CourtEditForm({
               defaultMinutes={cancha.minAdvanceMinutes}
               help="Vacío = usa la anticipación mínima por defecto del complejo."
               error={fieldErrors.minAdvanceMinutes}
+              allowEmpty
+            />
+
+            <MinPreparationInput
+              name="minPreparation"
+              label="Preparacion mínima propia"
+              defaultMinutes={cancha.minPreparationMinutes}
+              help="Vacío = Se utiliza la preparacion mínima por defecto del complejo."
+              error={fieldErrors.minPreparationMinutes}
               allowEmpty
             />
           </div>

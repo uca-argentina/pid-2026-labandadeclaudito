@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { MinAdvanceInput } from '@/components/min-advance-input'
+import { MinPreparationInput } from '@/components/min-preparation-input'
 import { ZonaSelect } from '@/components/zona-select'
 import { timeTextToMinutes } from '@/lib/time'
 import {
@@ -45,11 +46,13 @@ export function FormNuevoComplejo() {
   const [subiendoFotos, setSubiendoFotos] = useState(false)
   const [fotosFallidas, setFotosFallidas] = useState(0)
   const [errorAnticipacion, setErrorAnticipacion] = useState('')
+  const [errorPreparation, setErrorPreparation] = useState('')
 
   const { register, handleSubmit, formState } = useForm<CreateComplexInput>({
     resolver: zodResolver(createComplexSchema),
     // minAdvanceMinutesDefault se carga con un TimeSelect que no maneja
     // react-hook-form: se pasa a minutos en onSubmit.
+    // Lo mismo hago con minPreparationMinutesDefault (considero un default de 15min)
     defaultValues: {
       nombre: '',
       direccion: '',
@@ -57,6 +60,7 @@ export function FormNuevoComplejo() {
       contacto: '',
       porcentajeSenaDefault: 30,
       minAdvanceMinutesDefault: 180,
+      minPreparationMinutesDefault: 15,
       cancellationHours: 24,
     },
   })
@@ -97,6 +101,7 @@ export function FormNuevoComplejo() {
   async function onSubmit(datos: CreateComplexInput, event?: BaseSyntheticEvent) {
     setErrorServidor('')
     setErrorAnticipacion('')
+    setErrorPreparation('')
 
     if (!(event?.target instanceof HTMLFormElement)) {
       return
@@ -106,10 +111,12 @@ export function FormNuevoComplejo() {
       ...datos,
       // Campo vacío = sin anticipación (0)
       minAdvanceMinutesDefault: timeTextToMinutes(form.get('minAdvance') as string) ?? 0,
+      minPreparationMinutesDefault: timeTextToMinutes(form.get('minPreparation') as string) ?? 0,
     }
     const parsed = createComplexSchema.safeParse(datosCompletos)
     if (!parsed.success) {
       setErrorAnticipacion(parsed.error.issues[0].message)
+      setErrorPreparation(parsed.error.issues[0].message)
       return
     }
 
@@ -288,6 +295,16 @@ export function FormNuevoComplejo() {
               defaultMinutes={180}
               help="Cuánto antes del turno se puede reservar como mínimo. 0 = hasta que empieza. Después cada cancha puede tener la suya."
               error={errorAnticipacion}
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <MinPreparationInput
+              name="minPreparation"
+              label="Preparacion minima entre reservas"
+              defaultMinutes={180}
+              help="Tiempo de preparacion minima entre reservas. 0 es valido ya que es hasta que empieza. Una cancha puede tener la suya (se configura al editarla)."
+              error={errorPreparation}
             />
           </div>
 
