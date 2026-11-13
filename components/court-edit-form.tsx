@@ -39,7 +39,7 @@ export function CourtEditForm({
   const [horaCierre, setHoraCierre] = useState(cancha.horaCierre)
   // String para poder borrar y escribir libre
   const [capacidad, setCapacidad] = useState(String(cancha.capacidad))
-  const [intervaloMin, setIntervaloMin] = useState('60')
+  const [intervaloMin, setIntervaloMin] = useState(String(cancha.intervaloMin))
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cargando, setCargando] = useState(false)
