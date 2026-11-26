@@ -58,7 +58,6 @@ next-env.d.ts
 branch_context.md
 # docs/ es local: planes técnicos y notas de sprint, no se pushean.
 # El backlog real vive en Jira.
-/docs
 # Serena MCP tool config (local, per-dev)
 /.serena
 
