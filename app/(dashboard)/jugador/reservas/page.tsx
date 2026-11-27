@@ -4,6 +4,7 @@ import {
   CalendarDays,
   CircleDot,
   Clock,
+  Goal,
   LandPlot,
   Search,
   ShieldAlert,
@@ -57,6 +58,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { ResultBookingDialog } from '@/components/result-dialog'
+import { ResultButtons } from '@/components/result-buttons'
 
 // Próximas se muestran como tarjetas (tienen acciones: pagar, cancelar).
 // Historial y canceladas, como tabla: son solo para consultar.
@@ -262,6 +265,11 @@ export default async function MisReservasPage({ searchParams }: PageProps<'/juga
                     </TableHead>
                     {vista === 'historial' && (
                       <TableHead className="px-3">
+                        <TituloConIcono icono={Goal}>Resultado</TituloConIcono>
+                      </TableHead>
+                    )}
+                    {vista === 'historial' && (
+                      <TableHead className="px-3">
                         <TituloConIcono icono={Star}>Calificación</TituloConIcono>
                       </TableHead>
                     )}
@@ -360,6 +368,9 @@ function datosDelHistorial(
     !reserva.disputa &&
     sePuedeDisputar({ ...turno, asistenciaMarcadaEn: reserva.asistenciaMarcadaEn }, ahora)
 
+  const puedeCargarResultado =
+    sePuedeCalificar(turno, ahora) && reserva.estadoResultado !== 'CONFIRMADO'
+
   return {
     dia,
     esParticipante,
@@ -370,6 +381,7 @@ function datosDelHistorial(
     etiquetados,
     puedeCalificar,
     puedeDisputar,
+    puedeCargarResultado,
   }
 }
 
@@ -390,6 +402,27 @@ function PuntosDelTurno({ puntos }: { puntos: number }) {
     )
   }
   return null
+}
+
+function ResultadoDeLaReserva({
+  reserva,
+  datos,
+}: {
+  reserva: Reserva
+  datos: ReturnType<typeof datosDelHistorial>
+}) {
+  return (
+    <div className="flex flex-col items-end gap-1">
+      {reserva.resultado && (
+        <span className="text-sm">
+          {reserva.resultado} · {reserva.estadoResultado}
+        </span>
+      )}
+      {datos.puedeCargarResultado && !reserva.resultado && (
+        <ResultBookingDialog bookingId={reserva.id} />
+      )}
+    </div>
+  )
 }
 
 // Calificar y disputar: los botones (o lo que ya hizo) de una reserva del
@@ -532,6 +565,11 @@ function FilaReserva({
       <TableCell className={conDisputa ? 'px-3' : 'px-3 pr-4'}>
         <CeldaMonto monto={monto} />
       </TableCell>
+      {conDisputa && (
+        <TableCell className="px-3">
+          <ResultadoDeLaReserva reserva={reserva} datos={datos} />
+        </TableCell>
+      )}
       {conDisputa && (
         <TableCell className="px-3">
           <CalificacionDeLaReserva reserva={reserva} datos={datos} />

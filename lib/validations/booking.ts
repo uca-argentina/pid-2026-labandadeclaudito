@@ -16,6 +16,14 @@ export const markAttendanceSchema = z.object({
   asistio: z.boolean(),
 })
 
+export const resultBookingSchema = z.object({
+  resultado: z.string().trim().min(1, 'Ingresa el resultado'),
+})
+
+export const responderResultadoSchema = z.object({
+  accion: z.enum(['CONFIRMAR', 'OBSERVAR']),
+})
+
 // Edición de los jugadores de una reserva ya creada. null = marcar completa.
 export const editPlayersSchema = z.object({
   jugadores: z.number().int().min(1).nullable(),

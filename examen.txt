@@ -1,0 +1,7 @@
+Asumo que un resultado cargado ya nace en estado REGISTRADO, y al momento de que el dueño confirma o deja una observacion,
+el resultado va a cambiar su estado al correspondiente.
+
+Caso de validacion:
+Los botones solo aparecen en el historial de reservas (en el historial unicamente aparecen reservas que ya se jugaron),
+de todas formas en el back tambien se valida que solo sean reservas validas a poner el resultado (en las disputas ya se usa una funcion igual
+asi que la tomo de ahi: "sePuedeCalificar")

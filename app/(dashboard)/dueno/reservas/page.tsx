@@ -1,6 +1,15 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { CalendarDays, CircleDot, Clock, LandPlot, User, UserCheck, Wallet } from 'lucide-react'
+import {
+  CalendarDays,
+  CircleDot,
+  Clock,
+  Goal,
+  LandPlot,
+  User,
+  UserCheck,
+  Wallet,
+} from 'lucide-react'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
 import type { Prisma } from '@/lib/generated/prisma/client'
@@ -42,6 +51,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { ResultButtons } from '@/components/result-buttons'
 
 // Próximas se muestran como tarjetas, historial y canceladas como tabla.
 const TARJETAS_POR_PAGINA = 12
@@ -286,6 +296,11 @@ export default async function ReservasDelDuenioPage({
                         <TituloConIcono icono={UserCheck}>Asistencia</TituloConIcono>
                       </TableHead>
                     )}
+                    {vista === 'historial' && (
+                      <TableHead className="px-3 pr-4 text-right">
+                        <TituloConIcono icono={Goal}>Resultado</TituloConIcono>
+                      </TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -386,6 +401,14 @@ function FilaReserva({
           )}
         </TableCell>
       )}
+      <TableCell>
+        {reserva.resultado && (
+          <span className="text-xs">
+            {reserva.resultado} · {reserva.estadoResultado}
+          </span>
+        )}
+        {reserva.estadoResultado === 'REGISTRADO' && <ResultButtons bookingId={reserva.id} />}
+      </TableCell>
     </TableRow>
   )
 }
