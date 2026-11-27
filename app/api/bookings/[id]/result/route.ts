@@ -3,7 +3,7 @@ import { requireRole } from '@/lib/auth-helpers'
 import { sePuedeCalificar } from '@/lib/estado-reserva'
 import { diaDeReserva, momentoActual } from '@/lib/time'
 import { db } from '@/lib/db'
-import { resultBookingSchema } from '@/lib/validations/booking'
+import { resultBookingSchema, responderResultadoSchema } from '@/lib/validations/booking'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { session, error, status } = await requireRole('JUGADOR')
@@ -54,5 +54,41 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     },
   })
 
+  return NextResponse.json({ ok: true }, { status: 200 })
+}
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { session, error, status } = await requireRole('DUENIO')
+  if (!session) return NextResponse.json({ error }, { status })
+
+  const { id } = await params
+
+  const body = await request.json()
+  const parsed = responderResultadoSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
+  }
+
+  const reserva = await db.reserva.findUnique({
+    where: { id },
+    include: {
+      cancha: { include: { complejo: true } },
+      participantes: { where: { jugadorId: session.user.id } },
+    },
+  })
+  if (!reserva) {
+    return NextResponse.json({ error: 'La reserva no existe' }, { status: 404 })
+  }
+
+  if (!reserva.resultado) {
+    return NextResponse.json({ error: 'Todavía no hay resultado' }, { status: 409 })
+  }
+
+  await db.reserva.update({
+    where: { id },
+    data: {
+      estadoResultado: parsed.data.accion === 'CONFIRMAR' ? 'CONFIRMADO' : 'PENDIENTE_CONFIRMACION',
+    },
+  })
   return NextResponse.json({ ok: true }, { status: 200 })
 }
