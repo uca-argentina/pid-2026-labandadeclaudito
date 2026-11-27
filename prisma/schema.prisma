@@ -10,6 +10,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum EstadoResultado {
+  REGISTRADO
+  CONFIRMADO
+  PENDIENTE_CONFIRMACION
+}
+
 enum Rol {
   JUGADOR
   DUENIO
@@ -226,6 +232,9 @@ model Reserva {
   jugadores           Int?
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
+  resultado           String?
+  resultadoCargadoPorId  String?
+  estadoResultado     EstadoResultado?
 
   cancha         Cancha                @relation(fields: [canchaId], references: [id])
   jugador        Usuario               @relation("JugadorReservas", fields: [jugadorId], references: [id])
