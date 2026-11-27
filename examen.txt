@@ -1,6 +1,9 @@
 Asumo que un resultado cargado ya nace en estado REGISTRADO, y al momento de que el dueño confirma o deja una observacion,
 el resultado va a cambiar su estado al correspondiente.
 
+En el punto 3 para validar que los resultados confirmados no se puedan modificar, haria un condicional en la ruta que lea el estadoResultado, y si es
+igual a "CONFIRMADO" retorne un json con un error de que no se puede modificar
+
 Caso de validacion:
 Los botones solo aparecen en el historial de reservas (en el historial unicamente aparecen reservas que ya se jugaron),
 de todas formas en el back tambien se valida que solo sean reservas validas a poner el resultado (en las disputas ya se usa una funcion igual
